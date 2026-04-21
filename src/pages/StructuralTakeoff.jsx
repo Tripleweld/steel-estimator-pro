@@ -1,436 +1,753 @@
-import { useState, useMemo, useRef, useEffect } from 'react'
-import { useProject } from '../context/ProjectContext'
-import { searchShapes } from '../data/aisc-shapes'
-import { fmtNumber } from '../utils/calculations'
-import { Plus, Trash2, Search, HardHat } from 'lucide-react'
+import { useState, useMemo, useCallback, useRef, useEffect } from 'react';
+import { useProject } from '../context/ProjectContext';
+import { searchShapes } from '../data/aisc-shapes';
+import {
+  Plus,
+  Trash2,
+  Search,
+  HardHat,
+  ChevronDown,
+  ChevronRight,
+  RotateCcw,
+  Copy,
+  ArrowUpDown,
+} from 'lucide-react';
 
-/**
- * ShapeAutocomplete — reusable AISC shape search input with dropdown.
- * Shows up to 8 matching results. On select, calls onSelect(shape).
- */
-function ShapeAutocomplete({ value, onChange, onSelect }) {
-  const [query, setQuery] = useState(value || '')
-  const [results, setResults] = useState([])
-  const [open, setOpen] = useState(false)
-  const [activeIndex, setActiveIndex] = useState(-1)
-  const wrapperRef = useRef(null)
+const TYPE_OPTIONS = [
+  'Beam',
+  'Column',
+  'Brace',
+  'Plate',
+  'HSS',
+  'Angle',
+  'Channel',
+  'Other',
+];
+
+const fmt = (v) =>
+  '$' +
+  Number(v || 0).toLocaleString('en-CA', {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  });
+
+const fmtNum = (v, decimals = 0) =>
+  Number(v || 0).toLocaleString('en-CA', {
+    minimumFractionDigits: decimals,
+    maximumFractionDigits: decimals,
+  });
+
+// ---------------------------------------------------------------------------
+// Column group definitions
+// ---------------------------------------------------------------------------
+const COLUMN_GROUPS = [
+  { label: 'Identification', cols: 5, bg: 'bg-slate-700 text-white' },
+  { label: 'Quantity & Weight', cols: 5, bg: 'bg-blue-700 text-white' },
+  { label: 'Connections & Hardware', cols: 2, bg: 'bg-purple-700 text-white' },
+  { label: 'Fabrication Hours (per piece)', cols: 9, bg: 'bg-amber-700 text-white' },
+  { label: 'Installation Hours (per piece)', cols: 8, bg: 'bg-green-700 text-white' },
+  { label: 'Cost Preview', cols: 4, bg: 'bg-red-700 text-white' },
+  { label: 'Notes', cols: 1, bg: 'bg-slate-600 text-white' },
+  { label: '', cols: 1, bg: 'bg-slate-800' }, // actions column
+];
+
+// ---------------------------------------------------------------------------
+// Profile / AISC shape search dropdown
+// ---------------------------------------------------------------------------
+function ProfileSearch({ value, lbsPerFt, onChange }) {
+  const [query, setQuery] = useState(value || '');
+  const [results, setResults] = useState([]);
+  const [open, setOpen] = useState(false);
+  const wrapperRef = useRef(null);
+  const debounceRef = useRef(null);
 
   // Sync external value changes
   useEffect(() => {
-    setQuery(value || '')
-  }, [value])
+    setQuery(value || '');
+  }, [value]);
 
   // Close dropdown on outside click
   useEffect(() => {
-    function handleClickOutside(e) {
+    function handleClick(e) {
       if (wrapperRef.current && !wrapperRef.current.contains(e.target)) {
-        setOpen(false)
+        setOpen(false);
       }
     }
-    document.addEventListener('mousedown', handleClickOutside)
-    return () => document.removeEventListener('mousedown', handleClickOutside)
-  }, [])
+    document.addEventListener('mousedown', handleClick);
+    return () => document.removeEventListener('mousedown', handleClick);
+  }, []);
 
-  function handleChange(e) {
-    const val = e.target.value
-    setQuery(val)
-    onChange(val)
-
-    if (val.trim().length >= 1) {
-      const matches = searchShapes(val).slice(0, 8)
-      setResults(matches)
-      setOpen(matches.length > 0)
-      setActiveIndex(-1)
+  const handleInput = (e) => {
+    const val = e.target.value;
+    setQuery(val);
+    clearTimeout(debounceRef.current);
+    if (val.length >= 2) {
+      debounceRef.current = setTimeout(() => {
+        const matches = searchShapes(val);
+        setResults(matches.slice(0, 15));
+        setOpen(matches.length > 0);
+      }, 250);
     } else {
-      setResults([])
-      setOpen(false)
+      setResults([]);
+      setOpen(false);
     }
-  }
+  };
 
-  function handleSelect(shape) {
-    setQuery(shape.shape)
-    setOpen(false)
-    setResults([])
-    onSelect(shape)
-  }
+  const handleSelect = (shape) => {
+    setQuery(shape.name);
+    setOpen(false);
+    onChange({ profile: shape.name, lbsPerFt: shape.W });
+  };
 
-  function handleKeyDown(e) {
-    if (!open || results.length === 0) return
-
-    if (e.key === 'ArrowDown') {
-      e.preventDefault()
-      setActiveIndex(prev => Math.min(prev + 1, results.length - 1))
-    } else if (e.key === 'ArrowUp') {
-      e.preventDefault()
-      setActiveIndex(prev => Math.max(prev - 1, 0))
-    } else if (e.key === 'Enter' && activeIndex >= 0) {
-      e.preventDefault()
-      handleSelect(results[activeIndex])
-    } else if (e.key === 'Escape') {
-      setOpen(false)
-    }
-  }
+  const handleBlur = () => {
+    // allow click on dropdown item before closing
+    setTimeout(() => setOpen(false), 200);
+  };
 
   return (
     <div ref={wrapperRef} className="relative">
-      <div className="relative">
+      <div className="flex items-center gap-1">
         <input
           type="text"
           value={query}
-          onChange={handleChange}
+          onChange={handleInput}
           onFocus={() => {
-            if (results.length > 0) setOpen(true)
+            if (results.length > 0) setOpen(true);
           }}
-          onKeyDown={handleKeyDown}
-          placeholder="e.g. W14x30"
-          className="input-field pr-7"
+          onBlur={handleBlur}
+          placeholder="Search..."
+          className="input-number text-xs py-1 w-28"
         />
-        <Search className="pointer-events-none absolute right-2 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-silver-400" />
+        <Search size={12} className="text-gray-400 shrink-0" />
       </div>
       {open && results.length > 0 && (
-        <ul className="absolute z-50 mt-1 max-h-52 w-full overflow-auto rounded-md border border-silver-200 bg-white shadow-lg">
-          {results.map((shape, idx) => (
+        <ul className="absolute z-50 mt-1 w-56 max-h-48 overflow-y-auto rounded border border-gray-600 bg-gray-800 shadow-lg text-xs">
+          {results.map((shape) => (
             <li
-              key={shape.shape}
+              key={shape.name}
               onMouseDown={() => handleSelect(shape)}
-              className={`flex cursor-pointer items-center justify-between px-3 py-1.5 text-sm ${
-                idx === activeIndex ? 'bg-fire-50 text-fire-700' : 'text-steel-700 hover:bg-fire-50/30'
-              }`}
+              className="px-2 py-1.5 cursor-pointer hover:bg-blue-600 hover:text-white flex justify-between"
             >
-              <span className="font-medium">{shape.shape}</span>
-              <span className="text-xs text-silver-400">{shape.w} lb/ft</span>
+              <span className="font-medium">{shape.name}</span>
+              <span className="text-gray-400">{shape.W} lb/ft</span>
             </li>
           ))}
         </ul>
       )}
     </div>
-  )
+  );
 }
 
+// ---------------------------------------------------------------------------
+// Main component
+// ---------------------------------------------------------------------------
 export default function StructuralTakeoff() {
-  const { state, dispatch } = useProject()
-  const rows = state.structural
-  const defaults = state.rates.productivityDefaults
+  const { state, dispatch } = useProject();
+  const rows = state.structural || [];
+  const rates = state.rates || {};
 
-  // ── Handlers ──
+  const fabRate = rates.labourRates?.fabRate || 0;
+  const installRate = rates.labourRates?.installRate || 0;
 
-  function handleDefaultChange(field, value) {
-    dispatch({
-      type: 'SET_PRODUCTIVITY',
-      payload: { [field]: parseFloat(value) || 0 },
-    })
-  }
+  // Resolve material rate ($/lb) — try to match by type, else first entry
+  const getMaterialRate = useCallback(
+    (type) => {
+      const mats = rates.materialRates || [];
+      if (!mats.length) return 0;
+      const match = mats.find(
+        (r) => r.item && type && r.item.toLowerCase().includes(type.toLowerCase())
+      );
+      return match ? Number(match.rate || match.costPerLb || 0) : Number(mats[0].rate || mats[0].costPerLb || 0);
+    },
+    [rates.materialRates]
+  );
 
-  function addRow() {
-    dispatch({ type: 'ADD_STRUCTURAL_ROW' })
-  }
+  // ------ Row-level derived data ------
+  const computedRows = useMemo(() => {
+    return rows.map((row, idx) => {
+      const qty = Number(row.qty) || 0;
+      const lengthFt = Number(row.lengthFt) || 0;
+      const lbsPerFt = Number(row.lbsPerFt) || 0;
 
-  function deleteRow(id) {
-    dispatch({ type: 'DELETE_STRUCTURAL_ROW', payload: id })
-  }
+      const totalLbs = qty * lengthFt * lbsPerFt;
+      const totalTons = totalLbs / 2000;
 
-  function updateRow(id, changes) {
-    const existing = rows.find(r => r.id === id)
-    if (!existing) return
+      // Fab hours per piece
+      const fabFields = [
+        row.fabSetup, row.fabCut, row.fabDrill, row.fabFeed,
+        row.fabWeld, row.fabGrind, row.fabPaint,
+      ];
+      const fabHrsPerPc = fabFields.reduce((s, v) => s + (Number(v) || 0), 0);
+      const totalFabHrs = fabHrsPerPc * qty;
 
-    const updated = { ...existing, ...changes }
+      // Install hours per piece
+      const instFields = [
+        row.instUnload, row.instRig, row.instFit,
+        row.instBolt, row.instTouchup, row.instQC,
+      ];
+      const instHrsPerPc = instFields.reduce((s, v) => s + (Number(v) || 0), 0);
+      const totalInstHrs = instHrsPerPc * qty;
 
-    // Recalculate derived fields
-    const totalWt = updated.qty * updated.length * updated.wtPerFt
-    const totalFabHrs = (totalWt / 2000) * updated.fabHrsPerTon
-    const totalInstHrs = (totalWt / 2000) * updated.instHrsPerTon
+      // Costs
+      const matRate = getMaterialRate(row.type);
+      const materialCost = totalLbs * matRate;
+      const fabCost = totalFabHrs * fabRate;
+      const installCost = totalInstHrs * installRate;
+      const rowTotal = materialCost + fabCost + installCost;
 
-    dispatch({
-      type: 'UPDATE_STRUCTURAL_ROW',
-      payload: { ...updated, totalWt, totalFabHrs, totalInstHrs },
-    })
-  }
+      return {
+        ...row,
+        _idx: idx + 1,
+        totalLbs,
+        totalTons,
+        fabHrsPerPc,
+        totalFabHrs,
+        instHrsPerPc,
+        totalInstHrs,
+        materialCost,
+        fabCost,
+        installCost,
+        rowTotal,
+      };
+    });
+  }, [rows, fabRate, installRate, getMaterialRate]);
 
-  function handleShapeSelect(id, shape) {
-    updateRow(id, { shape: shape.shape, wtPerFt: shape.w })
-  }
-
-  // ── Summary ──
-
+  // ------ Summary totals ------
   const summary = useMemo(() => {
-    const totalWt = rows.reduce((sum, r) => sum + (r.totalWt || 0), 0)
-    const totalFabHrs = rows.reduce((sum, r) => sum + (r.totalFabHrs || 0), 0)
-    const totalInstHrs = rows.reduce((sum, r) => sum + (r.totalInstHrs || 0), 0)
-    return {
-      rowCount: rows.length,
-      totalWt,
-      totalTons: totalWt / 2000,
-      totalFabHrs,
-      totalInstHrs,
+    return computedRows.reduce(
+      (acc, r) => ({
+        totalPieces: acc.totalPieces + (Number(r.qty) || 0),
+        totalLbs: acc.totalLbs + r.totalLbs,
+        totalTons: acc.totalTons + r.totalTons,
+        totalFabHrs: acc.totalFabHrs + r.totalFabHrs,
+        totalInstHrs: acc.totalInstHrs + r.totalInstHrs,
+        materialCost: acc.materialCost + r.materialCost,
+        fabCost: acc.fabCost + r.fabCost,
+        installCost: acc.installCost + r.installCost,
+        grandTotal: acc.grandTotal + r.rowTotal,
+      }),
+      {
+        totalPieces: 0,
+        totalLbs: 0,
+        totalTons: 0,
+        totalFabHrs: 0,
+        totalInstHrs: 0,
+        materialCost: 0,
+        fabCost: 0,
+        installCost: 0,
+        grandTotal: 0,
+      }
+    );
+  }, [computedRows]);
+
+  // ------ Handlers ------
+  const addRow = () => dispatch({ type: 'ADD_STRUCTURAL_ROW' });
+
+  const updateRow = useCallback(
+    (id, fields) =>
+      dispatch({ type: 'UPDATE_STRUCTURAL_ROW', payload: { id, ...fields } }),
+    [dispatch]
+  );
+
+  const deleteRow = useCallback(
+    (id) => dispatch({ type: 'DELETE_STRUCTURAL_ROW', payload: id }),
+    [dispatch]
+  );
+
+  const duplicateRow = useCallback(
+    (row) => {
+      const cloned = {
+        ...row,
+        id: Date.now(),
+        mark: row.mark ? row.mark + ' (copy)' : '',
+      };
+      // Remove computed fields
+      delete cloned._idx;
+      delete cloned.totalLbs;
+      delete cloned.totalTons;
+      delete cloned.fabHrsPerPc;
+      delete cloned.totalFabHrs;
+      delete cloned.instHrsPerPc;
+      delete cloned.totalInstHrs;
+      delete cloned.materialCost;
+      delete cloned.fabCost;
+      delete cloned.installCost;
+      delete cloned.rowTotal;
+
+      dispatch({
+        type: 'SET_STRUCTURAL',
+        payload: [...rows, cloned],
+      });
+    },
+    [dispatch, rows]
+  );
+
+  // ------ Sorting ------
+  const [sortField, setSortField] = useState(null);
+  const [sortDir, setSortDir] = useState('asc');
+
+  const handleSort = (field) => {
+    if (sortField === field) {
+      setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'));
+    } else {
+      setSortField(field);
+      setSortDir('asc');
     }
-  }, [rows])
+  };
 
-  // ── Render ──
+  const sortedRows = useMemo(() => {
+    if (!sortField) return computedRows;
+    return [...computedRows].sort((a, b) => {
+      const av = a[sortField] ?? '';
+      const bv = b[sortField] ?? '';
+      const cmp = typeof av === 'number' ? av - bv : String(av).localeCompare(String(bv));
+      return sortDir === 'asc' ? cmp : -cmp;
+    });
+  }, [computedRows, sortField, sortDir]);
 
+  // ------ Collapsed groups ------
+  const [collapsedGroups, setCollapsedGroups] = useState({});
+  const toggleGroup = (label) =>
+    setCollapsedGroups((prev) => ({ ...prev, [label]: !prev[label] }));
+
+  // ------ Render helpers ------
+  const numInput = (row, field, width = 'w-16') => (
+    <input
+      type="number"
+      step="any"
+      value={row[field] ?? ''}
+      onChange={(e) => updateRow(row.id, { [field]: e.target.value })}
+      className={`input-number text-xs py-1 ${width}`}
+    />
+  );
+
+  const readonlyCell = (value, decimals = 0) => (
+    <span className="text-xs tabular-nums text-gray-300">
+      {fmtNum(value, decimals)}
+    </span>
+  );
+
+  const currencyCell = (value) => (
+    <span className="text-xs tabular-nums text-gray-300 font-medium">
+      {fmt(value)}
+    </span>
+  );
+
+  // ---------------------------------------------------------------------------
   return (
-    <div className="space-y-6">
-      <div className="accent-stripe" />
+    <div className="space-y-4">
+      {/* Accent stripe */}
+      <div className="h-1 bg-gradient-to-r from-blue-500 via-amber-500 to-red-500 rounded-full" />
 
-      {/* Header */}
-      <div>
+      {/* Page header */}
+      <div className="flex items-center justify-between flex-wrap gap-4">
         <div className="flex items-center gap-3">
-          <HardHat className="h-6 w-6 text-fire-600" />
-          <h1 className="page-title">Structural Takeoff</h1>
-        </div>
-        <p className="page-subtitle">
-          Enter structural steel members. Shape selection auto-fills weight from the AISC library
-          and calculates fabrication &amp; installation hours.
-        </p>
-      </div>
-
-      {/* Default Productivity Rates */}
-      <div className="card">
-        <h2 className="section-title mb-4">Default Productivity Rates</h2>
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <HardHat className="text-amber-400" size={28} />
           <div>
-            <label className="label">
-              Fab Hrs / Ton
-            </label>
-            <input
-              type="number"
-              min="0"
-              step="0.5"
-              value={defaults.fabHrsPerTon}
-              onChange={e => handleDefaultChange('fabHrsPerTon', e.target.value)}
-              className="input-number"
-            />
-          </div>
-          <div>
-            <label className="label">
-              Install Hrs / Ton
-            </label>
-            <input
-              type="number"
-              min="0"
-              step="0.5"
-              value={defaults.installHrsPerTon}
-              onChange={e => handleDefaultChange('installHrsPerTon', e.target.value)}
-              className="input-number"
-            />
+            <h1 className="text-2xl font-bold text-white tracking-tight">
+              Structural Steel Takeoff
+            </h1>
+            <p className="text-sm text-gray-400">
+              Division 05 12 00 &mdash; Structural Steel Framing
+            </p>
           </div>
         </div>
-      </div>
 
-      {/* Structural Members Table */}
-      <div className="card p-0">
-        <div className="flex items-center justify-between px-6 py-4">
-          <h2 className="section-title">Structural Members</h2>
-          <button onClick={addRow} className="btn-primary">
-            <Plus className="h-4 w-4" />
+        <div className="flex items-center gap-2">
+          <button
+            onClick={addRow}
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 hover:bg-blue-500 text-white text-sm font-medium rounded transition-colors"
+          >
+            <Plus size={14} />
             Add Row
           </button>
+          <button
+            onClick={() => {
+              setSortField(null);
+              setSortDir('asc');
+            }}
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-gray-700 hover:bg-gray-600 text-gray-200 text-sm rounded transition-colors"
+            title="Reset sort"
+          >
+            <RotateCcw size={14} />
+          </button>
         </div>
+      </div>
 
-        <div className="overflow-x-auto">
-          <table className="w-full min-w-[1280px]">
-            <thead>
-              <tr>
-                <th className="table-header w-24">Mark</th>
-                <th className="table-header w-40">Description</th>
-                <th className="table-header w-44">Shape</th>
-                <th className="table-header w-16 text-right">Qty</th>
-                <th className="table-header w-24 text-right">Length (ft)</th>
-                <th className="table-header w-24 text-right">Wt/ft (lb)</th>
-                <th className="table-header w-28 text-right">Total Wt (lb)</th>
-                <th className="table-header w-24 text-right">Fab Hrs/Ton</th>
-                <th className="table-header w-24 text-right">Total Fab Hrs</th>
-                <th className="table-header w-24 text-right">Inst Hrs/Ton</th>
-                <th className="table-header w-24 text-right">Total Inst Hrs</th>
-                <th className="table-header w-36">Notes</th>
-                <th className="table-header w-12"></th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-silver-100">
-              {rows.length === 0 && (
-                <tr>
-                  <td colSpan={13} className="px-6 py-10 text-center text-sm text-silver-400">
-                    No structural members yet. Click <strong>Add Row</strong> to start your takeoff.
-                  </td>
-                </tr>
-              )}
-              {rows.map(row => (
-                <StructuralRow
-                  key={row.id}
-                  row={row}
-                  onUpdate={updateRow}
-                  onDelete={deleteRow}
-                  onShapeSelect={handleShapeSelect}
-                />
+      {/* Rate info badges */}
+      <div className="flex flex-wrap gap-3 text-xs">
+        <span className="px-2 py-1 rounded bg-amber-900/40 text-amber-300 border border-amber-700/50">
+          Fab Rate: {fmt(fabRate)}/hr
+        </span>
+        <span className="px-2 py-1 rounded bg-green-900/40 text-green-300 border border-green-700/50">
+          Install Rate: {fmt(installRate)}/hr
+        </span>
+        <span className="px-2 py-1 rounded bg-gray-700/60 text-gray-300 border border-gray-600/50">
+          {rows.length} row{rows.length !== 1 ? 's' : ''}
+        </span>
+      </div>
+
+      {/* Scrollable table */}
+      <div className="overflow-x-auto rounded-lg border border-gray-700 bg-gray-900/60">
+        <table className="min-w-max w-full border-collapse text-sm">
+          {/* ---- Group header row ---- */}
+          <thead>
+            <tr>
+              {COLUMN_GROUPS.map((g, gi) => (
+                <th
+                  key={gi}
+                  colSpan={g.cols}
+                  className={`${g.bg} px-2 py-1.5 text-xs font-semibold text-center border-b border-gray-600 ${
+                    g.label ? 'cursor-pointer select-none' : ''
+                  }`}
+                  onClick={() => g.label && toggleGroup(g.label)}
+                >
+                  {g.label && (
+                    <span className="inline-flex items-center gap-1">
+                      {collapsedGroups[g.label] ? (
+                        <ChevronRight size={12} />
+                      ) : (
+                        <ChevronDown size={12} />
+                      )}
+                      {g.label}
+                    </span>
+                  )}
+                </th>
               ))}
-            </tbody>
-          </table>
-        </div>
+            </tr>
+
+            {/* ---- Column headers ---- */}
+            <tr className="bg-gray-800">
+              {/* GROUP A — Identification */}
+              <th className="table-header text-xs whitespace-nowrap sticky left-0 z-20 bg-gray-800">#</th>
+              <th className="table-header text-xs whitespace-nowrap sticky left-8 z-20 bg-gray-800">Mark</th>
+              <th className="table-header text-xs whitespace-nowrap">Dwg Ref</th>
+              <th className="table-header text-xs whitespace-nowrap">Type</th>
+              <th className="table-header text-xs whitespace-nowrap">Profile</th>
+
+              {/* GROUP B — Qty & Weight */}
+              <th className="table-header text-xs whitespace-nowrap">Qty</th>
+              <th className="table-header text-xs whitespace-nowrap">Length (ft)</th>
+              <th className="table-header text-xs whitespace-nowrap">Wt/ft (lb)</th>
+              <th className="table-header text-xs whitespace-nowrap">Total (lb)</th>
+              <th className="table-header text-xs whitespace-nowrap">Total (ton)</th>
+
+              {/* GROUP C — Connections */}
+              <th className="table-header text-xs whitespace-nowrap">Base Pl (lb)</th>
+              <th className="table-header text-xs whitespace-nowrap">Anchors/pc</th>
+
+              {/* GROUP D — Fabrication */}
+              <th className="table-header text-xs whitespace-nowrap">Setup</th>
+              <th className="table-header text-xs whitespace-nowrap">Cut</th>
+              <th className="table-header text-xs whitespace-nowrap">Drill</th>
+              <th className="table-header text-xs whitespace-nowrap">Feed</th>
+              <th className="table-header text-xs whitespace-nowrap">Weld</th>
+              <th className="table-header text-xs whitespace-nowrap">Grind</th>
+              <th className="table-header text-xs whitespace-nowrap">Paint</th>
+              <th className="table-header text-xs whitespace-nowrap">Fab/Pc</th>
+              <th className="table-header text-xs whitespace-nowrap">Tot Fab</th>
+
+              {/* GROUP E — Installation */}
+              <th className="table-header text-xs whitespace-nowrap">Unload</th>
+              <th className="table-header text-xs whitespace-nowrap">Rig</th>
+              <th className="table-header text-xs whitespace-nowrap">Fit</th>
+              <th className="table-header text-xs whitespace-nowrap">Bolt</th>
+              <th className="table-header text-xs whitespace-nowrap">Touch-up</th>
+              <th className="table-header text-xs whitespace-nowrap">QC</th>
+              <th className="table-header text-xs whitespace-nowrap">Inst/Pc</th>
+              <th className="table-header text-xs whitespace-nowrap">Tot Inst</th>
+
+              {/* GROUP F — Cost */}
+              <th className="table-header text-xs whitespace-nowrap">Material $</th>
+              <th className="table-header text-xs whitespace-nowrap">Fab $</th>
+              <th className="table-header text-xs whitespace-nowrap">Install $</th>
+              <th className="table-header text-xs whitespace-nowrap">Row Total</th>
+
+              {/* Notes */}
+              <th className="table-header text-xs whitespace-nowrap">Notes</th>
+
+              {/* Actions */}
+              <th className="table-header text-xs whitespace-nowrap w-16"></th>
+            </tr>
+          </thead>
+
+          <tbody>
+            {sortedRows.length === 0 && (
+              <tr>
+                <td colSpan={35} className="text-center py-12 text-gray-500 text-sm">
+                  No rows yet. Click <strong>Add Row</strong> to begin your takeoff.
+                </td>
+              </tr>
+            )}
+
+            {sortedRows.map((row) => (
+              <tr key={row.id} className="table-row hover:bg-gray-800/60 border-b border-gray-800">
+                {/* ---- A: Identification ---- */}
+                <td className="table-cell text-xs text-center text-gray-500 sticky left-0 z-10 bg-gray-900">
+                  {row._idx}
+                </td>
+                <td className="table-cell sticky left-8 z-10 bg-gray-900">
+                  <input
+                    type="text"
+                    value={row.mark || ''}
+                    onChange={(e) => updateRow(row.id, { mark: e.target.value })}
+                    className="input-number text-xs py-1 w-20 font-medium"
+                    placeholder="B1"
+                  />
+                </td>
+                <td className="table-cell">
+                  <input
+                    type="text"
+                    value={row.drawingRef || ''}
+                    onChange={(e) => updateRow(row.id, { drawingRef: e.target.value })}
+                    className="input-number text-xs py-1 w-20"
+                    placeholder="S-101"
+                  />
+                </td>
+                <td className="table-cell">
+                  <select
+                    value={row.type || ''}
+                    onChange={(e) => updateRow(row.id, { type: e.target.value })}
+                    className="input-number text-xs py-1 w-24 bg-gray-800 border border-gray-600 rounded"
+                  >
+                    <option value="">--</option>
+                    {TYPE_OPTIONS.map((t) => (
+                      <option key={t} value={t}>
+                        {t}
+                      </option>
+                    ))}
+                  </select>
+                </td>
+                <td className="table-cell">
+                  <ProfileSearch
+                    value={row.profile}
+                    lbsPerFt={row.lbsPerFt}
+                    onChange={(fields) => updateRow(row.id, fields)}
+                  />
+                </td>
+
+                {/* ---- B: Qty & Weight ---- */}
+                <td className="table-cell">{numInput(row, 'qty')}</td>
+                <td className="table-cell">{numInput(row, 'lengthFt')}</td>
+                <td className="table-cell text-center">
+                  <span className="text-xs tabular-nums text-blue-300">
+                    {row.lbsPerFt ? fmtNum(row.lbsPerFt, 1) : '--'}
+                  </span>
+                </td>
+                <td className="table-cell text-center">{readonlyCell(row.totalLbs)}</td>
+                <td className="table-cell text-center">{readonlyCell(row.totalTons, 2)}</td>
+
+                {/* ---- C: Connections ---- */}
+                <td className="table-cell">{numInput(row, 'plateBP')}</td>
+                <td className="table-cell">{numInput(row, 'anchorsPerPc')}</td>
+
+                {/* ---- D: Fabrication ---- */}
+                <td className="table-cell">{numInput(row, 'fabSetup')}</td>
+                <td className="table-cell">{numInput(row, 'fabCut')}</td>
+                <td className="table-cell">{numInput(row, 'fabDrill')}</td>
+                <td className="table-cell">{numInput(row, 'fabFeed')}</td>
+                <td className="table-cell">{numInput(row, 'fabWeld')}</td>
+                <td className="table-cell">{numInput(row, 'fabGrind')}</td>
+                <td className="table-cell">{numInput(row, 'fabPaint')}</td>
+                <td className="table-cell text-center bg-amber-900/10">
+                  <span className="text-xs tabular-nums text-amber-300 font-medium">
+                    {fmtNum(row.fabHrsPerPc, 1)}
+                  </span>
+                </td>
+                <td className="table-cell text-center bg-amber-900/10">
+                  <span className="text-xs tabular-nums text-amber-300 font-semibold">
+                    {fmtNum(row.totalFabHrs, 1)}
+                  </span>
+                </td>
+
+                {/* ---- E: Installation ---- */}
+                <td className="table-cell">{numInput(row, 'instUnload')}</td>
+                <td className="table-cell">{numInput(row, 'instRig')}</td>
+                <td className="table-cell">{numInput(row, 'instFit')}</td>
+                <td className="table-cell">{numInput(row, 'instBolt')}</td>
+                <td className="table-cell">{numInput(row, 'instTouchup')}</td>
+                <td className="table-cell">{numInput(row, 'instQC')}</td>
+                <td className="table-cell text-center bg-green-900/10">
+                  <span className="text-xs tabular-nums text-green-300 font-medium">
+                    {fmtNum(row.instHrsPerPc, 1)}
+                  </span>
+                </td>
+                <td className="table-cell text-center bg-green-900/10">
+                  <span className="text-xs tabular-nums text-green-300 font-semibold">
+                    {fmtNum(row.totalInstHrs, 1)}
+                  </span>
+                </td>
+
+                {/* ---- F: Cost ---- */}
+                <td className="table-cell text-center">{currencyCell(row.materialCost)}</td>
+                <td className="table-cell text-center">{currencyCell(row.fabCost)}</td>
+                <td className="table-cell text-center">{currencyCell(row.installCost)}</td>
+                <td className="table-cell text-center bg-red-900/10">
+                  <span className="text-xs tabular-nums text-red-300 font-bold">
+                    {fmt(row.rowTotal)}
+                  </span>
+                </td>
+
+                {/* ---- Notes ---- */}
+                <td className="table-cell">
+                  <input
+                    type="text"
+                    value={row.notes || ''}
+                    onChange={(e) => updateRow(row.id, { notes: e.target.value })}
+                    className="input-number text-xs py-1 w-32"
+                    placeholder="Notes..."
+                  />
+                </td>
+
+                {/* ---- Actions ---- */}
+                <td className="table-cell">
+                  <div className="flex items-center gap-1">
+                    <button
+                      onClick={() => duplicateRow(row)}
+                      className="p-1 rounded hover:bg-gray-700 text-gray-400 hover:text-blue-400 transition-colors"
+                      title="Duplicate row"
+                    >
+                      <Copy size={13} />
+                    </button>
+                    <button
+                      onClick={() => deleteRow(row.id)}
+                      className="p-1 rounded hover:bg-gray-700 text-gray-400 hover:text-red-400 transition-colors"
+                      title="Delete row"
+                    >
+                      <Trash2 size={13} />
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            ))}
+
+            {/* ---- Summary row ---- */}
+            {rows.length > 0 && (
+              <tr className="bg-gray-800 border-t-2 border-gray-600 font-semibold">
+                {/* Identification cols: 5 */}
+                <td className="table-cell sticky left-0 z-10 bg-gray-800" />
+                <td
+                  colSpan={4}
+                  className="table-cell text-xs text-white sticky left-8 z-10 bg-gray-800"
+                >
+                  TOTALS
+                </td>
+
+                {/* Qty & Weight: 5 */}
+                <td className="table-cell text-center">
+                  <span className="text-xs tabular-nums text-blue-300">
+                    {fmtNum(summary.totalPieces)}
+                  </span>
+                </td>
+                <td className="table-cell" />
+                <td className="table-cell" />
+                <td className="table-cell text-center">
+                  <span className="text-xs tabular-nums text-blue-300">
+                    {fmtNum(summary.totalLbs)}
+                  </span>
+                </td>
+                <td className="table-cell text-center">
+                  <span className="text-xs tabular-nums text-blue-300">
+                    {fmtNum(summary.totalTons, 2)}
+                  </span>
+                </td>
+
+                {/* Connections: 2 */}
+                <td className="table-cell" />
+                <td className="table-cell" />
+
+                {/* Fab: 9 — show total in last cell */}
+                <td className="table-cell" />
+                <td className="table-cell" />
+                <td className="table-cell" />
+                <td className="table-cell" />
+                <td className="table-cell" />
+                <td className="table-cell" />
+                <td className="table-cell" />
+                <td className="table-cell" />
+                <td className="table-cell text-center bg-amber-900/20">
+                  <span className="text-xs tabular-nums text-amber-300">
+                    {fmtNum(summary.totalFabHrs, 1)}
+                  </span>
+                </td>
+
+                {/* Install: 8 — show total in last cell */}
+                <td className="table-cell" />
+                <td className="table-cell" />
+                <td className="table-cell" />
+                <td className="table-cell" />
+                <td className="table-cell" />
+                <td className="table-cell" />
+                <td className="table-cell" />
+                <td className="table-cell text-center bg-green-900/20">
+                  <span className="text-xs tabular-nums text-green-300">
+                    {fmtNum(summary.totalInstHrs, 1)}
+                  </span>
+                </td>
+
+                {/* Cost: 4 */}
+                <td className="table-cell text-center">
+                  <span className="text-xs tabular-nums text-gray-200">
+                    {fmt(summary.materialCost)}
+                  </span>
+                </td>
+                <td className="table-cell text-center">
+                  <span className="text-xs tabular-nums text-gray-200">
+                    {fmt(summary.fabCost)}
+                  </span>
+                </td>
+                <td className="table-cell text-center">
+                  <span className="text-xs tabular-nums text-gray-200">
+                    {fmt(summary.installCost)}
+                  </span>
+                </td>
+                <td className="table-cell text-center bg-red-900/20">
+                  <span className="text-sm tabular-nums text-red-300 font-bold">
+                    {fmt(summary.grandTotal)}
+                  </span>
+                </td>
+
+                {/* Notes + Actions */}
+                <td className="table-cell" />
+                <td className="table-cell" />
+              </tr>
+            )}
+          </tbody>
+        </table>
       </div>
 
-      {/* Summary Footer */}
-      <div className="card">
-        <h2 className="section-title mb-4">Takeoff Summary</h2>
-        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
-          <SummaryCard label="Total Rows" value={summary.rowCount} />
-          <SummaryCard label="Total Weight (lbs)" value={fmtNumber(summary.totalWt, 0)} />
-          <SummaryCard label="Total Weight (tons)" value={fmtNumber(summary.totalTons, 2)} />
-          <SummaryCard label="Total Fab Hours" value={fmtNumber(summary.totalFabHrs, 1)} />
-          <SummaryCard label="Total Install Hours" value={fmtNumber(summary.totalInstHrs, 1)} />
+      {/* Bottom summary cards */}
+      {rows.length > 0 && (
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+          <SummaryCard label="Total Pieces" value={fmtNum(summary.totalPieces)} color="blue" />
+          <SummaryCard
+            label="Total Weight"
+            value={`${fmtNum(summary.totalLbs)} lb / ${fmtNum(summary.totalTons, 2)} ton`}
+            color="blue"
+          />
+          <SummaryCard label="Fab Hours" value={fmtNum(summary.totalFabHrs, 1)} color="amber" />
+          <SummaryCard label="Install Hours" value={fmtNum(summary.totalInstHrs, 1)} color="green" />
+          <SummaryCard label="Grand Total" value={fmt(summary.grandTotal)} color="red" />
         </div>
-      </div>
+      )}
     </div>
-  )
+  );
 }
 
-/**
- * Individual table row, memoised to avoid unnecessary re-renders.
- */
-function StructuralRow({ row, onUpdate, onDelete, onShapeSelect }) {
-  function set(field, value) {
-    onUpdate(row.id, { [field]: value })
-  }
-
-  function setNum(field, value) {
-    onUpdate(row.id, { [field]: parseFloat(value) || 0 })
-  }
-
+// ---------------------------------------------------------------------------
+// Summary card sub-component
+// ---------------------------------------------------------------------------
+function SummaryCard({ label, value, color }) {
+  const colorMap = {
+    blue: 'border-blue-600/40 bg-blue-950/30 text-blue-300',
+    amber: 'border-amber-600/40 bg-amber-950/30 text-amber-300',
+    green: 'border-green-600/40 bg-green-950/30 text-green-300',
+    red: 'border-red-600/40 bg-red-950/30 text-red-300',
+  };
   return (
-    <tr className="table-row group">
-      {/* Mark */}
-      <td className="table-cell">
-        <input
-          type="text"
-          value={row.mark}
-          onChange={e => set('mark', e.target.value)}
-          className="input-field"
-          placeholder="B1"
-        />
-      </td>
-
-      {/* Description */}
-      <td className="table-cell">
-        <input
-          type="text"
-          value={row.description}
-          onChange={e => set('description', e.target.value)}
-          className="input-field"
-          placeholder="Main beam"
-        />
-      </td>
-
-      {/* Shape (autocomplete) */}
-      <td className="table-cell">
-        <ShapeAutocomplete
-          value={row.shape}
-          onChange={val => set('shape', val)}
-          onSelect={shape => onShapeSelect(row.id, shape)}
-        />
-      </td>
-
-      {/* Qty */}
-      <td className="table-cell">
-        <input
-          type="number"
-          min="0"
-          value={row.qty}
-          onChange={e => setNum('qty', e.target.value)}
-          className="input-number"
-        />
-      </td>
-
-      {/* Length */}
-      <td className="table-cell">
-        <input
-          type="number"
-          min="0"
-          step="0.5"
-          value={row.length}
-          onChange={e => setNum('length', e.target.value)}
-          className="input-number"
-        />
-      </td>
-
-      {/* Wt/ft */}
-      <td className="table-cell">
-        <input
-          type="number"
-          min="0"
-          step="0.01"
-          value={row.wtPerFt}
-          onChange={e => setNum('wtPerFt', e.target.value)}
-          className="input-number"
-        />
-      </td>
-
-      {/* Total Wt (read-only) */}
-      <td className="table-cell currency font-medium text-steel-800">
-        {fmtNumber(row.totalWt, 0)}
-      </td>
-
-      {/* Fab Hrs/Ton */}
-      <td className="table-cell">
-        <input
-          type="number"
-          min="0"
-          step="0.5"
-          value={row.fabHrsPerTon}
-          onChange={e => setNum('fabHrsPerTon', e.target.value)}
-          className="input-number"
-        />
-      </td>
-
-      {/* Total Fab Hrs (read-only) */}
-      <td className="table-cell currency text-steel-700">
-        {fmtNumber(row.totalFabHrs, 1)}
-      </td>
-
-      {/* Inst Hrs/Ton */}
-      <td className="table-cell">
-        <input
-          type="number"
-          min="0"
-          step="0.5"
-          value={row.instHrsPerTon}
-          onChange={e => setNum('instHrsPerTon', e.target.value)}
-          className="input-number"
-        />
-      </td>
-
-      {/* Total Inst Hrs (read-only) */}
-      <td className="table-cell currency text-steel-700">
-        {fmtNumber(row.totalInstHrs, 1)}
-      </td>
-
-      {/* Notes */}
-      <td className="table-cell">
-        <input
-          type="text"
-          value={row.notes}
-          onChange={e => set('notes', e.target.value)}
-          className="input-field"
-          placeholder="—"
-        />
-      </td>
-
-      {/* Delete */}
-      <td className="table-cell text-center">
-        <button
-          onClick={() => onDelete(row.id)}
-          className="btn-danger p-1.5 opacity-0 group-hover:opacity-100 transition-opacity"
-          title="Delete row"
-        >
-          <Trash2 className="h-4 w-4" />
-        </button>
-      </td>
-    </tr>
-  )
-}
-
-function SummaryCard({ label, value }) {
-  return (
-    <div className="stat-card">
-      <p className="label">{label}</p>
-      <p className="number-big mt-1">{value}</p>
+    <div className={`rounded-lg border px-4 py-3 ${colorMap[color] || colorMap.blue}`}>
+      <p className="text-xs text-gray-400 mb-1">{label}</p>
+      <p className="text-lg font-bold tabular-nums">{value}</p>
     </div>
-  )
+  );
 }
