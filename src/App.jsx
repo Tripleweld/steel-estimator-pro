@@ -8,6 +8,7 @@ import Stairs from './pages/Stairs'
 import Railings from './pages/Railings'
 import Ladder from './pages/Ladder'
 import JoistReinf from './pages/JoistReinf'
+import Equipment from './pages/Equipment'
 import PurchasedItems from './pages/PurchasedItems'
 import SoftCosts from './pages/SoftCosts'
 import Summary from './pages/Summary'
@@ -25,6 +26,7 @@ export default function App() {
         <Route path="/railings" element={<Railings />} />
         <Route path="/ladder" element={<Ladder />} />
         <Route path="/joist-reinf" element={<JoistReinf />} />
+        <Route path="/equipment" element={<Equipment />} />
         <Route path="/purchased" element={<PurchasedItems />} />
         <Route path="/soft-costs" element={<SoftCosts />} />
         <Route path="/summary" element={<Summary />} />
