@@ -1,10 +1,22 @@
 import { NavLink } from 'react-router-dom'
 import { useProject } from '../context/ProjectContext'
 import {
-  LayoutDashboard, Settings, Table2, Wrench,
-  ArrowUpDown, Fence, SquareSlash, Grid3X3,
-  ShoppingCart, DollarSign, FileSpreadsheet,
-  FileText, ChevronLeft, ChevronRight, Save
+  LayoutDashboard,
+  Settings,
+  Table2,
+  Wrench,
+  ArrowUpDown,
+  Fence,
+  SquareSlash,
+  Grid3X3,
+  Truck,
+  ShoppingCart,
+  DollarSign,
+  FileSpreadsheet,
+  FileText,
+  ChevronLeft,
+  ChevronRight,
+  Save,
 } from 'lucide-react'
 import { useState } from 'react'
 
@@ -20,6 +32,7 @@ const navItems = [
   { path: '/ladder', label: 'Ladder', icon: SquareSlash },
   { path: '/joist-reinf', label: 'Joist Reinf.', icon: Grid3X3 },
   { divider: true, label: 'COSTS' },
+  { path: '/equipment', label: 'Equipment', icon: Truck },
   { path: '/purchased', label: 'Purchased Items', icon: ShoppingCart },
   { path: '/soft-costs', label: 'Soft Costs', icon: DollarSign },
   { divider: true, label: 'OUTPUT' },
@@ -32,42 +45,53 @@ export default function Layout({ children }) {
   const [collapsed, setCollapsed] = useState(false)
 
   const today = new Date().toLocaleDateString('en-US', {
-    month: 'short', day: 'numeric', year: 'numeric'
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
   })
 
   return (
     <div className="flex h-screen overflow-hidden bg-steel-50">
       {/* Sidebar */}
-      <aside className={`flex flex-col bg-steel-950 transition-all duration-200 ${
-        collapsed ? 'w-16' : 'w-60'
-      }`}>
+      <aside
+        className={`flex flex-col bg-steel-950 transition-all duration-200 ${
+          collapsed ? 'w-16' : 'w-60'
+        }`}
+      >
         {/* Brand header */}
         <div className="px-4 pt-5 pb-4">
           <div className="flex items-center gap-3">
             {/* TW logo mark */}
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl
-              bg-gradient-to-br from-fire-500 to-fire-700 shadow-lg shadow-fire-600/30">
-              <span className="text-sm font-black text-white tracking-tighter">TW</span>
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-fire-500 to-fire-700 shadow-lg shadow-fire-600/30">
+              <span className="text-sm font-black text-white tracking-tighter">
+                TW
+              </span>
             </div>
             {!collapsed && (
               <div className="min-w-0">
-                <div className="text-sm font-bold text-white tracking-tight">Steel Estimator</div>
+                <div className="text-sm font-bold text-white tracking-tight">
+                  Steel Estimator
+                </div>
                 <div className="text-[10px] font-semibold uppercase tracking-widest text-fire-500">
                   Triple Weld Inc.
                 </div>
               </div>
             )}
           </div>
-          {!collapsed && (
-            <div className="accent-stripe mt-4 opacity-60" />
-          )}
+          {!collapsed && <div className="accent-stripe mt-4 opacity-60" />}
         </div>
 
         {/* Navigation */}
         <nav className="flex-1 overflow-y-auto px-2 pb-3">
           {navItems.map((item, i) => {
             if (item.divider) {
-              if (collapsed) return <div key={i} className="my-2 border-t border-steel-800" />
+              if (collapsed)
+                return (
+                  <div
+                    key={i}
+                    className="my-2 border-t border-steel-800"
+                  />
+                )
               return (
                 <div key={i} className="mt-4 mb-1.5 px-3">
                   <span className="text-[10px] font-bold uppercase tracking-[0.15em] text-steel-600">
@@ -87,7 +111,9 @@ export default function Layout({ children }) {
                 title={collapsed ? item.label : undefined}
               >
                 <Icon size={17} className="shrink-0" />
-                {!collapsed && <span className="truncate">{item.label}</span>}
+                {!collapsed && (
+                  <span className="truncate">{item.label}</span>
+                )}
               </NavLink>
             )
           })}
@@ -96,10 +122,13 @@ export default function Layout({ children }) {
         {/* Collapse toggle */}
         <button
           onClick={() => setCollapsed(!collapsed)}
-          className="flex items-center justify-center py-3 border-t border-steel-800
-            text-steel-600 hover:text-silver-300 transition-colors"
+          className="flex items-center justify-center py-3 border-t border-steel-800 text-steel-600 hover:text-silver-300 transition-colors"
         >
-          {collapsed ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}
+          {collapsed ? (
+            <ChevronRight size={16} />
+          ) : (
+            <ChevronLeft size={16} />
+          )}
         </button>
       </aside>
 
@@ -136,9 +165,7 @@ export default function Layout({ children }) {
 
         {/* Page content */}
         <main className="flex-1 overflow-y-auto">
-          <div className="max-w-[1400px] mx-auto p-6">
-            {children}
-          </div>
+          <div className="max-w-[1400px] mx-auto p-6">{children}</div>
         </main>
       </div>
     </div>
