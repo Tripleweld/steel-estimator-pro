@@ -52,7 +52,7 @@ export default function Layout({ children }) {
   })
 
   return (
-    <div className="flex h-screen overflow-hidden bg-steel-50">
+    <div className="flex h-screen overflow-hidden bg-steel-950">
       {/* Sidebar */}
       <aside
         className={`flex flex-col bg-steel-950 transition-all duration-200 ${
@@ -136,26 +136,26 @@ export default function Layout({ children }) {
       {/* Main content area */}
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         {/* Top bar */}
-        <header className="flex items-center justify-between border-b border-silver-200 bg-white px-6 py-3">
+        <header className="flex items-center justify-between border-b border-steel-700 bg-steel-900 px-6 py-3">
           <div className="flex items-center gap-3 text-sm">
             <span className="text-silver-500">Project:</span>
-            <span className="font-bold text-steel-900">
+            <span className="font-bold text-white">
               {state.projectInfo.projectName || 'Untitled Project'}
             </span>
             <span className="text-silver-300">|</span>
             <span className="text-silver-500">Quote #:</span>
-            <span className="font-semibold font-mono text-steel-800">
+            <span className="font-semibold font-mono text-silver-200">
               {state.projectInfo.quoteNumber}
             </span>
           </div>
           <div className="flex items-center gap-4 text-sm">
             {state.isDirty ? (
-              <span className="flex items-center gap-1.5 text-amber-600">
+              <span className="flex items-center gap-1.5 text-amber-400">
                 <span className="h-2 w-2 rounded-full bg-amber-500 animate-pulse" />
                 Unsaved
               </span>
             ) : (
-              <span className="flex items-center gap-1.5 text-emerald-600">
+              <span className="flex items-center gap-1.5 text-emerald-400">
                 <Save size={14} />
                 Saved
               </span>
