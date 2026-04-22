@@ -45,85 +45,6 @@ const SAFETY_OPTIONS = [
 // ---------------------------------------------------------------------------
 // Equipment catalog data
 // ---------------------------------------------------------------------------
-const EQUIPMENT_CATALOG = [
-  {
-    category: 'Cranes',
-    items: [
-      { name: '30T RT Crane', dayRate: 2500, weekRate: 12500, monthRate: 40000 },
-      { name: '50T RT Crane', dayRate: 3200, weekRate: 16000, monthRate: 51200 },
-      { name: '80T RT Crane', dayRate: 4500, weekRate: 22500, monthRate: 72000 },
-      { name: '100T RT Crane', dayRate: 6000, weekRate: 30000, monthRate: 96000 },
-      { name: '160T Crawler', dayRate: 8500, weekRate: 42500, monthRate: 136000 },
-      { name: 'Crane Operator', dayRate: 680, weekRate: 3400, monthRate: 13600 },
-    ],
-  },
-  {
-    category: 'Aerial Lifts',
-    items: [
-      { name: "Scissor Lift 26'", dayRate: 250, weekRate: 1000, monthRate: 2500 },
-      { name: "Scissor Lift 32'", dayRate: 325, weekRate: 1300, monthRate: 3250 },
-      { name: "Boom Lift 45'", dayRate: 450, weekRate: 1800, monthRate: 4500 },
-      { name: "Boom Lift 60'", dayRate: 600, weekRate: 2400, monthRate: 6000 },
-      { name: "Boom Lift 80'", dayRate: 850, weekRate: 3400, monthRate: 8500 },
-    ],
-  },
-  {
-    category: 'Welding',
-    items: [
-      { name: 'Welding Machine 300A', dayRate: 150, weekRate: 600, monthRate: 1500 },
-      { name: 'Welding Machine 400A', dayRate: 185, weekRate: 740, monthRate: 1850 },
-      { name: 'Welding Leads/Cables', dayRate: 50, weekRate: 200, monthRate: 500 },
-      { name: 'Gas Bottles', dayRate: 35, weekRate: 140, monthRate: 350 },
-    ],
-  },
-  {
-    category: 'Rigging',
-    items: [
-      { name: 'Chain Slings', dayRate: 45, weekRate: 180, monthRate: 450 },
-      { name: 'Nylon Slings', dayRate: 25, weekRate: 100, monthRate: 250 },
-      { name: 'Shackles Set', dayRate: 30, weekRate: 120, monthRate: 300 },
-      { name: 'Spreader Bar', dayRate: 125, weekRate: 500, monthRate: 1250 },
-      { name: 'Come-Along', dayRate: 35, weekRate: 140, monthRate: 350 },
-    ],
-  },
-  {
-    category: 'Power Tools',
-    items: [
-      { name: 'Mag Drill', dayRate: 95, weekRate: 380, monthRate: 950 },
-      { name: 'Ironworker Punch', dayRate: 175, weekRate: 700, monthRate: 1750 },
-      { name: 'Porta-Band Saw', dayRate: 45, weekRate: 180, monthRate: 450 },
-      { name: 'Impact Wrench', dayRate: 40, weekRate: 160, monthRate: 400 },
-      { name: 'Grinder 7"', dayRate: 35, weekRate: 140, monthRate: 350 },
-    ],
-  },
-  {
-    category: 'Safety Equipment',
-    items: [
-      { name: 'Harness + Lanyard', dayRate: 25, weekRate: 100, monthRate: 250 },
-      { name: 'Guardrail System', dayRate: 75, weekRate: 300, monthRate: 750 },
-      { name: 'Safety Netting', dayRate: 150, weekRate: 600, monthRate: 1500 },
-    ],
-  },
-  {
-    category: 'Site Equipment',
-    items: [
-      { name: 'Job Box', dayRate: 15, weekRate: 60, monthRate: 150 },
-      { name: 'Generator 7.5kW', dayRate: 125, weekRate: 500, monthRate: 1250 },
-      { name: 'Compressor', dayRate: 95, weekRate: 380, monthRate: 950 },
-      { name: 'Heater (winter)', dayRate: 85, weekRate: 340, monthRate: 850 },
-    ],
-  },
-  {
-    category: 'Transport',
-    items: [
-      { name: 'Flatbed Truck', dayRate: 450, weekRate: 2250, monthRate: 7200 },
-      { name: 'Float/Lowboy', dayRate: 650, weekRate: 3250, monthRate: 10400 },
-      { name: 'Escort Vehicle', dayRate: 275, weekRate: 1375, monthRate: 4400 },
-      { name: 'Permit (oversize)', dayRate: 500, weekRate: 500, monthRate: 500 },
-    ],
-  },
-];
-
 const CODE_LIMITS = [
   { label: 'Guard Height Min', value: '1,070 mm' },
   { label: 'Handrail Height', value: '865-965 mm' },
@@ -245,8 +166,8 @@ export default function RatesConfig() {
     [dispatch],
   );
 
-  const setMiscMetalsRate = useCallback(
-    (key, value) => dispatch({ type: 'SET_MISC_METALS_RATE_BY_KEY', payload: { key, value: Number(value) } }),
+  const updateMiscRate = useCallback(
+    (id, field, value) => dispatch({ type: 'SET_MISC_METALS_RATE', payload: { id, [field]: typeof value === 'string' ? value : Number(value) } }),
     [dispatch],
   );
 
@@ -263,8 +184,8 @@ export default function RatesConfig() {
   const mkp = state.rates?.markup || {};
   const tf = state.rates?.travelFreight || {};
   const eng = state.rates?.engDrawings || {};
-  const equip = state.rates?.equipment || {};
-  const mm = state.rates?.miscMetalsRatesByKey || {};
+  const equipArr = state.rates?.equipment || [];
+  const miscMetals = state.rates?.miscMetalsRates || [];
 
   // Material defaults
   const matDef = (key, def) => (mr[key] !== undefined ? mr[key] : def);
@@ -273,16 +194,15 @@ export default function RatesConfig() {
   const mkpDef = (key, def) => (mkp[key] !== undefined ? mkp[key] : def);
   const tfDef = (key, def) => (tf[key] !== undefined ? tf[key] : def);
   const engDef = (key, def) => (eng[key] !== undefined ? eng[key] : def);
-  const mmDef = (key, def) => (mm[key] !== undefined ? mm[key] : def);
 
-  // Equipment helper
-  const equipItem = (name) => {
-    if (equip.items) {
-      const found = equip.items.find((i) => i.name === name);
-      if (found) return found;
-    }
-    return { qty: 0, days: 0 };
-  };
+
+    // Group equipment by category
+  const equipByCategory = equipArr.reduce((acc, item) => {
+    const cat = item.category || 'Other';
+    if (!acc[cat]) acc[cat] = [];
+    acc[cat].push(item);
+    return acc;
+  }, {});
 
   // Travel time auto-calc
   const distanceKm = tfDef('distanceToSite', 50);
@@ -893,77 +813,41 @@ export default function RatesConfig() {
       </div>
 
       {/* ============================================================= */}
-      {/* 9. EQUIPMENT RENTAL CATALOG                                   */}
+      {/* 9. EQUIPMENT RENTAL CATALOG                                    */}
       {/* ============================================================= */}
       <div>
-        <SectionHeader
-          icon={Wrench}
-          color="text-amber-400"
-          title="9. Equipment Rental Catalog"
-          open={open.equipment}
-          toggle={() => toggle('equipment')}
-        />
+        <SectionHeader icon={Wrench} color="text-amber-400" title="9. Equipment Rental Catalog" open={open.equipment} toggle={() => toggle('equipment')} />
         {open.equipment && (
           <div className="mt-2 space-y-4">
-            {EQUIPMENT_CATALOG.map((cat) => (
-              <div
-                key={cat.category}
-                className="p-4 rounded-lg bg-steel-900/60 border border-steel-700/50"
-              >
-                <h3 className="text-sm font-semibold text-steel-300 mb-3 uppercase tracking-wide">
-                  {cat.category}
-                </h3>
-                {/* Table header */}
-                <div className="hidden md:grid grid-cols-12 gap-2 text-xs text-steel-500 font-medium pb-2 border-b border-steel-700/40 mb-2">
-                  <div className="col-span-3">Item</div>
-                  <div className="col-span-1 text-right">Day</div>
-                  <div className="col-span-1 text-right">Week</div>
-                  <div className="col-span-1 text-right">Month</div>
-                  <div className="col-span-2 text-center">Qty</div>
-                  <div className="col-span-2 text-center">Days</div>
+            {Object.entries(equipByCategory).map(([cat, items]) => (
+              <div key={cat} className="p-4 rounded-lg bg-steel-900/60 border border-steel-700/50">
+                <h3 className="text-sm font-semibold text-steel-300 mb-3 uppercase tracking-wide">{cat}</h3>
+                <div className="hidden lg:grid grid-cols-12 gap-1 text-xs text-steel-500 font-medium pb-2 border-b border-steel-700/40 mb-2">
+                  <div className="col-span-2">Item</div>
+                  <div className="col-span-1 text-right">Day $</div>
+                  <div className="col-span-1 text-right">Week $</div>
+                  <div className="col-span-1 text-right">Month $</div>
+                  <div className="col-span-1 text-center">Period</div>
+                  <div className="col-span-1 text-center">Qty</div>
+                  <div className="col-span-1 text-center">Pickup $</div>
+                  <div className="col-span-1 text-center">Dropoff $</div>
                   <div className="col-span-2 text-right">Total</div>
                 </div>
-                {cat.items.map((item) => {
-                  const ei = equipItem(item.name);
-                  const qty = ei.qty || 0;
-                  const days = ei.days || 0;
-                  const total = qty * days * item.dayRate;
+                {items.map((item) => {
+                  const rateMap = { Day: item.dayRate, Week: item.weekRate, Month: item.monthRate };
+                  const selectedRate = rateMap[item.period] || item.dayRate;
+                  const total = selectedRate * (item.qty || 0) + (item.pickup || 0) + (item.dropoff || 0);
                   return (
-                    <div
-                      key={item.name}
-                      className="grid grid-cols-1 md:grid-cols-12 gap-2 items-center py-1.5 border-b border-steel-800/30 last:border-0"
-                    >
-                      <div className="col-span-3 text-sm text-white truncate">{item.name}</div>
-                      <div className="col-span-1 text-sm text-steel-300 text-right">
-                        {fmt(item.dayRate)}
-                      </div>
-                      <div className="col-span-1 text-sm text-steel-300 text-right">
-                        {fmt(item.weekRate)}
-                      </div>
-                      <div className="col-span-1 text-sm text-steel-300 text-right">
-                        {fmt(item.monthRate)}
-                      </div>
-                      <div className="col-span-2">
-                        <BlueInput
-                          type="number"
-                          min="0"
-                          value={qty}
-                          onChange={(e) => updateEquipment(item.name, 'qty', e.target.value)}
-                          className="text-center"
-                        />
-                      </div>
-                      <div className="col-span-2">
-                        <BlueInput
-                          type="number"
-                          min="0"
-                          value={days}
-                          onChange={(e) => updateEquipment(item.name, 'days', e.target.value)}
-                          className="text-center"
-                        />
-                      </div>
-                      <div className="col-span-2 text-sm text-right font-medium text-white">
-                        {fmt(total)}
-                      </div>
+                    <div key={item.id} className="grid grid-cols-1 lg:grid-cols-12 gap-1 items-center py-1.5 border-b border-steel-800/30 last:border-0">
+                      <div className="col-span-2 text-sm text-white truncate" title={item.item}>{item.item}</div>
+                      <div className="col-span-1"><BlueInput type="number" step="1" value={item.dayRate} onChange={(e) => updateEquip(item.id, { dayRate: Number(e.target.value) })} className="text-right text-xs" /></div>
+                      <div className="col-span-1"><BlueInput type="number" step="1" value={item.weekRate} onChange={(e) => updateEquip(item.id, { weekRate: Number(e.target.value) })} className="text-right text-xs" /></div>
+                      <div className="col-span-1"><BlueInput type="number" step="1" value={item.monthRate} onChange={(e) => updateEquip(item.id, { monthRate: Number(e.target.value) })} className="text-right text-xs" /></div>
+                      <div className="col-span-1"><BlueSelect value={item.period || 'Day'} onChange={(e) => updateEquip(item.id, { period: e.target.value })}><option value="Day" className="bg-steel-900 text-white">Day</option><option value="Week" className="bg-steel-900 text-white">Week</option><option value="Month" className="bg-steel-900 text-white">Month</option></BlueSelect></div>
+                      <div className="col-span-1"><BlueInput type="number" min="0" value={item.qty || 0} onChange={(e) => updateEquip(item.id, { qty: Number(e.target.value) })} className="text-center" /></div>
+                      <div className="col-span-1"><BlueInput type="number" min="0" step="1" value={item.pickup || 0} onChange={(e) => updateEquip(item.id, { pickup: Number(e.target.value) })} className="text-center text-xs" /></div>
+                      <div className="col-span-1"><BlueInput type="number" min="0" step="1" value={item.dropoff || 0} onChange={(e) => updateEquip(item.id, { dropoff: Number(e.target.value) })} className="text-center text-xs" /></div>
+                      <div className="col-span-2 text-sm text-right font-medium text-white">{fmt(total)}</div>
                     </div>
                   );
                 })}
@@ -974,72 +858,27 @@ export default function RatesConfig() {
       </div>
 
       {/* ============================================================= */}
-      {/* 10. MISC METALS RATES                                         */}
+      {/* 10. MISC METALS RATES                                          */}
       {/* ============================================================= */}
       <div>
-        <SectionHeader
-          icon={Layers}
-          color="text-teal-400"
-          title="10. Misc Metals Rates"
-          open={open.misc}
-          toggle={() => toggle('misc')}
-        />
+        <SectionHeader icon={Layers} color="text-teal-400" title="10. Misc Metals Rates" open={open.misc} toggle={() => toggle('misc')} />
         {open.misc && (
-          <div className="mt-2 p-4 rounded-lg bg-steel-900/60 border border-steel-700/50 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            <div className="space-y-1">
-              <Label>Stair Fabrication Factor</Label>
-              <BlueInput
-                type="number"
-                step="0.01"
-                value={mmDef('stairFabFactor', 1.8)}
-                onChange={(e) => setMiscMetalsRate('stairFabFactor', e.target.value)}
-              />
+          <div className="mt-2 p-4 rounded-lg bg-steel-900/60 border border-steel-700/50">
+            <div className="hidden md:grid grid-cols-12 gap-2 text-xs text-steel-500 font-medium pb-2 border-b border-steel-700/40 mb-2">
+              <div className="col-span-5">Item</div>
+              <div className="col-span-3">Rate</div>
+              <div className="col-span-2">Unit</div>
+              <div className="col-span-2 text-right">Actions</div>
             </div>
-            <div className="space-y-1">
-              <Label>Railing Fab Factor</Label>
-              <BlueInput
-                type="number"
-                step="0.01"
-                value={mmDef('railingFabFactor', 2.0)}
-                onChange={(e) => setMiscMetalsRate('railingFabFactor', e.target.value)}
-              />
-            </div>
-            <div className="space-y-1">
-              <Label>Ladder Fab Factor</Label>
-              <BlueInput
-                type="number"
-                step="0.01"
-                value={mmDef('ladderFabFactor', 1.5)}
-                onChange={(e) => setMiscMetalsRate('ladderFabFactor', e.target.value)}
-              />
-            </div>
-            <div className="space-y-1">
-              <Label>Grating Rate ($/sqft)</Label>
-              <BlueInput
-                type="number"
-                step="0.01"
-                value={mmDef('gratingRate', 12.50)}
-                onChange={(e) => setMiscMetalsRate('gratingRate', e.target.value)}
-              />
-            </div>
-            <div className="space-y-1">
-              <Label>Embed Plate Rate ($/lb)</Label>
-              <BlueInput
-                type="number"
-                step="0.01"
-                value={mmDef('embedPlateRate', 2.25)}
-                onChange={(e) => setMiscMetalsRate('embedPlateRate', e.target.value)}
-              />
-            </div>
-            <div className="space-y-1">
-              <Label>Bollard Rate ($/each)</Label>
-              <BlueInput
-                type="number"
-                step="0.01"
-                value={mmDef('bollardRate', 450)}
-                onChange={(e) => setMiscMetalsRate('bollardRate', e.target.value)}
-              />
-            </div>
+            {miscMetals.map((item) => (
+              <div key={item.id} className="grid grid-cols-1 md:grid-cols-12 gap-2 items-center py-1.5 border-b border-steel-800/30 last:border-0">
+                <div className="col-span-5"><BlueInput value={item.item || ''} onChange={(e) => updateMiscRate(item.id, 'item', e.target.value)} /></div>
+                <div className="col-span-3"><BlueInput type="number" step="0.01" value={item.rate || 0} onChange={(e) => updateMiscRate(item.id, 'rate', e.target.value)} /></div>
+                <div className="col-span-2"><BlueInput value={item.unit || ''} onChange={(e) => updateMiscRate(item.id, 'unit', e.target.value)} /></div>
+                <div className="col-span-2 text-right"><button onClick={() => dispatch({ type: 'DELETE_MISC_METALS_RATE', payload: item.id })} className="text-red-400 hover:text-red-300"><Trash2 className="w-4 h-4 inline" /></button></div>
+              </div>
+            ))}
+            <button onClick={() => dispatch({ type: 'ADD_MISC_METALS_RATE' })} className="mt-3 flex items-center gap-2 text-xs text-blue-400 hover:text-blue-300"><Plus className="w-4 h-4" /> Add Item</button>
           </div>
         )}
       </div>
