@@ -149,7 +149,7 @@ export default function StructuralTakeoff() {
   const fabRate = rates.labourRates?.fabRate || 0;
   const installRate = rates.labourRates?.installRate || 0;
 
-  // Resolve material rate ($/lb) — try to match by type, else first entry
+  // Resolve material rate ($/lb) â try to match by type, else first entry
   const getMaterialRate = useCallback(
     (type) => {
       const mats = rates.materialRates || [];
@@ -335,7 +335,7 @@ export default function StructuralTakeoff() {
 
   // ---------------------------------------------------------------------------
   return (
-    <div className="space-y-4">
+    <div className="min-h-screen bg-steel-950 text-white p-6 space-y-4">
       {/* Accent stripe */}
       <div className="h-1 bg-gradient-to-r from-blue-500 via-amber-500 to-red-500 rounded-full" />
 
@@ -418,25 +418,25 @@ export default function StructuralTakeoff() {
 
             {/* ---- Column headers ---- */}
             <tr className="bg-gray-800">
-              {/* GROUP A — Identification */}
+              {/* GROUP A â Identification */}
               <th className="table-header text-xs whitespace-nowrap sticky left-0 z-20 bg-gray-800">#</th>
               <th className="table-header text-xs whitespace-nowrap sticky left-8 z-20 bg-gray-800">Mark</th>
               <th className="table-header text-xs whitespace-nowrap">Dwg Ref</th>
               <th className="table-header text-xs whitespace-nowrap">Type</th>
               <th className="table-header text-xs whitespace-nowrap">Profile</th>
 
-              {/* GROUP B — Qty & Weight */}
+              {/* GROUP B â Qty & Weight */}
               <th className="table-header text-xs whitespace-nowrap">Qty</th>
               <th className="table-header text-xs whitespace-nowrap">Length (ft)</th>
               <th className="table-header text-xs whitespace-nowrap">Wt/ft (lb)</th>
               <th className="table-header text-xs whitespace-nowrap">Total (lb)</th>
               <th className="table-header text-xs whitespace-nowrap">Total (ton)</th>
 
-              {/* GROUP C — Connections */}
+              {/* GROUP C â Connections */}
               <th className="table-header text-xs whitespace-nowrap">Base Pl (lb)</th>
               <th className="table-header text-xs whitespace-nowrap">Anchors/pc</th>
 
-              {/* GROUP D — Fabrication */}
+              {/* GROUP D â Fabrication */}
               <th className="table-header text-xs whitespace-nowrap">Setup</th>
               <th className="table-header text-xs whitespace-nowrap">Cut</th>
               <th className="table-header text-xs whitespace-nowrap">Drill</th>
@@ -447,7 +447,7 @@ export default function StructuralTakeoff() {
               <th className="table-header text-xs whitespace-nowrap">Fab/Pc</th>
               <th className="table-header text-xs whitespace-nowrap">Tot Fab</th>
 
-              {/* GROUP E — Installation */}
+              {/* GROUP E â Installation */}
               <th className="table-header text-xs whitespace-nowrap">Unload</th>
               <th className="table-header text-xs whitespace-nowrap">Rig</th>
               <th className="table-header text-xs whitespace-nowrap">Fit</th>
@@ -457,7 +457,7 @@ export default function StructuralTakeoff() {
               <th className="table-header text-xs whitespace-nowrap">Inst/Pc</th>
               <th className="table-header text-xs whitespace-nowrap">Tot Inst</th>
 
-              {/* GROUP F — Cost */}
+              {/* GROUP F â Cost */}
               <th className="table-header text-xs whitespace-nowrap">Material $</th>
               <th className="table-header text-xs whitespace-nowrap">Fab $</th>
               <th className="table-header text-xs whitespace-nowrap">Install $</th>
@@ -656,7 +656,7 @@ export default function StructuralTakeoff() {
                 <td className="table-cell" />
                 <td className="table-cell" />
 
-                {/* Fab: 9 — show total in last cell */}
+                {/* Fab: 9 â show total in last cell */}
                 <td className="table-cell" />
                 <td className="table-cell" />
                 <td className="table-cell" />
@@ -671,7 +671,7 @@ export default function StructuralTakeoff() {
                   </span>
                 </td>
 
-                {/* Install: 8 — show total in last cell */}
+                {/* Install: 8 â show total in last cell */}
                 <td className="table-cell" />
                 <td className="table-cell" />
                 <td className="table-cell" />
@@ -739,10 +739,10 @@ export default function StructuralTakeoff() {
 // ---------------------------------------------------------------------------
 function SummaryCard({ label, value, color }) {
   const colorMap = {
-    blue: 'border-blue-500 bg-blue-900/60 text-blue-200',
-    amber: 'border-amber-500 bg-amber-900/60 text-amber-200',
-    green: 'border-green-500 bg-green-900/60 text-green-200',
-    red: 'border-red-500 bg-red-900/60 text-red-200',
+    blue: 'border-blue-400/80 bg-blue-950 text-blue-100',
+    amber: 'border-amber-400/80 bg-amber-950 text-amber-100',
+    green: 'border-green-400/80 bg-green-950 text-green-100',
+    red: 'border-red-400/80 bg-red-950 text-red-100',
   };
   return (
     <div className={`rounded-lg border px-4 py-3 ${colorMap[color] || colorMap.blue}`}>
