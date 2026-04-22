@@ -15,7 +15,6 @@ const SECTIONS = [
   { id: 'kneeBrace',       label: 'KNEE BRACE',                  prefix: 'KB',    defaultRows: 2  },
   { id: 'xBracing',        label: 'X-BRACING',                   prefix: 'XB',    defaultRows: 2  },
   { id: 'lintels',         label: 'LINTELS',                     prefix: 'L',     defaultRows: 3  },
-  { id: 'miscellaneous',   label: 'MISCELLANEOUS',               prefix: 'M',     defaultRows: 3  },
 ];
 
 /* ─── Helpers ─── */
@@ -45,7 +44,11 @@ function makeEmptyRow(sectionId, prefix, index) {
     basePlLb: 0,
     anchorsPc: 0,
     setup: 0, cut: 0, drill: 0, feed: 0, weld: 0, grind: 0, paint: 0,
+    fabPerPcOverride: null,
+    fabCrew: 1,
     unload: 0, rig: 0, fit: 0, bolt: 0, touchUp: 0,
+    instPerPcOverride: null,
+    instCrew: 2,
     notes: '',
   };
 }
@@ -82,6 +85,38 @@ function EditCell({ value, onChange, type = 'text', className = '', ...rest }) {
   );
 }
 
+/* ─── Overridable Sum Cell ───
+   Shows auto-calculated sum by default.
+   When user types a value, it becomes the override.
+   Clear the field (empty or 0) to revert to auto-sum. */
+function OverridableCell({ calcValue, override, onOverride, colorClass }) {
+  const isOverridden = override != null && override !== '' && override !== 0;
+  const displayValue = isOverridden ? override : calcValue;
+  return (
+    <input
+      type="text"
+      inputMode="decimal"
+      value={fmtNum(displayValue, 1)}
+      onChange={(e) => {
+        const raw = e.target.value.replace(/,/g, '');
+        const n = parseFloat(raw);
+        if (raw === '' || raw === '0') {
+          onOverride(null);
+        } else if (!isNaN(n)) {
+          onOverride(n);
+        }
+      }}
+      onFocus={(e) => e.target.select()}
+      className={`w-16 text-right rounded px-1 py-1 text-sm font-mono focus:outline-none focus:ring-1 focus:ring-blue-500/50 ${colorClass} ${
+        isOverridden
+          ? 'bg-amber-900/40 border border-amber-500/50'
+          : 'bg-transparent border border-transparent'
+      }`}
+      title={isOverridden ? `Override: ${override} (auto: ${fmtNum(calcValue, 1)})` : 'Auto-calculated — type to override'}
+    />
+  );
+}
+
 /* ─── Section Header with collapse toggle ─── */
 function SectionHeader({ label, isOpen, onToggle, rowCount, sectionTotals, onAddRow }) {
   return (
@@ -107,13 +142,30 @@ function SectionHeader({ label, isOpen, onToggle, rowCount, sectionTotals, onAdd
   );
 }
 
+/* ─── Helper: get effective fab/inst per piece ─── */
+function getEffectiveFabPerPc(row) {
+  if (row.fabPerPcOverride != null && row.fabPerPcOverride !== '' && row.fabPerPcOverride !== 0) {
+    return toNum(row.fabPerPcOverride);
+  }
+  return toNum(row.setup) + toNum(row.cut) + toNum(row.drill) + toNum(row.feed) + toNum(row.weld) + toNum(row.grind) + toNum(row.paint);
+}
+
+function getEffectiveInstPerPc(row) {
+  if (row.instPerPcOverride != null && row.instPerPcOverride !== '' && row.instPerPcOverride !== 0) {
+    return toNum(row.instPerPcOverride);
+  }
+  return toNum(row.unload) + toNum(row.rig) + toNum(row.fit) + toNum(row.bolt) + toNum(row.touchUp);
+}
+
 /* ─── The Data Row ─── */
 function DataRow({ row, index, fabRate, installRate, onUpdate, onDelete }) {
   const totalLbs = toNum(row.qty) * toNum(row.lengthFt) * toNum(row.wtPerFt);
   const totalTon = totalLbs / 2000;
-  const fabPerPc = toNum(row.setup) + toNum(row.cut) + toNum(row.drill) + toNum(row.feed) + toNum(row.weld) + toNum(row.grind) + toNum(row.paint);
+  const calcFabPerPc = toNum(row.setup) + toNum(row.cut) + toNum(row.drill) + toNum(row.feed) + toNum(row.weld) + toNum(row.grind) + toNum(row.paint);
+  const fabPerPc = getEffectiveFabPerPc(row);
   const totFab = fabPerPc * toNum(row.qty);
-  const instPerPc = toNum(row.unload) + toNum(row.rig) + toNum(row.fit) + toNum(row.bolt) + toNum(row.touchUp);
+  const calcInstPerPc = toNum(row.unload) + toNum(row.rig) + toNum(row.fit) + toNum(row.bolt) + toNum(row.touchUp);
+  const instPerPc = getEffectiveInstPerPc(row);
   const totInst = instPerPc * toNum(row.qty);
   const matCost = totalLbs * 1.15;
   const fabCost = totFab * fabRate;
@@ -161,18 +213,36 @@ function DataRow({ row, index, fabRate, installRate, onUpdate, onDelete }) {
       {['setup','cut','drill','feed','weld','grind','paint'].map(f => (
         <td key={f} className="px-1 py-1"><EditCell value={row[f]} onChange={set(f)} type="text" inputMode="decimal" className="text-right w-12" /></td>
       ))}
-      {/* Fab/Pc */}
-      <td className="px-1 py-1 text-right text-sm text-amber-300 font-mono">{fmtNum(fabPerPc, 1)}</td>
+      {/* Fab/Pc — overridable */}
+      <td className="px-1 py-1">
+        <OverridableCell
+          calcValue={calcFabPerPc}
+          override={row.fabPerPcOverride}
+          onOverride={(v) => onUpdate(row.id, { fabPerPcOverride: v })}
+          colorClass="text-amber-300"
+        />
+      </td>
       {/* Tot Fab */}
       <td className="px-1 py-1 text-right text-sm text-amber-300 font-mono font-bold">{fmtNum(totFab, 1)}</td>
+      {/* Fab Crew */}
+      <td className="px-1 py-1"><EditCell value={row.fabCrew} onChange={set('fabCrew')} type="text" inputMode="decimal" className="text-right w-12" /></td>
       {/* Install hours: unload, rig, fit, bolt, touchUp */}
       {['unload','rig','fit','bolt','touchUp'].map(f => (
         <td key={f} className="px-1 py-1"><EditCell value={row[f]} onChange={set(f)} type="text" inputMode="decimal" className="text-right w-12" /></td>
       ))}
-      {/* Inst/Pc */}
-      <td className="px-1 py-1 text-right text-sm text-cyan-300 font-mono">{fmtNum(instPerPc, 1)}</td>
+      {/* Inst/Pc — overridable */}
+      <td className="px-1 py-1">
+        <OverridableCell
+          calcValue={calcInstPerPc}
+          override={row.instPerPcOverride}
+          onOverride={(v) => onUpdate(row.id, { instPerPcOverride: v })}
+          colorClass="text-cyan-300"
+        />
+      </td>
       {/* Tot Inst */}
       <td className="px-1 py-1 text-right text-sm text-cyan-300 font-mono font-bold">{fmtNum(totInst, 1)}</td>
+      {/* Inst Crew */}
+      <td className="px-1 py-1"><EditCell value={row.instCrew} onChange={set('instCrew')} type="text" inputMode="decimal" className="text-right w-12" /></td>
       {/* Cost preview */}
       <td className="px-1 py-1 text-right text-sm text-steel-300 font-mono">{fmtDollar(matCost)}</td>
       <td className="px-1 py-1 text-right text-sm text-steel-300 font-mono">{fmtDollar(fabCost)}</td>
@@ -201,11 +271,13 @@ function SectionTotalsRow({ rows, fabRate, installRate }) {
       <td className="px-1 py-1.5 text-right text-white font-mono">{fmtNum(t.totalTons, 2)}</td>
       <td colSpan={2}></td>
       <td colSpan={7}></td>
-      <td className="px-1 py-1.5 text-right text-amber-300 font-mono">{fmtNum(t.fabPerPc, 1)}</td>
+      <td className="px-1 py-1.5 text-right text-amber-300 font-mono">{fmtNum(t.avgFabPerPc, 1)}</td>
       <td className="px-1 py-1.5 text-right text-amber-300 font-mono font-bold">{fmtNum(t.totFab, 1)}</td>
+      <td></td>
       <td colSpan={5}></td>
-      <td className="px-1 py-1.5 text-right text-cyan-300 font-mono">{fmtNum(t.instPerPc, 1)}</td>
+      <td className="px-1 py-1.5 text-right text-cyan-300 font-mono">{fmtNum(t.avgInstPerPc, 1)}</td>
       <td className="px-1 py-1.5 text-right text-cyan-300 font-mono font-bold">{fmtNum(t.totInst, 1)}</td>
+      <td></td>
       <td className="px-1 py-1.5 text-right text-steel-300 font-mono">{fmtDollar(t.matCost)}</td>
       <td className="px-1 py-1.5 text-right text-steel-300 font-mono">{fmtDollar(t.fabCost)}</td>
       <td className="px-1 py-1.5 text-right text-steel-300 font-mono">{fmtDollar(t.instCost)}</td>
@@ -220,8 +292,8 @@ function calcSectionTotals(rows, fabRate, installRate) {
   let totalPcs = 0, totalLbs = 0, totFab = 0, totInst = 0;
   rows.forEach(r => {
     const lbs = toNum(r.qty) * toNum(r.lengthFt) * toNum(r.wtPerFt);
-    const fabPc = toNum(r.setup) + toNum(r.cut) + toNum(r.drill) + toNum(r.feed) + toNum(r.weld) + toNum(r.grind) + toNum(r.paint);
-    const instPc = toNum(r.unload) + toNum(r.rig) + toNum(r.fit) + toNum(r.bolt) + toNum(r.touchUp);
+    const fabPc = getEffectiveFabPerPc(r);
+    const instPc = getEffectiveInstPerPc(r);
     totalPcs += toNum(r.qty);
     totalLbs += lbs;
     totFab += fabPc * toNum(r.qty);
@@ -233,8 +305,8 @@ function calcSectionTotals(rows, fabRate, installRate) {
   const instCost = totInst * installRate;
   return {
     totalPcs, totalLbs, totalTons, totFab, totInst,
-    fabPerPc: rows.length ? totFab / Math.max(totalPcs, 1) : 0,
-    instPerPc: rows.length ? totInst / Math.max(totalPcs, 1) : 0,
+    avgFabPerPc: rows.length ? totFab / Math.max(totalPcs, 1) : 0,
+    avgInstPerPc: rows.length ? totInst / Math.max(totalPcs, 1) : 0,
     matCost, fabCost, instCost, rowTotal: matCost + fabCost + instCost,
   };
 }
@@ -249,7 +321,6 @@ export default function StructuralTakeoff() {
 
   /* ─── Row state: all rows stored flat, each has a .section field ─── */
   const [rows, setRows] = useState(() => {
-    // Initialize from saved state or create empty
     const saved = state.structuralRows;
     if (saved && saved.length > 0) return saved;
     return [];
@@ -272,10 +343,8 @@ export default function StructuralTakeoff() {
       const sec = SECTIONS.find(s => s.id === sectionId);
       const sectionRows = prev.filter(r => r.section === sectionId);
       const newRow = makeEmptyRow(sectionId, sec.prefix, sectionRows.length);
-      // Insert after last row of this section
       const lastIdx = prev.reduce((acc, r, i) => r.section === sectionId ? i : acc, -1);
       if (lastIdx === -1) {
-        // Find the position where this section's rows should go
         const sIdx = SECTIONS.findIndex(s => s.id === sectionId);
         let insertIdx = 0;
         for (let i = 0; i < sIdx; i++) {
@@ -306,17 +375,16 @@ export default function StructuralTakeoff() {
 
   /* ─── Grand totals ─── */
   const grandTotals = useMemo(() => {
-    const all = calcSectionTotals(rows, fabRate, installRate);
-    return all;
+    return calcSectionTotals(rows, fabRate, installRate);
   }, [rows, fabRate, installRate]);
 
   /* ─── Column headers ─── */
   const colGroups = [
     { label: 'Identification', cols: 4, color: 'bg-purple-800/60', border: 'border-purple-500' },
-    { label: 'Quantity & Weight', cols: 6, color: 'bg-green-800/60', border: 'border-green-500' },
+    { label: 'Quantity & Weight', cols: 5, color: 'bg-green-800/60', border: 'border-green-500' },
     { label: 'Connections & Hardware', cols: 2, color: 'bg-red-800/60', border: 'border-red-500' },
-    { label: 'Fabrication Hours (per piece)', cols: 9, color: 'bg-amber-800/60', border: 'border-amber-500' },
-    { label: 'Installation Hours (per piece)', cols: 7, color: 'bg-cyan-800/60', border: 'border-cyan-500' },
+    { label: 'Fabrication Hours (per piece)', cols: 10, color: 'bg-amber-800/60', border: 'border-amber-500' },
+    { label: 'Installation Hours (per piece)', cols: 8, color: 'bg-cyan-800/60', border: 'border-cyan-500' },
     { label: 'Cost Preview', cols: 4, color: 'bg-emerald-800/60', border: 'border-emerald-500' },
     { label: 'Notes', cols: 1, color: 'bg-steel-700', border: 'border-steel-500' },
   ];
@@ -325,8 +393,8 @@ export default function StructuralTakeoff() {
     'Mark','Dwg Ref','Type','Profile',
     'Qty','Length (ft)','Wt/ft (lb)','Total (lb)','Total (ton)',
     'Base Pl (lb)','Anchors/pc',
-    'Setup','Cut','Drill','Feed','Weld','Grind','Paint','Fab/Pc','Tot Fab',
-    'Unload','Rig','Fit','Bolt','Touch-up','Inst/Pc','Tot Inst',
+    'Setup','Cut','Drill','Feed','Weld','Grind','Paint','Fab/Pc','Tot Fab','Fab Crew',
+    'Unload','Rig','Fit','Bolt','Touch-up','Inst/Pc','Tot Inst','Inst Crew',
     'Material $','Fab $','Install $','Row Total',
     'Notes',
   ];
@@ -394,7 +462,7 @@ export default function StructuralTakeoff() {
 
               {isOpen && (
                 <div className="overflow-x-auto border border-steel-700 rounded-b-lg bg-steel-900/50">
-                  <table className="w-full text-left whitespace-nowrap" style={{ minWidth: '2200px' }}>
+                  <table className="w-full text-left whitespace-nowrap" style={{ minWidth: '2400px' }}>
                     {/* Column group headers */}
                     <thead>
                       <tr>
@@ -418,7 +486,7 @@ export default function StructuralTakeoff() {
                     <tbody>
                       {sectionRows.length === 0 ? (
                         <tr>
-                          <td colSpan={34} className="text-center py-6 text-steel-500 text-sm">
+                          <td colSpan={36} className="text-center py-6 text-steel-500 text-sm">
                             No rows yet.{' '}
                             <button onClick={() => addRow(sec.id)} className="text-blue-400 hover:text-blue-300 underline">
                               Add first row
