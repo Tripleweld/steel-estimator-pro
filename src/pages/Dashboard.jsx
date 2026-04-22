@@ -2,7 +2,7 @@ import { useProject } from '../context/ProjectContext'
 import { Link } from 'react-router-dom'
 import {
   LayoutDashboard, Settings, Columns, Grid3X3, Footprints, Fence,
-  Ladder as LadderIcon, Construction, ShoppingCart, Calculator,
+  ArrowUpFromLine as LadderIcon, Construction, ShoppingCart, Calculator,
   FileText, BarChart3, Wrench, BookOpen, CheckSquare, Square,
   AlertTriangle, TrendingUp, DollarSign, Weight, Clock, Truck
 } from 'lucide-react'
