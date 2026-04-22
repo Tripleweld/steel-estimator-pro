@@ -125,9 +125,9 @@ export default function Dashboard() {
 
   const MetricCard = ({ label, value, sub }) => (
     <div className="bg-steel-800/50 rounded-lg border border-steel-700/50 p-4">
-      <div className="text-steel-200 text-xs uppercase tracking-wider mb-1">{label}</div>
+      <div className="text-white text-xs uppercase tracking-wider mb-1">{label}</div>
       <div className="text-white font-bold text-lg">{value}</div>
-      {sub && <div className="text-steel-300 text-xs mt-1">{sub}</div>}
+      {sub && <div className="text-steel-200 text-xs mt-1">{sub}</div>}
     </div>
   )
 
