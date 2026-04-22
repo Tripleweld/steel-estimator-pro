@@ -1,6 +1,6 @@
 // AISC 13th Ed — 1,606 profiles (compact pipe-delimited)
 // [designation, type, wt_lb/ft, metric_designation, wt_kg/m]
-const _RAW = 'W44X335|W-Shape|335|W1120x499|498.55
+const _RAW = `W44X335|W-Shape|335|W1120x499|498.55
 W44X290|W-Shape|290|W1120x432|431.58
 W44X262|W-Shape|262|W1120x390|389.91
 W44X230|W-Shape|230|W1120x342|342.29
@@ -1605,7 +1605,7 @@ PL 2-1/2|Plate|102|PL 63.5mm|151.8
 PL 2.625|Plate|107.1|PL 66.7mm|159.39
 PL 2.75|Plate|112.2|PL 69.8mm|166.98
 PL 2.875|Plate|117.3|PL 73.0mm|174.57
-PL 3.0|Plate|122.4|PL 76.2mm|182.16';
+PL 3.0|Plate|122.4|PL 76.2mm|182.16`;
 const AISC_SHAPES = _RAW.split('\n').map(l => {
   const p = l.split('|');
   return [p[0], p[1], +p[2], p[3], +p[4]];
