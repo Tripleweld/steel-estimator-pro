@@ -78,6 +78,7 @@ const BlueInput = ({ type = 'text', value, onChange, className = '', ...rest }) 
     type={type}
     value={value ?? ''}
     onChange={onChange}
+    onFocus={(e) => e.target.select()}
     className={`w-full bg-blue-500/5 border border-blue-500/30 rounded px-3 py-1.5 text-sm text-white placeholder-steel-500 focus:outline-none focus:ring-1 focus:ring-blue-500/50 ${className}`}
     {...rest}
   />
