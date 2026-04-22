@@ -347,7 +347,7 @@ export default function StructuralTakeoff() {
             <h1 className="text-2xl font-bold text-white tracking-tight">
               Structural Steel Takeoff
             </h1>
-            <p className="text-sm text-gray-400">
+            <p className="text-sm text-gray-300">
               Division 05 12 00 &mdash; Structural Steel Framing
             </p>
           </div>
@@ -376,19 +376,19 @@ export default function StructuralTakeoff() {
 
       {/* Rate info badges */}
       <div className="flex flex-wrap gap-3 text-xs">
-        <span className="px-2 py-1 rounded bg-amber-900/40 text-amber-300 border border-amber-700/50">
+        <span className="px-2 py-1 rounded bg-amber-900/70 text-amber-200 border border-amber-600">
           Fab Rate: {fmt(fabRate)}/hr
         </span>
-        <span className="px-2 py-1 rounded bg-green-900/40 text-green-300 border border-green-700/50">
+        <span className="px-2 py-1 rounded bg-green-900/70 text-green-200 border border-green-600">
           Install Rate: {fmt(installRate)}/hr
         </span>
-        <span className="px-2 py-1 rounded bg-gray-700/60 text-gray-300 border border-gray-600/50">
+        <span className="px-2 py-1 rounded bg-gray-700 text-gray-200 border border-gray-500">
           {rows.length} row{rows.length !== 1 ? 's' : ''}
         </span>
       </div>
 
       {/* Scrollable table */}
-      <div className="overflow-x-auto rounded-lg border border-gray-700 bg-gray-900/60">
+      <div className="overflow-x-auto rounded-lg border border-gray-700 bg-gray-900/90">
         <table className="min-w-max w-full border-collapse text-sm">
           {/* ---- Group header row ---- */}
           <thead>
@@ -474,7 +474,7 @@ export default function StructuralTakeoff() {
           <tbody>
             {sortedRows.length === 0 && (
               <tr>
-                <td colSpan={35} className="text-center py-12 text-gray-500 text-sm">
+                <td colSpan={35} className="text-center py-12 text-gray-400 text-sm">
                   No rows yet. Click <strong>Add Row</strong> to begin your takeoff.
                 </td>
               </tr>
@@ -483,7 +483,7 @@ export default function StructuralTakeoff() {
             {sortedRows.map((row) => (
               <tr key={row.id} className="table-row hover:bg-gray-800/60 border-b border-gray-800">
                 {/* ---- A: Identification ---- */}
-                <td className="table-cell text-xs text-center text-gray-500 sticky left-0 z-10 bg-gray-900">
+                <td className="table-cell text-xs text-center text-gray-300 sticky left-0 z-10 bg-gray-900">
                   {row._idx}
                 </td>
                 <td className="table-cell sticky left-8 z-10 bg-gray-900">
@@ -508,7 +508,7 @@ export default function StructuralTakeoff() {
                   <select
                     value={row.type || ''}
                     onChange={(e) => updateRow(row.id, { type: e.target.value })}
-                    className="input-number text-xs py-1 w-24 bg-gray-800 border border-gray-600 rounded"
+                    className="input-number text-xs py-1 w-24 bg-gray-800 border border-blue-500/30 rounded text-white"
                   >
                     <option value="">--</option>
                     {TYPE_OPTIONS.map((t) => (
@@ -530,7 +530,7 @@ export default function StructuralTakeoff() {
                 <td className="table-cell">{numInput(row, 'qty')}</td>
                 <td className="table-cell">{numInput(row, 'lengthFt')}</td>
                 <td className="table-cell text-center">
-                  <span className="text-xs tabular-nums text-blue-300">
+                  <span className="text-xs tabular-nums text-blue-200 font-semibold">
                     {row.lbsPerFt ? fmtNum(row.lbsPerFt, 1) : '--'}
                   </span>
                 </td>
@@ -635,19 +635,19 @@ export default function StructuralTakeoff() {
 
                 {/* Qty & Weight: 5 */}
                 <td className="table-cell text-center">
-                  <span className="text-xs tabular-nums text-blue-300">
+                  <span className="text-xs tabular-nums text-blue-200 font-semibold">
                     {fmtNum(summary.totalPieces)}
                   </span>
                 </td>
                 <td className="table-cell" />
                 <td className="table-cell" />
                 <td className="table-cell text-center">
-                  <span className="text-xs tabular-nums text-blue-300">
+                  <span className="text-xs tabular-nums text-blue-200 font-semibold">
                     {fmtNum(summary.totalLbs)}
                   </span>
                 </td>
                 <td className="table-cell text-center">
-                  <span className="text-xs tabular-nums text-blue-300">
+                  <span className="text-xs tabular-nums text-blue-200 font-semibold">
                     {fmtNum(summary.totalTons, 2)}
                   </span>
                 </td>
@@ -739,14 +739,14 @@ export default function StructuralTakeoff() {
 // ---------------------------------------------------------------------------
 function SummaryCard({ label, value, color }) {
   const colorMap = {
-    blue: 'border-blue-600/40 bg-blue-950/30 text-blue-300',
-    amber: 'border-amber-600/40 bg-amber-950/30 text-amber-300',
-    green: 'border-green-600/40 bg-green-950/30 text-green-300',
-    red: 'border-red-600/40 bg-red-950/30 text-red-300',
+    blue: 'border-blue-500 bg-blue-900/60 text-blue-200',
+    amber: 'border-amber-500 bg-amber-900/60 text-amber-200',
+    green: 'border-green-500 bg-green-900/60 text-green-200',
+    red: 'border-red-500 bg-red-900/60 text-red-200',
   };
   return (
     <div className={`rounded-lg border px-4 py-3 ${colorMap[color] || colorMap.blue}`}>
-      <p className="text-xs text-gray-400 mb-1">{label}</p>
+      <p className="text-xs text-gray-300 mb-1">{label}</p>
       <p className="text-lg font-bold tabular-nums">{value}</p>
     </div>
   );
