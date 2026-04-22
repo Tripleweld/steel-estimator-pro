@@ -893,8 +893,8 @@ export default function RatesConfig() {
                       </div>
                       <div className="col-span-1"><BlueInput type="number" min="0" value={item.qty || 0} onChange={(e) => updateEquip(item.id, { qty: Number(e.target.value) })} className="text-center" /></div>
                       <div className="col-span-1"><BlueInput type="number" min="0" value={item.duration || 0} onChange={(e) => updateEquip(item.id, { duration: Number(e.target.value) })} className="text-center" /></div>
-                      <div className="col-span-1"><BlueInput type="number" min="0" step="1" value={item.pickup || 0} onChange={(e) => updateEquip(item.id, { pickup: Number(e.target.value) })} className="text-center text-xs" /></div>
-                      <div className="col-span-1"><BlueInput type="number" min="0" step="1" value={item.dropoff || 0} onChange={(e) => updateEquip(item.id, { dropoff: Number(e.target.value) })} className="text-center text-xs" /></div>
+                      <div className="col-span-1"><BlueInput type="text" inputMode="decimal" value={item.pickup || ''} onChange={(e) => updateEquip(item.id, { pickup: Number(e.target.value) || 0 })} className="text-center text-xs" /></div>
+                      <div className="col-span-1"><BlueInput type="text" inputMode="decimal" value={item.dropoff || ''} onChange={(e) => updateEquip(item.id, { dropoff: Number(e.target.value) || 0 })} className="text-center text-xs" /></div>
                       <div className="col-span-1 text-sm text-right font-medium text-green-400">{fmt(total)}</div>
                     </div>
                   );
