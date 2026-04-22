@@ -78,7 +78,7 @@ export default function Ladder() {
             Ladder Takeoff
           </div>
           <p className="page-subtitle mt-1 text-sm text-silver-500">
-            Fixed ladders, ship ladders &amp; access systems — OHSA compliant
+            Fixed ladders, ship ladders &amp; access systems â OHSA compliant
           </p>
         </div>
 
@@ -220,7 +220,7 @@ export default function Ladder() {
                         type="text"
                         value={row.notes}
                         onChange={(e) => updateRow(row.id, 'notes', e.target.value)}
-                        placeholder="—"
+                        placeholder="â"
                         className={inputTextCls}
                       />
                     </td>
