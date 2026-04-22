@@ -88,25 +88,36 @@ function EditCell({ value, onChange, type = 'text', className = '', ...rest }) {
 /* ─── Overridable Sum Cell ───
    Shows auto-calculated sum by default.
    When user types a value, it becomes the override.
-   Clear the field (empty or 0) to revert to auto-sum. */
+   Clear the field completely to revert to auto-sum.
+   Accepts decimals (0.1, 0.5, etc.) and zero. */
 function OverridableCell({ calcValue, override, onOverride, colorClass }) {
-  const isOverridden = override != null && override !== '' && override !== 0;
+  const isOverridden = override != null && override !== '';
+  const [editing, setEditing] = useState(false);
+  const [rawVal, setRawVal] = useState('');
   const displayValue = isOverridden ? override : calcValue;
   return (
     <input
       type="text"
       inputMode="decimal"
-      value={fmtNum(displayValue, 1)}
+      value={editing ? rawVal : fmtNum(displayValue, 1)}
       onChange={(e) => {
-        const raw = e.target.value.replace(/,/g, '');
-        const n = parseFloat(raw);
-        if (raw === '' || raw === '0') {
+        const raw = e.target.value.replace(/[^0-9.]/g, '');
+        setRawVal(raw);
+      }}
+      onFocus={(e) => {
+        setEditing(true);
+        setRawVal(isOverridden ? String(override) : '');
+        setTimeout(() => e.target.select(), 0);
+      }}
+      onBlur={() => {
+        setEditing(false);
+        if (rawVal === '') {
           onOverride(null);
-        } else if (!isNaN(n)) {
-          onOverride(n);
+        } else {
+          const n = parseFloat(rawVal);
+          if (!isNaN(n)) onOverride(n);
         }
       }}
-      onFocus={(e) => e.target.select()}
       className={`w-16 text-right rounded px-1 py-1 text-sm font-mono focus:outline-none focus:ring-1 focus:ring-blue-500/50 ${colorClass} ${
         isOverridden
           ? 'bg-amber-900/40 border border-amber-500/50'
