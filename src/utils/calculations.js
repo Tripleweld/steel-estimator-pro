@@ -141,6 +141,11 @@ export function calcStairs(params) {
   const landingWt = landingSqft * 25 // ~25 psf for plate + framing
   const totalWt = stringerWt + treadWt + landingWt
 
+  // Fab & install hours (stairs = complex misc: ~30 hrs/ton fab, ~24 hrs/ton install)
+  const tons = totalWt / 2000
+  const fabHrs = Math.round(tons * 30 * 10) / 10
+  const installHrs = Math.round(tons * 24 * 10) / 10
+
   return {
     risersPerFlight,
     riserHeight,
@@ -154,9 +159,13 @@ export function calcStairs(params) {
     guardrailPosts,
     compliance,
     totalWt: Math.round(totalWt),
+    totalWeight: Math.round(totalWt),
+    flights,
     stringerWt: Math.round(stringerWt),
     treadWt: Math.round(treadWt),
     landingWt: Math.round(landingWt),
+    fabHrs,
+    installHrs,
   }
 }
 
@@ -199,8 +208,8 @@ export function calcProjectSummary(state) {
   const totalWeightLbs = totalStructuralWt + totalMiscWt
   const totalWeightTons = totalWeightLbs / 2000
 
-  const totalFabHrs = structuralFabHrs + miscFabHrs + railingsFabHrs + ladderFabHrs + joistFabHrs
-  const totalInstHrs = structuralInstHrs + miscInstHrs + railingsInstHrs + ladderInstHrs + joistInstHrs
+  const totalFabHrs = structuralFabHrs + miscFabHrs + railingsFabHrs + ladderFabHrs + joistFabHrs + stairsCalc.fabHrs
+  const totalInstHrs = structuralInstHrs + miscInstHrs + railingsInstHrs + ladderInstHrs + joistInstHrs + stairsCalc.installHrs
 
   // Material costs
   const structuralMaterialCost = calcStructuralMaterialCost(totalStructuralWt, rates)
