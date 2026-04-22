@@ -8,7 +8,7 @@ function generateQuoteNumber() {
   return `TW01-${seq}-${yr}`
 }
 
-/* âââ Material Rates âââ */
+/* Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂ Material Rates Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂ */
 const defaultMaterialRates = [
   { id: 1, item: 'Structural steel', rate: 1.00, unit: '$/lb' },
   { id: 2, item: 'Galvanized steel', rate: 1.20, unit: '$/lb' },
@@ -18,7 +18,7 @@ const defaultMaterialRates = [
   { id: 6, item: 'Anchors/bolts (per unit)', rate: 8.00, unit: '$/unit' },
 ]
 
-/* âââ Labour Rates âââ */
+/* Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂ Labour Rates Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂ */
 const defaultLabourRates = {
   fabRate: 50,
   fabCrew: 2,
@@ -27,7 +27,7 @@ const defaultLabourRates = {
   travelRate: 55,
 }
 
-/* âââ Safety Factors âââ */
+/* Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂ Safety Factors Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂ */
 const defaultSafetyFactors = {
   fabLocal: 0.10,
   fabRemote: 0.15,
@@ -36,7 +36,7 @@ const defaultSafetyFactors = {
   projectType: 'Remote',   // 'Local' or 'Remote'
 }
 
-/* âââ Markup & Tax âââ */
+/* Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂ Markup & Tax Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂ */
 const defaultMarkup = {
   markupPercent: 15,
   hstPercent: 13,
@@ -45,7 +45,7 @@ const defaultMarkup = {
   connectionHardware: 5,
 }
 
-/* âââ Travel & Freight âââ */
+/* Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂ Travel & Freight Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂ */
 const defaultTravelFreight = {
   freightRatePerKm: 3.50,
   numberOfDeliveries: 2,
@@ -55,7 +55,7 @@ const defaultTravelFreight = {
   perDiemPerDay: 75,
 }
 
-/* âââ P.Eng & Shop Drawings âââ */
+/* Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂ P.Eng & Shop Drawings Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂ */
 const defaultEngDrawings = {
   drafterRate: 65,
   drawingHours: 160,
@@ -65,7 +65,7 @@ const defaultEngDrawings = {
   siteVisitCostEach: 0,
 }
 
-/* âââ Equipment Rental Catalog âââ */
+/* Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂ Equipment Rental Catalog Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂ */
 const defaultEquipment = [
   // Cranes
   { id: 1, category: 'CRANES', item: 'Mobile Crane 35T', dayRate: 1500, weekRate: 6500, monthRate: 22000, period: 'Day', qty: 0, pickup: 0, dropoff: 0 },
@@ -112,7 +112,7 @@ const defaultEquipment = [
   { id: 35, category: 'RIGGING & MISC', item: 'Fall Arrest System (complete)', dayRate: 40, weekRate: 200, monthRate: 650, period: 'Month', qty: 0, pickup: 0, dropoff: 0 },
 ]
 
-/* âââ Misc Metals Rates âââ */
+/* Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂ Misc Metals Rates Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂ */
 const defaultMiscMetalsRates = [
   { id: 1, item: 'Pan tread (galvanized)', rate: 75, unit: '$/tread' },
   { id: 2, item: 'Pan tread (mild)', rate: 55, unit: '$/tread' },
@@ -122,7 +122,7 @@ const defaultMiscMetalsRates = [
   { id: 6, item: 'Handrail pre-fab', rate: 65, unit: '$/lnft' },
 ]
 
-/* âââ Code Limits (OBC / OHSA) âââ */
+/* Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂ Code Limits (OBC / OHSA) Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂ */
 const defaultCodeLimits = [
   { id: 1, item: 'Post spacing max (rails)', value: 6, unit: 'ft (1.83m)', reference: 'OBC' },
   { id: 2, item: 'Riser max (stair)', value: 180, unit: 'mm', reference: 'OBC 3.4' },
@@ -137,7 +137,7 @@ const defaultCodeLimits = [
   { id: 11, item: 'Scissor lift day rate', value: 300, unit: '$/day', reference: '' },
 ]
 
-/* âââ Default Rates Bundle âââ */
+/* Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂ Default Rates Bundle Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂ */
 const defaultRates = {
   materialRates: defaultMaterialRates,
   labourRates: defaultLabourRates,
@@ -198,13 +198,13 @@ const defaultState = {
   isDirty: false,
 }
 
-/* âââ Helper: compute equipment rental cost for a row âââ */
+/* Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂ Helper: compute equipment rental cost for a row Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂ */
 function calcEquipRentalCost(row) {
   const rateMap = { Day: row.dayRate, Week: row.weekRate, Month: row.monthRate }
   return (rateMap[row.period] || 0) * (row.qty || 0)
 }
 
-/* âââ Reducer âââ */
+/* Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂ Reducer Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂ */
 function projectReducer(state, action) {
   switch (action.type) {
     case 'SET_PROJECT_INFO':
@@ -275,7 +275,7 @@ function projectReducer(state, action) {
     case 'SET_PRODUCTIVITY':
       return { ...state, rates: { ...state.rates, productivityDefaults: { ...state.rates.productivityDefaults, ...action.payload } }, isDirty: true }
 
-    /* âââ Structural takeoff âââ */
+    /* Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂ Structural takeoff Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂ */
     case 'SET_STRUCTURAL':
       return { ...state, structural: action.payload, isDirty: true }
 
@@ -307,7 +307,7 @@ function projectReducer(state, action) {
     case 'DELETE_STRUCTURAL_ROW':
       return { ...state, structural: state.structural.filter(r => r.id !== action.payload), isDirty: true }
 
-    /* âââ Misc metals âââ */
+    /* Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂ Misc metals Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂ */
     case 'SET_MISC_METALS':
       return { ...state, miscMetals: action.payload, isDirty: true }
 
@@ -338,11 +338,11 @@ function projectReducer(state, action) {
     case 'DELETE_MISC_METAL_ROW':
       return { ...state, miscMetals: state.miscMetals.filter(r => r.id !== action.payload), isDirty: true }
 
-    /* âââ Stairs âââ */
+    /* Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂ Stairs Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂ */
     case 'SET_STAIRS':
       return { ...state, stairs: { ...state.stairs, ...action.payload }, isDirty: true }
 
-    /* âââ Railings âââ */
+    /* Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂ Railings Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂ */
     case 'ADD_RAILING_ROW': {
       const newId = Date.now()
       return { ...state, railings: [...state.railings, { id: newId, location: '', type: 'Guard', heightMm: 1070, lengthFt: 0, posts: 0, material: 'Structural steel', weightLbs: 0, fabHrs: 0, instHrs: 0, notes: '' }], isDirty: true }
@@ -354,7 +354,7 @@ function projectReducer(state, action) {
     case 'DELETE_RAILING_ROW':
       return { ...state, railings: state.railings.filter(r => r.id !== action.payload), isDirty: true }
 
-    /* âââ Ladder âââ */
+    /* Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂ Ladder Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂ */
     case 'ADD_LADDER_ROW': {
       const newId = Date.now()
       return { ...state, ladder: [...state.ladder, { id: newId, location: '', type: 'Fixed Ladder', heightFt: 0, hasCage: false, material: 'Structural steel', weightLbs: 0, fabHrs: 0, instHrs: 0, notes: '' }], isDirty: true }
@@ -366,7 +366,7 @@ function projectReducer(state, action) {
     case 'DELETE_LADDER_ROW':
       return { ...state, ladder: state.ladder.filter(r => r.id !== action.payload), isDirty: true }
 
-    /* âââ Joist Reinforcement âââ */
+    /* Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂ Joist Reinforcement Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂ */
     case 'ADD_JOIST_REINF_ROW': {
       const newId = Date.now()
       return { ...state, joistReinf: [...state.joistReinf, { id: newId, mark: '', location: '', joistType: '', span: 0, reinfMethod: 'Angle + Plate', qty: 1, weightLbs: 0, fabHrs: 0, instHrs: 0, notes: '' }], isDirty: true }
@@ -378,7 +378,7 @@ function projectReducer(state, action) {
     case 'DELETE_JOIST_REINF_ROW':
       return { ...state, joistReinf: state.joistReinf.filter(r => r.id !== action.payload), isDirty: true }
 
-    /* âââ Purchased items âââ */
+    /* Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂ Purchased items Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂ */
     case 'ADD_PURCHASED_ROW': {
       const newId = Date.now()
       return { ...state, purchased: [...state.purchased, { id: newId, item: '', supplier: '', qty: 1, unit: 'ea', unitCost: 0, total: 0, leadWeeks: 0, notes: '' }], isDirty: true }
@@ -390,7 +390,7 @@ function projectReducer(state, action) {
     case 'DELETE_PURCHASED_ROW':
       return { ...state, purchased: state.purchased.filter(r => r.id !== action.payload), isDirty: true }
 
-    /* âââ Soft costs âââ */
+    /* Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂ Soft costs Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂ */
     case 'SET_SOFT_COSTS':
       return { ...state, softCosts: action.payload, isDirty: true }
     case 'UPDATE_SOFT_COST': {
@@ -404,7 +404,7 @@ function projectReducer(state, action) {
     case 'DELETE_SOFT_COST':
       return { ...state, softCosts: state.softCosts.filter(r => r.id !== action.payload), isDirty: true }
 
-    /* âââ Reset âââ */
+    /* Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂ Reset Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂ */
     case 'RESET_TO_DEFAULTS':
       return { ...JSON.parse(JSON.stringify(defaultState)), projectInfo: { ...defaultProjectInfo, quoteNumber: generateQuoteNumber() } }
 
@@ -422,7 +422,9 @@ function projectReducer(state, action) {
     case 'SET_MISC_METALS_RATE_BY_KEY':
       return { ...state, rates: { ...state.rates, miscMetalsRatesByKey: { ...(state.rates.miscMetalsRatesByKey || {}), [action.payload.key]: action.payload.value } }, isDirty: true }
 
-    default:
+    case 'SET_STRUCTURAL_ROWS':
+      return { ...state, structuralRows: action.payload, isDirty: true };
+        default:
       return state
   }
 }
