@@ -166,7 +166,7 @@ const BlueSelect = ({ value, onChange, children, className = '' }) => (
   <select
     value={value ?? ''}
     onChange={onChange}
-    className={`w-full bg-blue-500/5 border border-blue-500/30 rounded px-3 py-1.5 text-sm text-white focus:outline-none focus:ring-1 focus:ring-blue-500/50 appearance-none ${className}`}
+    className={`w-full bg-steel-900 border border-blue-500/30 rounded px-3 py-1.5 text-sm text-white focus:outline-none focus:ring-1 focus:ring-blue-500/50 ${className}`}
   >
     {children}
   </select>
@@ -209,13 +209,13 @@ export default function RatesConfig() {
     [dispatch],
   );
 
-  const setRate = useCallback(
-    (key, value) => dispatch({ type: 'SET_RATES', payload: { [key]: value } }),
+  const setMarkup = useCallback(
+    (key, value) => dispatch({ type: 'SET_MARKUP', payload: { [key]: Number(value) } }),
     [dispatch],
   );
 
   const setMaterialRate = useCallback(
-    (key, value) => dispatch({ type: 'SET_MATERIAL_RATE', payload: { key, value: Number(value) } }),
+    (key, value) => dispatch({ type: 'SET_MATERIAL_RATE_BY_KEY', payload: { key, value: Number(value) } }),
     [dispatch],
   );
 
@@ -246,7 +246,7 @@ export default function RatesConfig() {
   );
 
   const setMiscMetalsRate = useCallback(
-    (key, value) => dispatch({ type: 'SET_MISC_METALS_RATE', payload: { key, value: Number(value) } }),
+    (key, value) => dispatch({ type: 'SET_MISC_METALS_RATE_BY_KEY', payload: { key, value: Number(value) } }),
     [dispatch],
   );
 
@@ -257,20 +257,20 @@ export default function RatesConfig() {
 
   // ---- accessors with defaults --------------------------------------
   const pi = state.projectInfo || {};
-  const mr = state.materialRates || {};
-  const lr = state.labourRates || {};
-  const sf = state.safetyFactors || {};
-  const rates = state.rates || {};
-  const tf = state.travelFreight || {};
-  const eng = state.engDrawings || {};
-  const equip = state.equipment || {};
-  const mm = state.miscMetalsRates || {};
+  const mr = state.rates?.materialRatesByKey || {};
+  const lr = state.rates?.labourRates || {};
+  const sf = state.rates?.safetyFactors || {};
+  const mkp = state.rates?.markup || {};
+  const tf = state.rates?.travelFreight || {};
+  const eng = state.rates?.engDrawings || {};
+  const equip = state.rates?.equipment || {};
+  const mm = state.rates?.miscMetalsRatesByKey || {};
 
   // Material defaults
   const matDef = (key, def) => (mr[key] !== undefined ? mr[key] : def);
   const labDef = (key, def) => (lr[key] !== undefined ? lr[key] : def);
   const sfDef = (key, def) => (sf[key] !== undefined ? sf[key] : def);
-  const rateDef = (key, def) => (rates[key] !== undefined ? rates[key] : def);
+  const mkpDef = (key, def) => (mkp[key] !== undefined ? mkp[key] : def);
   const tfDef = (key, def) => (tf[key] !== undefined ? tf[key] : def);
   const engDef = (key, def) => (eng[key] !== undefined ? eng[key] : def);
   const mmDef = (key, def) => (mm[key] !== undefined ? mm[key] : def);
@@ -357,7 +357,7 @@ export default function RatesConfig() {
                 onChange={(e) => setProjectField('province', e.target.value)}
               >
                 {PROVINCES.map((p) => (
-                  <option key={p} value={p}>{p}</option>
+                  <option key={p} value={p} className="bg-steel-900 text-white">{p}</option>
                 ))}
               </BlueSelect>
             </div>
@@ -369,7 +369,7 @@ export default function RatesConfig() {
                 onChange={(e) => setProjectField('buildingType', e.target.value)}
               >
                 {BUILDING_TYPES.map((t) => (
-                  <option key={t} value={t}>{t}</option>
+                  <option key={t} value={t} className="bg-steel-900 text-white">{t}</option>
                 ))}
               </BlueSelect>
             </div>
@@ -655,7 +655,7 @@ export default function RatesConfig() {
                 onChange={(e) => setSafetyFactor('activeFab', e.target.value)}
               >
                 {SAFETY_OPTIONS.map((o) => (
-                  <option key={o.label} value={o.value}>
+                  <option key={o.label} value={o.value} className="bg-steel-900 text-white">
                     {o.label} ({o.value.toFixed(2)}x)
                   </option>
                 ))}
@@ -668,7 +668,7 @@ export default function RatesConfig() {
                 onChange={(e) => setSafetyFactor('activeInstall', e.target.value)}
               >
                 {SAFETY_OPTIONS.map((o) => (
-                  <option key={o.label} value={o.value}>
+                  <option key={o.label} value={o.value} className="bg-steel-900 text-white">
                     {o.label} ({o.value.toFixed(2)}x)
                   </option>
                 ))}
@@ -681,7 +681,7 @@ export default function RatesConfig() {
                 onChange={(e) => setSafetyFactor('activeCrane', e.target.value)}
               >
                 {SAFETY_OPTIONS.map((o) => (
-                  <option key={o.label} value={o.value}>
+                  <option key={o.label} value={o.value} className="bg-steel-900 text-white">
                     {o.label} ({o.value.toFixed(2)}x)
                   </option>
                 ))}
@@ -709,8 +709,8 @@ export default function RatesConfig() {
               <BlueInput
                 type="number"
                 step="0.1"
-                value={rateDef('markup', 15)}
-                onChange={(e) => setRate('markup', Number(e.target.value))}
+                value={mkpDef('markup', 15)}
+                onChange={(e) => setMarkup('markup', Number(e.target.value))}
               />
             </div>
             <div className="space-y-1">
@@ -718,8 +718,8 @@ export default function RatesConfig() {
               <BlueInput
                 type="number"
                 step="0.1"
-                value={rateDef('hst', 13)}
-                onChange={(e) => setRate('hst', Number(e.target.value))}
+                value={mkpDef('hst', 13)}
+                onChange={(e) => setMarkup('hst', Number(e.target.value))}
               />
             </div>
             <div className="space-y-1">
@@ -727,8 +727,8 @@ export default function RatesConfig() {
               <BlueInput
                 type="number"
                 step="0.1"
-                value={rateDef('contingency', 5)}
-                onChange={(e) => setRate('contingency', Number(e.target.value))}
+                value={mkpDef('contingency', 5)}
+                onChange={(e) => setMarkup('contingency', Number(e.target.value))}
               />
             </div>
             <div className="space-y-1">
@@ -736,8 +736,8 @@ export default function RatesConfig() {
               <BlueInput
                 type="number"
                 step="0.1"
-                value={rateDef('escalation', 0)}
-                onChange={(e) => setRate('escalation', Number(e.target.value))}
+                value={mkpDef('escalation', 0)}
+                onChange={(e) => setMarkup('escalation', Number(e.target.value))}
               />
             </div>
             <div className="space-y-1">
@@ -745,8 +745,8 @@ export default function RatesConfig() {
               <BlueInput
                 type="number"
                 step="0.1"
-                value={rateDef('bond', 0)}
-                onChange={(e) => setRate('bond', Number(e.target.value))}
+                value={mkpDef('bond', 0)}
+                onChange={(e) => setMarkup('bond', Number(e.target.value))}
               />
             </div>
           </div>
