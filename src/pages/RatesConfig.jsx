@@ -436,6 +436,27 @@ export default function RatesConfig() {
                 onChange={(e) => setMaterialRate('anchorBolt', e.target.value)}
               />
             </div>
+            <div className="space-y-1">
+              <Label>Galvanized Steel Rate ($/lb)</Label>
+              <BlueInput type="number" step="0.01"
+                value={matDef('galvanizedSteel', 1.20)}
+                onChange={(e) => setMaterialRate('galvanizedSteel', e.target.value)}
+              />
+            </div>
+            <div className="space-y-1">
+              <Label>Stainless Steel 304 Rate ($/lb)</Label>
+              <BlueInput type="number" step="0.01"
+                value={matDef('stainless304', 3.00)}
+                onChange={(e) => setMaterialRate('stainless304', e.target.value)}
+              />
+            </div>
+            <div className="space-y-1">
+              <Label>Stainless Steel 316 Rate ($/lb)</Label>
+              <BlueInput type="number" step="0.01"
+                value={matDef('stainless316', 4.50)}
+                onChange={(e) => setMaterialRate('stainless316', e.target.value)}
+              />
+            </div>
           </div>
         )}
       </div>
