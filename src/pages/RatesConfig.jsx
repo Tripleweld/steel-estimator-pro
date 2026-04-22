@@ -204,6 +204,16 @@ export default function RatesConfig() {
     return acc;
   }, {});
 
+  // Shop Drawing Cost calc
+  const detRate = eng.detailingRate !== undefined ? eng.detailingRate : 55;
+  const drawHrs = eng.drawingHours !== undefined ? eng.drawingHours : 160;
+  const shopDrawingCost = detRate * drawHrs;
+
+  // Site Visits calc
+  const pmRate = lr.projectManagement !== undefined ? lr.projectManagement : 65;
+  const siteVisitsQty = eng.siteVisitsQty !== undefined ? eng.siteVisitsQty : 3;
+  const siteVisitsCost = siteVisitsQty * pmRate;
+
   // Travel time auto-calc
   const distanceKm = tfDef('distanceToSite', 50);
   const travelTimeCalc = (Number(distanceKm) / 80).toFixed(2);
@@ -828,6 +838,38 @@ export default function RatesConfig() {
                 value={engDef('miscDrawingCosts', 500)}
                 onChange={(e) => setEngDrawings('miscDrawingCosts', Number(e.target.value))}
               />
+            </div>
+            <div className="space-y-1">
+              <Label>Drawing Hours (est.)</Label>
+              <BlueInput type="number" step="1"
+                value={engDef('drawingHours', 160)}
+                onChange={(e) => setEngDrawings('drawingHours', Number(e.target.value))}
+              />
+            </div>
+            <div className="space-y-1">
+              <Label>Shop Drawing Cost (calc.)</Label>
+              <div className="w-full bg-steel-800/60 border border-steel-700/50 rounded px-3 py-1.5 text-sm text-green-400 font-medium">
+                {fmt(shopDrawingCost)}
+              </div>
+            </div>
+            <div className="space-y-1">
+              <Label>Site Visits (qty)</Label>
+              <BlueInput type="number" step="1" min="0"
+                value={engDef('siteVisitsQty', 3)}
+                onChange={(e) => setEngDrawings('siteVisitsQty', Number(e.target.value))}
+              />
+            </div>
+            <div className="space-y-1">
+              <Label>Site Visit Rate (PM Rate)</Label>
+              <div className="w-full bg-steel-800/60 border border-steel-700/50 rounded px-3 py-1.5 text-sm text-steel-300">
+                {fmt(pmRate)}/visit
+              </div>
+            </div>
+            <div className="space-y-1">
+              <Label>Site Visits Total (calc.)</Label>
+              <div className="w-full bg-steel-800/60 border border-steel-700/50 rounded px-3 py-1.5 text-sm text-green-400 font-medium">
+                {fmt(siteVisitsCost)}
+              </div>
             </div>
           </div>
         )}
