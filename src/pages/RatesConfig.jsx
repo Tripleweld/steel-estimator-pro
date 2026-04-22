@@ -161,9 +161,12 @@ export default function RatesConfig() {
     [dispatch],
   );
 
-  const updateEquipment = useCallback(
-    (itemName, field, value) =>
-      dispatch({ type: 'UPDATE_EQUIPMENT', payload: { itemName, [field]: Number(value) } }),
+  const updateEquip = useCallback(
+    (id, updates) => {
+      const payload = { id };
+      Object.entries(updates).forEach(([k, v]) => { payload[k] = v; });
+      dispatch({ type: 'UPDATE_EQUIPMENT', payload });
+    },
     [dispatch],
   );
 
