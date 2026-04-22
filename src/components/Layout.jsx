@@ -17,7 +17,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Save,
-} from 'lucide-react'
+, BookOpen } from 'lucide-react'
 import { useState } from 'react'
 
 const navItems = [
@@ -38,6 +38,7 @@ const navItems = [
   { divider: true, label: 'OUTPUT' },
   { path: '/summary', label: 'Summary', icon: FileSpreadsheet },
   { path: '/quote', label: 'Quote', icon: FileText },
+  { path: '/manual', label: 'User Manual', icon: BookOpen, section: 'HELP' },
 ]
 
 export default function Layout({ children }) {
