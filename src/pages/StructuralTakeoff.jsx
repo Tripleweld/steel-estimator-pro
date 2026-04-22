@@ -1,5 +1,6 @@
 import React, { useState, useCallback, useMemo, useRef, useEffect } from 'react';
 import { useProject } from '../context/ProjectContext';
+import AISC_SHAPES from '../data/aisc-shapes-data';
 
 /* ─── Section definitions matching Excel layout ─── */
 const SECTIONS = [
@@ -128,6 +129,93 @@ function OverridableCell({ calcValue, override, onOverride, colorClass }) {
   );
 }
 
+/* ─── Profile Search Dropdown ───
+   Searchable dropdown populated with 1,606 AISC profiles.
+   Type to filter, click or Enter to select.
+   Auto-fills Wt/ft when a profile is selected. */
+function ProfileSearch({ value, onSelect }) {
+  const [query, setQuery] = useState(value || '');
+  const [open, setOpen] = useState(false);
+  const [hlIdx, setHlIdx] = useState(0);
+  const wrapRef = useRef(null);
+  const listRef = useRef(null);
+
+  useEffect(() => { setQuery(value || ''); }, [value]);
+
+  const filtered = useMemo(() => {
+    if (!query || query.length < 1) return AISC_SHAPES.slice(0, 50);
+    const q = query.toUpperCase();
+    const results = [];
+    for (let i = 0; i < AISC_SHAPES.length && results.length < 50; i++) {
+      if (AISC_SHAPES[i][0].toUpperCase().includes(q)) results.push(AISC_SHAPES[i]);
+    }
+    return results;
+  }, [query]);
+
+  useEffect(() => { setHlIdx(0); }, [filtered]);
+
+  useEffect(() => {
+    if (!open) return;
+    const handler = (e) => {
+      if (wrapRef.current && !wrapRef.current.contains(e.target)) setOpen(false);
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [open]);
+
+  useEffect(() => {
+    if (open && listRef.current && listRef.current.children[hlIdx]) {
+      listRef.current.children[hlIdx].scrollIntoView({ block: 'nearest' });
+    }
+  }, [hlIdx, open]);
+
+  const pick = (shape) => {
+    setQuery(shape[0]);
+    setOpen(false);
+    onSelect(shape[0], shape[2]);
+  };
+
+  const onKey = (e) => {
+    if (!open) return;
+    if (e.key === 'ArrowDown') { e.preventDefault(); setHlIdx(i => Math.min(i + 1, filtered.length - 1)); }
+    else if (e.key === 'ArrowUp') { e.preventDefault(); setHlIdx(i => Math.max(i - 1, 0)); }
+    else if (e.key === 'Enter' && filtered[hlIdx]) { e.preventDefault(); pick(filtered[hlIdx]); }
+    else if (e.key === 'Escape') { setOpen(false); }
+  };
+
+  return (
+    <div ref={wrapRef} className="relative">
+      <input
+        type="text"
+        value={query}
+        onChange={(e) => { setQuery(e.target.value); setOpen(true); }}
+        onFocus={() => setOpen(true)}
+        onKeyDown={onKey}
+        placeholder="W10x12..."
+        className="w-full bg-blue-500/5 border border-blue-500/30 rounded px-2 py-1 text-sm text-white placeholder-steel-500 focus:outline-none focus:ring-1 focus:ring-blue-500/50"
+      />
+      {open && filtered.length > 0 && (
+        <div className="absolute z-50 left-0 top-full mt-0.5 w-64 max-h-48 overflow-y-auto bg-steel-900 border border-blue-500/40 rounded shadow-xl" ref={listRef}>
+          {filtered.map((s, i) => (
+            <div
+              key={s[0] + i}
+              onMouseDown={() => pick(s)}
+              onMouseEnter={() => setHlIdx(i)}
+              className={`flex justify-between px-2 py-1 text-xs cursor-pointer ${
+                i === hlIdx ? 'bg-blue-600 text-white' : 'text-steel-200 hover:bg-steel-800'
+              }`}
+            >
+              <span className="font-mono font-semibold">{s[0]}</span>
+              <span className={`ml-2 ${i === hlIdx ? 'text-blue-200' : 'text-steel-400'}`}>{s[2]} lb/ft</span>
+              {s[3] && <span className={`ml-1 text-[10px] ${i === hlIdx ? 'text-blue-300' : 'text-steel-500'}`}>({s[3]})</span>}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 /* ─── Section Header with collapse toggle ─── */
 function SectionHeader({ label, isOpen, onToggle, rowCount, sectionTotals, onAddRow }) {
   return (
@@ -204,8 +292,13 @@ function DataRow({ row, index, fabRate, installRate, onUpdate, onDelete }) {
           {MEMBER_TYPES.map(t => <option key={t} value={t} style={{ backgroundColor: "#0c1222", color: "white" }}>{t}</option>)}
         </select>
       </td>
-      {/* Profile */}
-      <td className="px-1 py-1"><EditCell value={row.profile} onChange={set('profile')} placeholder="Search..." /></td>
+      {/* Profile — AISC searchable dropdown */}
+      <td className="px-1 py-1">
+        <ProfileSearch
+          value={row.profile}
+          onSelect={(designation, wtPerFt) => onUpdate(row.id, { profile: designation, wtPerFt })}
+        />
+      </td>
       {/* Qty */}
       <td className="px-1 py-1"><EditCell value={row.qty} onChange={set('qty')} type="text" inputMode="decimal" className="text-right w-14" /></td>
       {/* Length */}
