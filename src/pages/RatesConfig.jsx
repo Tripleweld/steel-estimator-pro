@@ -793,7 +793,7 @@ export default function RatesConfig() {
               </div>
               <div className="space-y-1">
                 <Label>Site Visit (days)</Label>
-                <BlueInput type="number" step="1" min="0" value={engDef('siteVisitDays', 3)} onChange={(e) => setEngDrawings('siteVisitDays', Number(e.target.value))} />
+                <BlueInput type="number" step="0.1" min="0" value={engDef('siteVisitDays', 3)} onChange={(e) => setEngDrawings('siteVisitDays', Number(e.target.value))} />
               </div>
               <div className="space-y-1">
                 <Label>Site Visit Hours (days x 8hr)</Label>
