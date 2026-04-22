@@ -204,15 +204,20 @@ export default function RatesConfig() {
     return acc;
   }, {});
 
-  // Shop Drawing Cost calc
-  const detRate = eng.detailingRate !== undefined ? eng.detailingRate : 55;
-  const drawHrs = eng.drawingHours !== undefined ? eng.drawingHours : 160;
-  const shopDrawingCost = detRate * drawHrs;
+  // P.Eng & Shop Drawings calcs
+  const siteVisitRate = eng.siteVisitRate !== undefined ? eng.siteVisitRate : 65;
+  const siteVisitDays = eng.siteVisitDays !== undefined ? eng.siteVisitDays : 3;
+  const siteVisitHrs = siteVisitDays * 8;
+  const siteVisitCost = siteVisitRate * siteVisitHrs;
 
-  // Site Visits calc
-  const pmRate = lr.projectManagement !== undefined ? lr.projectManagement : 65;
-  const siteVisitsQty = eng.siteVisitsQty !== undefined ? eng.siteVisitsQty : 3;
-  const siteVisitsCost = siteVisitsQty * pmRate;
+  const drafterRate = eng.drafterRate !== undefined ? eng.drafterRate : 55;
+  const estReviewHrs = eng.estReviewHrs !== undefined ? eng.estReviewHrs : 16;
+  const connDesignHrs = eng.connDesignHrs !== undefined ? eng.connDesignHrs : 24;
+  const draftingDays = eng.draftingDays !== undefined ? eng.draftingDays : 20;
+  const draftingHrs = draftingDays * 8;
+  const peStampFee = eng.peStampFee !== undefined ? eng.peStampFee : 3500;
+
+  const totalShopDrawings = siteVisitCost + (estReviewHrs * drafterRate) + (connDesignHrs * drafterRate) + (drafterRate * draftingHrs) + peStampFee;
 
   // Travel time auto-calc
   const distanceKm = tfDef('distanceToSite', 50);
@@ -775,102 +780,66 @@ export default function RatesConfig() {
       {/* ============================================================= */}
       {/* 8. P.ENG & SHOP DRAWINGS                                      */}
       {/* ============================================================= */}
+      {/* 8. P.ENG & SHOP DRAWINGS                                       */}
+      {/* ============================================================= */}
       <div>
-        <SectionHeader
-          icon={PenTool}
-          color="text-indigo-400"
-          title="8. P.Eng & Shop Drawings"
-          open={open.eng}
-          toggle={() => toggle('eng')}
-        />
+        <SectionHeader icon={PenTool} color="text-indigo-400" title="8. P.Eng & Shop Drawings" open={open.eng} toggle={() => toggle('eng')} />
         {open.eng && (
-          <div className="mt-2 p-4 rounded-lg bg-steel-900/60 border border-steel-700/50 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            <div className="space-y-1">
-              <Label>Engineering Review Rate ($/hr)</Label>
-              <BlueInput
-                type="number"
-                step="0.01"
-                value={engDef('engineeringReviewRate', 185)}
-                onChange={(e) => setEngDrawings('engineeringReviewRate', Number(e.target.value))}
-              />
-            </div>
-            <div className="space-y-1">
-              <Label>Detailing Rate ($/hr)</Label>
-              <BlueInput
-                type="number"
-                step="0.01"
-                value={engDef('detailingRate', 55)}
-                onChange={(e) => setEngDrawings('detailingRate', Number(e.target.value))}
-              />
-            </div>
-            <div className="space-y-1">
-              <Label>Estimated Review Hours</Label>
-              <BlueInput
-                type="number"
-                step="1"
-                value={engDef('estimatedReviewHours', 16)}
-                onChange={(e) => setEngDrawings('estimatedReviewHours', Number(e.target.value))}
-              />
-            </div>
-            <div className="space-y-1">
-              <Label>Connection Design Hours</Label>
-              <BlueInput
-                type="number"
-                step="1"
-                value={engDef('connectionDesignHours', 24)}
-                onChange={(e) => setEngDrawings('connectionDesignHours', Number(e.target.value))}
-              />
-            </div>
-            <div className="space-y-1">
-              <Label>PE Stamp Fee (lump sum $)</Label>
-              <BlueInput
-                type="number"
-                step="1"
-                value={engDef('peStampFee', 3500)}
-                onChange={(e) => setEngDrawings('peStampFee', Number(e.target.value))}
-              />
-            </div>
-            <div className="space-y-1">
-              <Label>Miscellaneous Drawing Costs ($)</Label>
-              <BlueInput
-                type="number"
-                step="1"
-                value={engDef('miscDrawingCosts', 500)}
-                onChange={(e) => setEngDrawings('miscDrawingCosts', Number(e.target.value))}
-              />
-            </div>
-            <div className="space-y-1">
-              <Label>Drawing Hours (est.)</Label>
-              <BlueInput type="number" step="1"
-                value={engDef('drawingHours', 160)}
-                onChange={(e) => setEngDrawings('drawingHours', Number(e.target.value))}
-              />
-            </div>
-            <div className="space-y-1">
-              <Label>Shop Drawing Cost (calc.)</Label>
-              <div className="w-full bg-steel-800/60 border border-steel-700/50 rounded px-3 py-1.5 text-sm text-green-400 font-medium">
-                {fmt(shopDrawingCost)}
+          <div className="mt-2 p-4 rounded-lg bg-steel-900/60 border border-steel-700/50 space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              <div className="space-y-1">
+                <Label>Rate $/hr Site Visit</Label>
+                <BlueInput type="number" step="0.01" value={engDef('siteVisitRate', 65)} onChange={(e) => setEngDrawings('siteVisitRate', Number(e.target.value))} />
+              </div>
+              <div className="space-y-1">
+                <Label>Site Visit (days)</Label>
+                <BlueInput type="number" step="1" min="0" value={engDef('siteVisitDays', 3)} onChange={(e) => setEngDrawings('siteVisitDays', Number(e.target.value))} />
+              </div>
+              <div className="space-y-1">
+                <Label>Site Visit Hours (days x 8hr)</Label>
+                <div className="w-full bg-steel-800/60 border border-steel-700/50 rounded px-3 py-1.5 text-sm text-steel-300">{siteVisitHrs} hrs</div>
+              </div>
+              <div className="space-y-1">
+                <Label>Site Visit Cost (calc.)</Label>
+                <div className="w-full bg-steel-800/60 border border-steel-700/50 rounded px-3 py-1.5 text-sm text-green-400 font-medium">{fmt(siteVisitCost)}</div>
               </div>
             </div>
-            <div className="space-y-1">
-              <Label>Site Visits (qty)</Label>
-              <BlueInput type="number" step="1" min="0"
-                value={engDef('siteVisitsQty', 3)}
-                onChange={(e) => setEngDrawings('siteVisitsQty', Number(e.target.value))}
-              />
-            </div>
-            <div className="space-y-1">
-              <Label>Site Visit Rate (PM Rate)</Label>
-              <div className="w-full bg-steel-800/60 border border-steel-700/50 rounded px-3 py-1.5 text-sm text-steel-300">
-                {fmt(pmRate)}/visit
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              <div className="space-y-1">
+                <Label>Drafter $/hr Rate</Label>
+                <BlueInput type="number" step="0.01" value={engDef('drafterRate', 55)} onChange={(e) => setEngDrawings('drafterRate', Number(e.target.value))} />
+              </div>
+              <div className="space-y-1">
+                <Label>Estimated Review Hours</Label>
+                <BlueInput type="number" step="1" min="0" value={engDef('estReviewHrs', 16)} onChange={(e) => setEngDrawings('estReviewHrs', Number(e.target.value))} />
+              </div>
+              <div className="space-y-1">
+                <Label>Connection Design Hours</Label>
+                <BlueInput type="number" step="1" min="0" value={engDef('connDesignHrs', 24)} onChange={(e) => setEngDrawings('connDesignHrs', Number(e.target.value))} />
+              </div>
+              <div className="space-y-1">
+                <Label>Drafting Time (days)</Label>
+                <BlueInput type="number" step="1" min="0" value={engDef('draftingDays', 20)} onChange={(e) => setEngDrawings('draftingDays', Number(e.target.value))} />
               </div>
             </div>
-            <div className="space-y-1">
-              <Label>Site Visits Total (calc.)</Label>
-              <div className="w-full bg-steel-800/60 border border-steel-700/50 rounded px-3 py-1.5 text-sm text-green-400 font-medium">
-                {fmt(siteVisitsCost)}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              <div className="space-y-1">
+                <Label>Drafting Hours (days x 8hr)</Label>
+                <div className="w-full bg-steel-800/60 border border-steel-700/50 rounded px-3 py-1.5 text-sm text-steel-300">{draftingHrs} hrs</div>
+              </div>
+              <div className="space-y-1">
+                <Label>P.Eng Stamp Fee ($)</Label>
+                <BlueInput type="number" step="1" value={engDef('peStampFee', 3500)} onChange={(e) => setEngDrawings('peStampFee', Number(e.target.value))} />
+              </div>
+              <div></div>
+              <div className="space-y-1">
+                <Label>Total Shop Drawings (calc.)</Label>
+                <div className="w-full bg-fire-500/10 border border-fire-500/30 rounded px-3 py-1.5 text-sm text-fire-400 font-bold">{fmt(totalShopDrawings)}</div>
               </div>
             </div>
+            <p className="text-xs text-steel-500 mt-2">
+              Total = (Site Visit Rate x Site Visit Hrs) + (Review Hrs x Drafter Rate) + (Conn. Design Hrs x Drafter Rate) + (Drafter Rate x Drafting Hrs) + P.Eng Stamp
+            </p>
           </div>
         )}
       </div>
