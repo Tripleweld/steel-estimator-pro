@@ -414,6 +414,14 @@ function projectReducer(state, action) {
     case 'MARK_SAVED':
       return { ...state, isDirty: false }
 
+    /* Material Rates by key (RatesConfig flat-key access) */
+    case 'SET_MATERIAL_RATE_BY_KEY':
+      return { ...state, rates: { ...state.rates, materialRatesByKey: { ...(state.rates.materialRatesByKey || {}), [action.payload.key]: action.payload.value } }, isDirty: true }
+
+    /* Misc Metals Rates by key (RatesConfig flat-key access) */
+    case 'SET_MISC_METALS_RATE_BY_KEY':
+      return { ...state, rates: { ...state.rates, miscMetalsRatesByKey: { ...(state.rates.miscMetalsRatesByKey || {}), [action.payload.key]: action.payload.value } }, isDirty: true }
+
     default:
       return state
   }
