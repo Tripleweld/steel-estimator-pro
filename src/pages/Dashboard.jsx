@@ -125,9 +125,9 @@ export default function Dashboard() {
 
   const MetricCard = ({ label, value, sub }) => (
     <div className="bg-steel-800/50 rounded-lg border border-steel-700/50 p-4">
-      <div className="text-steel-400 text-xs uppercase tracking-wider mb-1">{label}</div>
+      <div className="text-steel-200 text-xs uppercase tracking-wider mb-1">{label}</div>
       <div className="text-white font-bold text-lg">{value}</div>
-      {sub && <div className="text-steel-500 text-xs mt-1">{sub}</div>}
+      {sub && <div className="text-steel-300 text-xs mt-1">{sub}</div>}
     </div>
   )
 
@@ -150,7 +150,7 @@ export default function Dashboard() {
           <LayoutDashboard className="w-7 h-7 text-fire-400" />
           Project Dashboard
         </h1>
-        <p className="text-steel-400 mt-1">
+        <p className="text-steel-200 mt-1">
           {r.projectName || 'Untitled Project'} &mdash; Quote: {r.quoteNumber || 'TW--'}
         </p>
       </div>
@@ -178,7 +178,7 @@ export default function Dashboard() {
               ['Markup %', pct(markup)],
             ].map(([l, v]) => (
               <div key={l} className="flex justify-between">
-                <span className="text-steel-400">{l}</span>
+                <span className="text-steel-200">{l}</span>
                 <span className="text-white font-medium">{v}</span>
               </div>
             ))}
@@ -190,15 +190,15 @@ export default function Dashboard() {
           <SectionHeader icon={TrendingUp} title="Benchmarks" color="text-green-400" />
           <div className="space-y-2 text-sm">
             <div className="flex justify-between">
-              <span className="text-steel-400">$/lb &mdash; Fab Steel (struct)</span>
+              <span className="text-steel-200">$/lb &mdash; Fab Steel (struct)</span>
               <span className="text-white font-medium">{fmtN(dolPerLbStruct, 2)}</span>
             </div>
-            <div className="text-steel-500 text-xs pl-2">Target: $3-6/lb</div>
+            <div className="text-steel-300 text-xs pl-2">Target: $3-6/lb</div>
             <div className="flex justify-between">
-              <span className="text-steel-400">$/sqft &mdash; Full Scope</span>
+              <span className="text-steel-200">$/sqft &mdash; Full Scope</span>
               <span className="text-white font-medium">{fmtN(dolPerSqft, 2)}</span>
             </div>
-            <div className="text-steel-500 text-xs pl-2">Varies by project</div>
+            <div className="text-steel-300 text-xs pl-2">Varies by project</div>
           </div>
         </div>
 
@@ -214,7 +214,7 @@ export default function Dashboard() {
               ['Total Labour Cost', fmt(totalLabourCost)],
             ].map(([l, v]) => (
               <div key={l} className="flex justify-between">
-                <span className="text-steel-400">{l}</span>
+                <span className="text-steel-200">{l}</span>
                 <span className="text-white font-medium">{v}</span>
               </div>
             ))}
@@ -233,7 +233,7 @@ export default function Dashboard() {
               ['Install Crew Size', instCrew],
             ].map(([l, v]) => (
               <div key={l} className="flex justify-between">
-                <span className="text-steel-400">{l}</span>
+                <span className="text-steel-200">{l}</span>
                 <span className="text-white font-medium">{v}</span>
               </div>
             ))}
@@ -252,7 +252,7 @@ export default function Dashboard() {
             ].map(([label, val, color]) => (
               <div key={label}>
                 <div className="flex justify-between text-sm mb-1">
-                  <span className="text-steel-400">{label}</span>
+                  <span className="text-steel-200">{label}</span>
                   <span className="text-white font-medium">{pct(val)}</span>
                 </div>
                 <div className="w-full bg-steel-800 rounded-full h-2">
@@ -274,7 +274,7 @@ export default function Dashboard() {
               ['Gross Margin %', pct(grossMargin)],
             ].map(([l, v]) => (
               <div key={l} className="flex justify-between">
-                <span className="text-steel-400">{l}</span>
+                <span className="text-steel-200">{l}</span>
                 <span className={`font-medium ${l.includes('Margin') ? (grossMargin >= 0.1 ? 'text-green-400' : 'text-red-400') : 'text-white'}`}>{v}</span>
               </div>
             ))}
@@ -286,11 +286,11 @@ export default function Dashboard() {
           <SectionHeader icon={Wrench} title="Rate Check" color="text-orange-400" />
           <div className="space-y-2 text-sm">
             <div className="flex justify-between">
-              <span className="text-steel-400">Effective Fab Rate ($/hr all-in)</span>
+              <span className="text-steel-200">Effective Fab Rate ($/hr all-in)</span>
               <span className="text-white font-medium">{fmt(effFabRate)}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-steel-400">Effective Inst Rate ($/hr all-in)</span>
+              <span className="text-steel-200">Effective Inst Rate ($/hr all-in)</span>
               <span className="text-white font-medium">{fmt(effInstRate)}</span>
             </div>
           </div>
@@ -303,7 +303,7 @@ export default function Dashboard() {
             {statusItems.map((item) => (
               <div key={item.label} className="flex items-center gap-2 text-sm">
                 <div className={`w-2.5 h-2.5 rounded-full ${item.done ? 'bg-green-500' : 'bg-steel-600'}`} />
-                <span className={item.done ? 'text-white' : 'text-steel-500'}>{item.label}</span>
+                <span className={item.done ? 'text-white' : 'text-steel-300'}>{item.label}</span>
               </div>
             ))}
           </div>
@@ -316,8 +316,8 @@ export default function Dashboard() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
           {reviewChecklist.map((item) => (
             <label key={item} className="flex items-start gap-2 text-sm cursor-pointer group">
-              <Square className="w-4 h-4 text-steel-500 mt-0.5 flex-shrink-0 group-hover:text-yellow-400" />
-              <span className="text-steel-400 group-hover:text-steel-200">{item}</span>
+              <Square className="w-4 h-4 text-steel-300 mt-0.5 flex-shrink-0 group-hover:text-yellow-400" />
+              <span className="text-steel-200 group-hover:text-steel-200">{item}</span>
             </label>
           ))}
         </div>
@@ -331,7 +331,7 @@ export default function Dashboard() {
             <Link key={qa.path} to={qa.path} className="bg-steel-900/60 rounded-xl border border-steel-700/50 p-4 hover:border-fire-500/50 hover:bg-steel-800/60 transition-all group">
               <qa.icon className="w-5 h-5 text-fire-400 mb-2 group-hover:text-fire-300" />
               <h3 className="text-white font-semibold text-sm">{qa.label}</h3>
-              <p className="text-steel-500 text-xs mt-1">{qa.desc}</p>
+              <p className="text-steel-300 text-xs mt-1">{qa.desc}</p>
             </Link>
           ))}
         </div>
