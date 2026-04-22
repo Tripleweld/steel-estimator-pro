@@ -921,7 +921,7 @@ export default function RatesConfig() {
             {miscMetals.map((item) => (
               <div key={item.id} className="grid grid-cols-1 md:grid-cols-12 gap-2 items-center py-1.5 border-b border-steel-800/30 last:border-0">
                 <div className="col-span-5"><BlueInput value={item.item || ''} onChange={(e) => updateMiscRate(item.id, 'item', e.target.value)} /></div>
-                <div className="col-span-3"><BlueInput type="number" step="0.01" value={item.rate || 0} onChange={(e) => updateMiscRate(item.id, 'rate', e.target.value)} /></div>
+                <div className="col-span-3"><BlueInput type="text" inputMode="decimal" value={item.rate || ''} onChange={(e) => updateMiscRate(item.id, 'rate', e.target.value)} /></div>
                 <div className="col-span-2"><BlueInput value={item.unit || ''} onChange={(e) => updateMiscRate(item.id, 'unit', e.target.value)} /></div>
                 <div className="col-span-2 text-right"><button onClick={() => dispatch({ type: 'DELETE_MISC_METALS_RATE', payload: item.id })} className="text-red-400 hover:text-red-300"><Trash2 className="w-4 h-4 inline" /></button></div>
               </div>
