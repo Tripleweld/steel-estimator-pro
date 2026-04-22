@@ -17,7 +17,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Save,
-, BookOpen } from 'lucide-react'
+  BookOpen } from 'lucide-react'
 import { useState } from 'react'
 
 const navItems = [
