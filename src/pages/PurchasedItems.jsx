@@ -1,216 +1,261 @@
-import { useProject } from '../context/ProjectContext'
-import { fmtCurrency } from '../utils/calculations'
-import { Plus, Trash2, PackagePlus } from 'lucide-react'
+import { useMemo } from 'react';
+import { ShoppingCart, Plus, Trash2, Copy } from 'lucide-react';
+import { useProject } from '../context/ProjectContext';
 
-const UNIT_OPTIONS = ['ea', 'lf', 'sf', 'ton', 'ls']
+const fmt = (v) => '$' + Number(v || 0).toLocaleString('en-CA', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+const fmtNum = (v, d = 0) => Number(v || 0).toLocaleString('en-CA', { minimumFractionDigits: d, maximumFractionDigits: d });
 
-const COMMON_TEMPLATES = [
-  { item: 'Open Web Steel Joists', unit: 'ea', leadWeeks: 8 },
-  { item: 'Steel Deck (22ga)', unit: 'sf', leadWeeks: 6 },
-  { item: 'Shear Studs', unit: 'ea', leadWeeks: 2 },
-  { item: 'Grout', unit: 'ea', leadWeeks: 1 },
-  { item: 'Anchor Bolts', unit: 'ea', leadWeeks: 3 },
-  { item: 'Base Plate Leveling Nuts', unit: 'ea', leadWeeks: 2 },
-]
+const UNITS = ['ea', 'lnft', 'sqft', 'lb', 'ton', 'ls', 'set', 'lot'];
 
 export default function PurchasedItems() {
-  const { state, dispatch } = useProject()
-  const rows = state.purchased
+  const { state, dispatch } = useProject();
+  const rows = state.purchasedItems || [];
 
-  const handleUpdate = (id, field, value) => {
-    const row = rows.find(r => r.id === id)
-    if (!row) return
-    const updated = { ...row, [field]: value }
-    if (field === 'qty' || field === 'unitCost') {
-      updated.total = (parseFloat(updated.qty) || 0) * (parseFloat(updated.unitCost) || 0)
-    }
-    dispatch({ type: 'UPDATE_PURCHASED_ROW', payload: updated })
-  }
+  const summary = useMemo(() => {
+    const totalItems = rows.length;
+    const totalCost = rows.reduce((s, r) => s + (Number(r.qty) || 0) * (Number(r.unitCost) || 0), 0);
+    const longestLead = rows.reduce((m, r) => Math.max(m, Number(r.leadWeeks) || 0), 0);
+    const avgUnit = totalItems > 0
+      ? rows.reduce((s, r) => s + (Number(r.unitCost) || 0), 0) / totalItems
+      : 0;
+    return { totalItems, totalCost, longestLead, avgUnit };
+  }, [rows]);
 
   const handleAdd = () => {
-    dispatch({ type: 'ADD_PURCHASED_ROW' })
-  }
+    dispatch({
+      type: 'ADD_PURCHASED_ROW',
+      payload: {
+        id: crypto.randomUUID(),
+        item: '',
+        supplier: '',
+        qty: 1,
+        unit: 'ea',
+        unitCost: 0,
+        total: 0,
+        leadWeeks: 0,
+        notes: '',
+      },
+    });
+  };
+
+  const handleCopy = (row) => {
+    dispatch({
+      type: 'ADD_PURCHASED_ROW',
+      payload: { ...row, id: crypto.randomUUID() },
+    });
+  };
 
   const handleDelete = (id) => {
-    dispatch({ type: 'DELETE_PURCHASED_ROW', payload: id })
-  }
+    dispatch({ type: 'DELETE_PURCHASED_ROW', payload: id });
+  };
 
-  const loadCommonItems = () => {
-    const existingItems = new Set(rows.map(r => r.item))
-    const toAdd = COMMON_TEMPLATES.filter(t => !existingItems.has(t.item))
-    if (toAdd.length === 0) return
+  const handleUpdate = (id, field, value) => {
+    dispatch({ type: 'UPDATE_PURCHASED_ROW', payload: { id, [field]: value } });
+  };
 
-    // Build new rows with unique IDs and pre-filled data
-    const newRows = toAdd.map((template, i) => ({
-      id: Date.now() + i + 1,
-      item: template.item,
-      supplier: '',
-      qty: 1,
-      unit: template.unit,
-      unitCost: 0,
-      total: 0,
-      leadWeeks: template.leadWeeks,
-      notes: '',
-    }))
-
-    // Use LOAD_PROJECT to set the full state with new purchased rows appended
-    const updatedState = {
-      ...state,
-      purchased: [...rows, ...newRows],
-      isDirty: true,
-    }
-    dispatch({ type: 'LOAD_PROJECT', payload: updatedState })
-  }
-
-  const grandTotal = rows.reduce((sum, r) => {
-    return sum + ((parseFloat(r.qty) || 0) * (parseFloat(r.unitCost) || 0))
-  }, 0)
+  const lineTotal = (r) => (Number(r.qty) || 0) * (Number(r.unitCost) || 0);
 
   return (
-    <div className="space-y-6">
-      <div className="accent-stripe" />
+    <div className="min-h-screen bg-steel-50">
+      {/* Accent stripe */}
+      <div className="accent-stripe h-1.5 w-full bg-gradient-to-r from-fire-500 via-fire-600 to-steel-800" />
 
-      <div className="flex items-start justify-between">
-        <div>
-          <h1 className="page-title">Purchased Items</h1>
-          <p className="page-subtitle">
-            Items purchased from suppliers — joists, deck, fasteners, grout.
+      <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+        {/* Page header */}
+        <div className="mb-8">
+          <h1 className="page-title flex items-center gap-3 text-3xl font-bold text-steel-900">
+            <ShoppingCart className="h-8 w-8 text-fire-600" />
+            Purchased Items
+          </h1>
+          <p className="page-subtitle mt-1 text-sm text-steel-500">
+            Third-party materials, sub-contracts &amp; supplier quotes
           </p>
         </div>
-        <button onClick={loadCommonItems} className="btn-secondary">
-          <PackagePlus className="h-4 w-4" />
-          Load common items
-        </button>
-      </div>
 
-      <div className="card overflow-x-auto">
-        <table className="w-full min-w-[900px]">
-          <thead>
-            <tr>
-              <th className="table-header w-[200px]">Item</th>
-              <th className="table-header w-[140px]">Supplier</th>
-              <th className="table-header w-[80px] text-right">Qty</th>
-              <th className="table-header w-[80px]">Unit</th>
-              <th className="table-header w-[110px] text-right">Unit Cost ($)</th>
-              <th className="table-header w-[110px] text-right">Total ($)</th>
-              <th className="table-header w-[70px] text-right">Lead (wk)</th>
-              <th className="table-header w-[160px]">Notes</th>
-              <th className="table-header w-[50px]"></th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-silver-100">
-            {rows.map(row => {
-              const total = (parseFloat(row.qty) || 0) * (parseFloat(row.unitCost) || 0)
-              return (
-                <tr key={row.id} className="table-row">
-                  <td className="table-cell">
-                    <input
-                      type="text"
-                      className="input-field"
-                      value={row.item}
-                      onChange={e => handleUpdate(row.id, 'item', e.target.value)}
-                      placeholder="Item name"
-                    />
-                  </td>
-                  <td className="table-cell">
-                    <input
-                      type="text"
-                      className="input-field"
-                      value={row.supplier}
-                      onChange={e => handleUpdate(row.id, 'supplier', e.target.value)}
-                      placeholder="Supplier"
-                    />
-                  </td>
-                  <td className="table-cell">
-                    <input
-                      type="number"
-                      className="input-number"
-                      value={row.qty}
-                      onChange={e => handleUpdate(row.id, 'qty', parseFloat(e.target.value) || 0)}
-                      min="0"
-                    />
-                  </td>
-                  <td className="table-cell">
-                    <select
-                      className="input-field"
-                      value={row.unit}
-                      onChange={e => handleUpdate(row.id, 'unit', e.target.value)}
-                    >
-                      {UNIT_OPTIONS.map(u => (
-                        <option key={u} value={u}>{u}</option>
-                      ))}
-                    </select>
-                  </td>
-                  <td className="table-cell">
-                    <input
-                      type="number"
-                      className="input-number"
-                      value={row.unitCost}
-                      onChange={e => handleUpdate(row.id, 'unitCost', parseFloat(e.target.value) || 0)}
-                      min="0"
-                      step="0.01"
-                    />
-                  </td>
-                  <td className="table-cell currency font-medium text-steel-900">
-                    {fmtCurrency(total)}
-                  </td>
-                  <td className="table-cell">
-                    <input
-                      type="number"
-                      className="input-number"
-                      value={row.leadWeeks}
-                      onChange={e => handleUpdate(row.id, 'leadWeeks', parseInt(e.target.value) || 0)}
-                      min="0"
-                    />
-                  </td>
-                  <td className="table-cell">
-                    <input
-                      type="text"
-                      className="input-field"
-                      value={row.notes}
-                      onChange={e => handleUpdate(row.id, 'notes', e.target.value)}
-                      placeholder="Notes"
-                    />
-                  </td>
-                  <td className="table-cell text-center">
-                    <button
-                      onClick={() => handleDelete(row.id)}
-                      className="btn-danger p-1.5"
-                      title="Delete row"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </button>
-                  </td>
+        {/* Summary cards */}
+        <div className="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="rounded-xl border border-silver-200 bg-white p-5 shadow-sm">
+            <p className="text-xs font-medium uppercase tracking-wide text-steel-500">Total Items</p>
+            <p className="mt-1 text-2xl font-bold text-steel-900">{fmtNum(summary.totalItems)}</p>
+          </div>
+          <div className="rounded-xl border border-silver-200 bg-white p-5 shadow-sm">
+            <p className="text-xs font-medium uppercase tracking-wide text-steel-500">Total Cost</p>
+            <p className="mt-1 text-2xl font-bold text-fire-600">{fmt(summary.totalCost)}</p>
+          </div>
+          <div className="rounded-xl border border-silver-200 bg-white p-5 shadow-sm">
+            <p className="text-xs font-medium uppercase tracking-wide text-steel-500">Longest Lead Time</p>
+            <p className="mt-1 text-2xl font-bold text-steel-900">
+              {summary.longestLead > 0 ? `${fmtNum(summary.longestLead)} wks` : '—'}
+            </p>
+          </div>
+          <div className="rounded-xl border border-silver-200 bg-white p-5 shadow-sm">
+            <p className="text-xs font-medium uppercase tracking-wide text-steel-500">Average Unit Cost</p>
+            <p className="mt-1 text-2xl font-bold text-steel-900">{fmt(summary.avgUnit)}</p>
+          </div>
+        </div>
+
+        {/* Add button */}
+        <div className="mb-4 flex justify-end">
+          <button
+            onClick={handleAdd}
+            className="inline-flex items-center gap-2 rounded-lg bg-fire-500 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-fire-600 focus:outline-none focus:ring-2 focus:ring-fire-500 focus:ring-offset-2"
+          >
+            <Plus className="h-4 w-4" />
+            Add Item
+          </button>
+        </div>
+
+        {/* Table */}
+        <div className="rounded-xl border border-silver-200 bg-white shadow-sm">
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="bg-steel-800 text-white">
+                  <th className="rounded-tl-xl px-3 py-3 text-left font-semibold">#</th>
+                  <th className="px-3 py-3 text-left font-semibold">Item Description</th>
+                  <th className="px-3 py-3 text-left font-semibold">Supplier</th>
+                  <th className="px-3 py-3 text-right font-semibold">Qty</th>
+                  <th className="px-3 py-3 text-left font-semibold">Unit</th>
+                  <th className="px-3 py-3 text-right font-semibold">Unit Cost ($)</th>
+                  <th className="px-3 py-3 text-right font-semibold">Line Total ($)</th>
+                  <th className="px-3 py-3 text-right font-semibold">Lead Time (wks)</th>
+                  <th className="px-3 py-3 text-left font-semibold">Notes</th>
+                  <th className="rounded-tr-xl px-3 py-3 text-center font-semibold">Actions</th>
                 </tr>
-              )
-            })}
+              </thead>
+              <tbody>
+                {rows.length === 0 ? (
+                  <tr>
+                    <td colSpan={10} className="px-6 py-16 text-center">
+                      <ShoppingCart className="mx-auto mb-3 h-10 w-10 text-steel-300" />
+                      <p className="text-sm text-steel-500">
+                        No purchased items yet. Click{' '}
+                        <span className="font-semibold text-fire-600">+ Add Item</span> for third-party
+                        materials, joist/deck quotes, or sub-contract items.
+                      </p>
+                    </td>
+                  </tr>
+                ) : (
+                  rows.map((row, idx) => (
+                    <tr key={row.id} className="border-t border-silver-100 even:bg-steel-50">
+                      <td className="px-3 py-2 text-steel-400 font-mono text-xs">{idx + 1}</td>
+                      <td className="px-3 py-2">
+                        <input
+                          type="text"
+                          value={row.item}
+                          onChange={(e) => handleUpdate(row.id, 'item', e.target.value)}
+                          placeholder="e.g. Open-web joists"
+                          className="w-full min-w-[180px] rounded border border-silver-200 bg-transparent px-2 py-1 text-sm text-steel-900 placeholder:text-steel-300 focus:border-fire-500 focus:outline-none focus:ring-1 focus:ring-fire-500"
+                        />
+                      </td>
+                      <td className="px-3 py-2">
+                        <input
+                          type="text"
+                          value={row.supplier}
+                          onChange={(e) => handleUpdate(row.id, 'supplier', e.target.value)}
+                          placeholder="Supplier"
+                          className="w-full min-w-[120px] rounded border border-silver-200 bg-transparent px-2 py-1 text-sm text-steel-900 placeholder:text-steel-300 focus:border-fire-500 focus:outline-none focus:ring-1 focus:ring-fire-500"
+                        />
+                      </td>
+                      <td className="px-3 py-2">
+                        <input
+                          type="number"
+                          min="0"
+                          value={row.qty}
+                          onChange={(e) => handleUpdate(row.id, 'qty', parseFloat(e.target.value) || 0)}
+                          className="w-20 rounded border border-silver-200 bg-transparent px-2 py-1 text-right text-sm text-steel-900 focus:border-fire-500 focus:outline-none focus:ring-1 focus:ring-fire-500"
+                        />
+                      </td>
+                      <td className="px-3 py-2">
+                        <select
+                          value={row.unit}
+                          onChange={(e) => handleUpdate(row.id, 'unit', e.target.value)}
+                          className="rounded border border-silver-200 bg-transparent px-2 py-1 text-sm text-steel-900 focus:border-fire-500 focus:outline-none focus:ring-1 focus:ring-fire-500"
+                        >
+                          {UNITS.map((u) => (
+                            <option key={u} value={u}>{u}</option>
+                          ))}
+                        </select>
+                      </td>
+                      <td className="px-3 py-2">
+                        <input
+                          type="number"
+                          min="0"
+                          step="0.01"
+                          value={row.unitCost}
+                          onChange={(e) => handleUpdate(row.id, 'unitCost', parseFloat(e.target.value) || 0)}
+                          className="w-28 rounded border border-silver-200 bg-transparent px-2 py-1 text-right text-sm text-steel-900 focus:border-fire-500 focus:outline-none focus:ring-1 focus:ring-fire-500"
+                        />
+                      </td>
+                      <td className="px-3 py-2 text-right">
+                        <span className="font-mono font-bold text-steel-900">
+                          {fmt(lineTotal(row))}
+                        </span>
+                      </td>
+                      <td className="px-3 py-2">
+                        <input
+                          type="number"
+                          min="0"
+                          value={row.leadWeeks}
+                          onChange={(e) => handleUpdate(row.id, 'leadWeeks', parseInt(e.target.value) || 0)}
+                          className="w-16 rounded border border-silver-200 bg-transparent px-2 py-1 text-right text-sm text-steel-900 focus:border-fire-500 focus:outline-none focus:ring-1 focus:ring-fire-500"
+                        />
+                      </td>
+                      <td className="px-3 py-2">
+                        <input
+                          type="text"
+                          value={row.notes}
+                          onChange={(e) => handleUpdate(row.id, 'notes', e.target.value)}
+                          placeholder="Notes"
+                          className="w-full min-w-[100px] rounded border border-silver-200 bg-transparent px-2 py-1 text-sm text-steel-900 placeholder:text-steel-300 focus:border-fire-500 focus:outline-none focus:ring-1 focus:ring-fire-500"
+                        />
+                      </td>
+                      <td className="px-3 py-2">
+                        <div className="flex items-center justify-center gap-1">
+                          <button
+                            onClick={() => handleCopy(row)}
+                            title="Duplicate row"
+                            className="rounded p-1 text-steel-400 transition hover:bg-steel-100 hover:text-steel-700"
+                          >
+                            <Copy className="h-4 w-4" />
+                          </button>
+                          <button
+                            onClick={() => handleDelete(row.id)}
+                            title="Delete row"
+                            className="rounded p-1 text-steel-400 transition hover:bg-red-50 hover:text-red-600"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+              {rows.length > 0 && (
+                <tfoot>
+                  <tr className="border-t-2 border-steel-200 bg-steel-50">
+                    <td colSpan={6} className="px-3 py-3 text-right text-sm font-bold text-steel-700">
+                      Grand Total
+                    </td>
+                    <td className="px-3 py-3 text-right">
+                      <span className="font-mono text-base font-bold text-fire-600">
+                        {fmt(summary.totalCost)}
+                      </span>
+                    </td>
+                    <td colSpan={3} />
+                  </tr>
+                </tfoot>
+              )}
+            </table>
+          </div>
+        </div>
 
-            {rows.length === 0 && (
-              <tr>
-                <td colSpan={9} className="table-cell text-center text-silver-400 py-8">
-                  No purchased items yet. Click "Load common items" or add a row below.
-                </td>
-              </tr>
-            )}
-          </tbody>
-          <tfoot>
-            <tr className="bg-steel-800 text-silver-300 border-t-2 border-steel-700">
-              <td colSpan={5} className="table-cell text-right font-semibold text-silver-100">
-                Grand Total
-              </td>
-              <td className="table-cell currency font-bold text-white text-lg">
-                {fmtCurrency(grandTotal)}
-              </td>
-              <td colSpan={3}></td>
-            </tr>
-          </tfoot>
-        </table>
+        {/* Footer */}
+        <div className="mt-10 border-t border-silver-200 pt-4 text-center text-xs text-steel-400">
+          Triple Weld Inc. &mdash; Steel Estimating Platform
+        </div>
       </div>
-
-      <button onClick={handleAdd} className="btn-primary">
-        <Plus className="h-4 w-4" />
-        Add Row
-      </button>
     </div>
-  )
+  );
 }
