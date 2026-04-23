@@ -2,7 +2,7 @@ import React, { useState, useCallback, useMemo, useRef, useEffect } from 'react'
 import { useProject } from '../context/ProjectContext';
 import AISC_SHAPES from '../data/aisc-shapes-data';
 
-/* âââ Section definitions matching Excel layout âââ */
+/* ─── Section definitions matching Excel layout ─── */
 const SECTIONS = [
   { id: 'columns',        label: 'COLUMNS',                     prefix: 'C',     defaultRows: 5  },
   { id: 'beams',           label: 'BEAMS',                       prefix: 'B',     defaultRows: 5  },
@@ -18,7 +18,7 @@ const SECTIONS = [
   { id: 'lintels',         label: 'LINTELS',                     prefix: 'L',     defaultRows: 3  },
 ];
 
-/* âââ Helpers âââ */
+/* ─── Helpers ─── */
 const fmtNum = (v, d = 0) => {
   if (v == null || isNaN(v)) return d === 0 ? '0' : '0.' + '0'.repeat(d);
   return Number(v).toLocaleString('en-US', { minimumFractionDigits: d, maximumFractionDigits: d });
@@ -54,7 +54,7 @@ function makeEmptyRow(sectionId, prefix, index) {
   };
 }
 
-/* âââ Summary Card âââ */
+/* ─── Summary Card ─── */
 function SummaryCard({ label, value, color }) {
   const colorMap = {
     blue:  'border-blue-400/80 bg-blue-950 text-blue-100',
@@ -70,7 +70,7 @@ function SummaryCard({ label, value, color }) {
   );
 }
 
-/* âââ Editable Cell âââ */
+/* ─── Editable Cell ─── */
 function EditCell({ value, onChange, type = 'text', className = '', ...rest }) {
   return (
     <input
@@ -86,7 +86,7 @@ function EditCell({ value, onChange, type = 'text', className = '', ...rest }) {
   );
 }
 
-/* âââ Overridable Sum Cell âââ
+/* ─── Overridable Sum Cell ───
    Shows auto-calculated sum by default.
    When user types a value, it becomes the override.
    Clear the field completely to revert to auto-sum.
@@ -124,12 +124,12 @@ function OverridableCell({ calcValue, override, onOverride, colorClass }) {
           ? 'bg-amber-900/40 border border-amber-500/50'
           : 'bg-transparent border border-transparent'
       }`}
-      title={isOverridden ? `Override: ${override} (auto: ${fmtNum(calcValue, 1)})` : 'Auto-calculated â type to override'}
+      title={isOverridden ? `Override: ${override} (auto: ${fmtNum(calcValue, 1)})` : 'Auto-calculated — type to override'}
     />
   );
 }
 
-/* âââ Profile Search Dropdown âââ
+/* ─── Profile Search Dropdown ───
    Searchable dropdown populated with 1,606 AISC profiles.
    Type to filter, click or Enter to select.
    Auto-fills Wt/ft when a profile is selected. */
@@ -216,18 +216,18 @@ function ProfileSearch({ value, onSelect }) {
   );
 }
 
-/* âââ Section Header with collapse toggle âââ */
+/* ─── Section Header with collapse toggle ─── */
 function SectionHeader({ label, isOpen, onToggle, rowCount, sectionTotals, onAddRow }) {
   return (
     <div className="flex items-center justify-between bg-steel-800/80 border border-steel-700 rounded-lg px-4 py-2.5 mt-4 first:mt-0">
       <button onClick={onToggle} className="flex items-center gap-3 text-left flex-1">
-        <span className={`text-steel-400 transition-transform duration-200 ${isOpen ? 'rotate-90' : ''}`}>â¶</span>
+        <span className={`text-steel-400 transition-transform duration-200 ${isOpen ? 'rotate-90' : ''}`}>▶</span>
         <span className="text-sm font-bold uppercase tracking-wider text-fire-400">{label}</span>
         <span className="text-xs text-steel-500 font-mono">({rowCount} {rowCount === 1 ? 'row' : 'rows'})</span>
         {!isOpen && sectionTotals.totalLbs > 0 && (
           <span className="text-xs text-steel-400 ml-2">
-            â {fmtNum(sectionTotals.totalLbs)} lb / {fmtNum(sectionTotals.totalTons, 2)} ton
-            &nbsp;â¢&nbsp; {fmtDollar(sectionTotals.rowTotal)}
+            — {fmtNum(sectionTotals.totalLbs)} lb / {fmtNum(sectionTotals.totalTons, 2)} ton
+            &nbsp;•&nbsp; {fmtDollar(sectionTotals.rowTotal)}
           </span>
         )}
       </button>
@@ -241,7 +241,7 @@ function SectionHeader({ label, isOpen, onToggle, rowCount, sectionTotals, onAdd
   );
 }
 
-/* âââ Helper: get effective fab/inst per piece âââ */
+/* ─── Helper: get effective fab/inst per piece ─── */
 function getEffectiveFabPerPc(row) {
   if (row.fabPerPcOverride != null && row.fabPerPcOverride !== '' && row.fabPerPcOverride !== 0) {
     return toNum(row.fabPerPcOverride);
@@ -256,7 +256,7 @@ function getEffectiveInstPerPc(row) {
   return toNum(row.unload) + toNum(row.rig) + toNum(row.fit) + toNum(row.bolt) + toNum(row.touchUp);
 }
 
-/* âââ The Data Row âââ */
+/* ─── The Data Row ─── */
 function DataRow({ row, index, fabRate, installRate, onUpdate, onDelete }) {
   const totalLbs = toNum(row.qty) * toNum(row.lengthFt) * toNum(row.wtPerFt);
   const totalTon = totalLbs / 2000;
@@ -292,7 +292,7 @@ function DataRow({ row, index, fabRate, installRate, onUpdate, onDelete }) {
           {MEMBER_TYPES.map(t => <option key={t} value={t} style={{ backgroundColor: "#0c1222", color: "white" }}>{t}</option>)}
         </select>
       </td>
-      {/* Profile â AISC searchable dropdown */}
+      {/* Profile — AISC searchable dropdown */}
       <td className="px-1 py-1">
         <ProfileSearch
           value={row.profile}
@@ -317,7 +317,7 @@ function DataRow({ row, index, fabRate, installRate, onUpdate, onDelete }) {
       {['setup','cut','drill','feed','weld','grind','paint'].map(f => (
         <td key={f} className="px-1 py-1"><EditCell value={row[f]} onChange={set(f)} type="text" inputMode="decimal" className="text-right w-12" /></td>
       ))}
-      {/* Fab/Pc â overridable */}
+      {/* Fab/Pc — overridable */}
       <td className="px-1 py-1">
         <OverridableCell
           calcValue={calcFabPerPc}
@@ -334,7 +334,7 @@ function DataRow({ row, index, fabRate, installRate, onUpdate, onDelete }) {
       {['unload','rig','fit','bolt','touchUp'].map(f => (
         <td key={f} className="px-1 py-1"><EditCell value={row[f]} onChange={set(f)} type="text" inputMode="decimal" className="text-right w-12" /></td>
       ))}
-      {/* Inst/Pc â overridable */}
+      {/* Inst/Pc — overridable */}
       <td className="px-1 py-1">
         <OverridableCell
           calcValue={calcInstPerPc}
@@ -356,13 +356,13 @@ function DataRow({ row, index, fabRate, installRate, onUpdate, onDelete }) {
       <td className="px-1 py-1"><EditCell value={row.notes} onChange={set('notes')} placeholder="" className="w-24" /></td>
       {/* Delete */}
       <td className="px-1 py-1 text-center">
-        <button onClick={() => onDelete(row.id)} className="text-red-500/60 hover:text-red-400 text-xs">â</button>
+        <button onClick={() => onDelete(row.id)} className="text-red-500/60 hover:text-red-400 text-xs">✕</button>
       </td>
     </tr>
   );
 }
 
-/* âââ Section Totals Row âââ */
+/* ─── Section Totals Row ─── */
 function SectionTotalsRow({ rows, fabRate, installRate }) {
   const t = calcSectionTotals(rows, fabRate, installRate);
   return (
@@ -391,7 +391,7 @@ function SectionTotalsRow({ rows, fabRate, installRate }) {
   );
 }
 
-/* âââ Calculate totals for a section âââ */
+/* ─── Calculate totals for a section ─── */
 function calcSectionTotals(rows, fabRate, installRate) {
   let totalPcs = 0, totalLbs = 0, totFab = 0, totInst = 0;
   rows.forEach(r => {
@@ -415,22 +415,22 @@ function calcSectionTotals(rows, fabRate, installRate) {
   };
 }
 
-/* âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
+/* ═══════════════════════════════════════════════════════════════
    MAIN COMPONENT
-   âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ */
+   ═══════════════════════════════════════════════════════════════ */
 export default function StructuralTakeoff() {
   const { state, dispatch } = useProject();
   const fabRate = toNum(state.rates?.labourRates?.fabRate ?? 50);
   const installRate = toNum(state.rates?.labourRates?.installRate ?? 55);
 
-  /* âââ Row state: all rows stored flat, each has a .section field âââ */
+  /* ─── Row state: all rows stored flat, each has a .section field ─── */
   const [rows, setRows] = useState(() => {
     const saved = state.structuralRows;
     if (saved && saved.length > 0) return saved;
     return [];
   });
 
-  /* âââ Section open/close state âââ */
+  /* ─── Section open/close state ─── */
   const [openSections, setOpenSections] = useState(() => {
     const m = {};
     SECTIONS.forEach(s => { m[s.id] = true; });
@@ -441,7 +441,7 @@ export default function StructuralTakeoff() {
     setOpenSections(prev => ({ ...prev, [id]: !prev[id] }));
   }, []);
 
-  /* âââ Row CRUD âââ */
+  /* ─── Row CRUD ─── */
   const addRow = useCallback((sectionId) => {
     setRows(prev => {
       const sec = SECTIONS.find(s => s.id === sectionId);
@@ -472,17 +472,17 @@ export default function StructuralTakeoff() {
     setRows(prev => prev.filter(r => r.id !== id));
   }, []);
 
-  /* âââ Save rows to context on change âââ */
+  /* ─── Save rows to context on change ─── */
   useEffect(() => {
     dispatch({ type: 'SET_STRUCTURAL_ROWS', payload: rows });
   }, [rows, dispatch]);
 
-  /* âââ Grand totals âââ */
+  /* ─── Grand totals ─── */
   const grandTotals = useMemo(() => {
     return calcSectionTotals(rows, fabRate, installRate);
   }, [rows, fabRate, installRate]);
 
-  /* âââ Column headers âââ */
+  /* ─── Column headers ─── */
   const colGroups = [
     { label: 'Identification', cols: 4, color: 'bg-purple-800/60', border: 'border-purple-500' },
     { label: 'Quantity & Weight', cols: 5, color: 'bg-green-800/60', border: 'border-green-500' },
@@ -503,7 +503,7 @@ export default function StructuralTakeoff() {
     'Notes',
   ];
 
-  /* âââââââââââââââââ RENDER âââââââââââââââââ */
+  /* ───────────────── RENDER ───────────────── */
   return (
     <div className="min-h-screen bg-steel-950 text-white p-6 space-y-4">
       {/* Accent stripe */}
@@ -513,9 +513,9 @@ export default function StructuralTakeoff() {
       <div className="flex items-start justify-between">
         <div>
           <h1 className="text-2xl font-bold text-white flex items-center gap-2">
-            <span className="text-fire-400">â</span> Structural Steel Takeoff
+            <span className="text-fire-400">⛑</span> Structural Steel Takeoff
           </h1>
-          <p className="text-steel-400 text-sm mt-0.5">Division 05 12 00 â Structural Steel Framing</p>
+          <p className="text-steel-400 text-sm mt-0.5">Division 05 12 00 — Structural Steel Framing</p>
           <div className="flex gap-2 mt-2">
             <span className="px-2 py-0.5 bg-fire-600/80 text-white text-xs font-semibold rounded">Fab Rate: ${fabRate}/hr</span>
             <span className="px-2 py-0.5 bg-green-600/80 text-white text-xs font-semibold rounded">Install Rate: ${installRate}/hr</span>
@@ -532,7 +532,7 @@ export default function StructuralTakeoff() {
             })}
             className="px-3 py-1.5 bg-steel-700 hover:bg-steel-600 text-steel-300 text-xs font-semibold rounded transition-colors"
           >
-            {Object.values(openSections).every(v => v) ? 'â Collapse All' : 'â Expand All'}
+            {Object.values(openSections).every(v => v) ? '⊟ Collapse All' : '⊞ Expand All'}
           </button>
         </div>
       </div>
@@ -546,7 +546,7 @@ export default function StructuralTakeoff() {
         <SummaryCard label="Grand Total" value={fmtDollar(grandTotals.rowTotal)} color="red" />
       </div>
 
-      {/* âââ Sections âââ */}
+      {/* ─── Sections ─── */}
       <div className="space-y-1">
         {SECTIONS.map(sec => {
           const sectionRows = rows.filter(r => r.section === sec.id);
@@ -625,7 +625,7 @@ export default function StructuralTakeoff() {
       {/* Grand Total Bar */}
       <div className="bg-steel-800/80 border border-steel-600 rounded-lg p-4 mt-4">
         <div className="flex items-center justify-between">
-          <span className="text-lg font-bold text-white uppercase tracking-wider">Grand Totals â All Sections</span>
+          <span className="text-lg font-bold text-white uppercase tracking-wider">Grand Totals — All Sections</span>
           <div className="flex gap-6 text-sm font-mono">
             <span className="text-steel-300">{fmtNum(grandTotals.totalPcs)} pcs</span>
             <span className="text-steel-300">{fmtNum(grandTotals.totalLbs)} lb</span>
