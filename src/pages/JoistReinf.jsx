@@ -181,7 +181,7 @@ function calcRow(r) {
   };
 }
 
-/* ── Info Legend (collapsible) ── */
+/* ─┈ Info Legend (collapsible) ─┈ */
 function JoistInfoLegend() {
   const [open, setOpen] = useState(false);
   return (
@@ -574,7 +574,7 @@ export default function JoistReinf() {
         {rows.length > 0 && (
           <div className="flex items-center gap-2 px-3 py-1.5 mb-1 text-[10px] font-semibold uppercase tracking-wider text-silver-500">
             <span className="w-8 text-center">#</span>
-             <div className="flex-1 grid grid-cols-8 gap-2">
+            <div className="flex-1 grid grid-cols-8 gap-2">
               <span>Mark</span><span>Location</span><span>Joist Type</span><span>Span (ft)</span>
               <span className="col-span-2">Reinf. Method</span><span>Qty</span>
             </div>
