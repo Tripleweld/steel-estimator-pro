@@ -157,12 +157,13 @@ function computeRailing(row, materialRates, galvRatePerLb, fabRate, installRate,
   const rateGalv = matRateMap['Galvanized steel'] || 1.20;
   const rateSS304 = matRateMap['Stainless Steel 304'] || matRateMap['Stainless steel'] || 3.50;
   const rateSS316 = matRateMap['Stainless Steel 316'] || 5.50;
+  const ratePowder = matRateMap['Powder Coat'] || 1.50;
   const finishCfg = {
     'Paint':              { matRate: rateStruct, upcharge: 0 },
     'Galvanized':         { matRate: rateGalv,   upcharge: galvRatePerLb || 0.80 },
     'Stainless Steel 304':{ matRate: rateSS304,  upcharge: 0 },
     'Stainless Steel 316':{ matRate: rateSS316,  upcharge: 0 },
-    'Powder Coated':      { matRate: rateStruct, upcharge: 1.50 },
+    'Powder Coated':      { matRate: rateStruct, upcharge: ratePowder },
   };
   const fc = finishCfg[row.finish] || finishCfg['Paint'];
   const matRate = fc.matRate;
