@@ -369,7 +369,7 @@ function projectReducer(state, action) {
     /* Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂ Joist Reinforcement Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂ */
     case 'ADD_JOIST_REINF_ROW': {
       const newId = Date.now()
-      return { ...state, joistReinf: [...state.joistReinf, { id: newId, mark: '', location: '', joistType: '', span: 0, reinfMethod: 'Angle + Plate', qty: 1, weightLbs: 0, fabHrs: 0, instHrs: 0, notes: '' }], isDirty: true }
+      return { ...state, joistReinf: [...state.joistReinf, { id: newId, mark: '', location: '', joistType: '8K1', span: 0, reinfMethod: '2 Bars Top + Plate Bottom', qty: 1, weightLbs: 0, fabHrs: 0, instHrs: 0, notes: '' }], isDirty: true }
     }
     case 'UPDATE_JOIST_REINF_ROW': {
       const joistReinf = state.joistReinf.map(row => row.id === action.payload.id ? { ...row, ...action.payload } : row)
