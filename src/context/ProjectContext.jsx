@@ -132,7 +132,7 @@ const defaultCodeLimits = [
   { id: 6, item: 'Risers max before landing', value: 12, unit: '', reference: 'OBC 3.4' },
   { id: 7, item: 'Baluster spacing max', value: 100, unit: 'mm', reference: 'OBC 3.4' },
   { id: 8, item: 'Rung spacing (ladder)', value: 12, unit: 'in', reference: 'OHSA' },
-  { id: 9, item: 'Cage required above', value: 6, unit: 'm', reference: 'OHSA' },
+  { id: 9, item: 'Cage required above', value: 5, unit: 'm', reference: 'OHSA' },
   { id: 10, item: 'Shoring / jacks per day', value: 250, unit: '$/day', reference: '' },
   { id: 11, item: 'Scissor lift day rate', value: 300, unit: '$/day', reference: '' },
 ]
