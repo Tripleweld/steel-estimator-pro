@@ -196,16 +196,11 @@ export default function Ladder() {
     if (!state.ladder || state.ladder.length === 0) {
       dispatch({ type: 'ADD_LADDER_ROW' })
     }
-  }, [state.ladder, dispatch])
+  }, [state.ladder?.length, dispatch])
 
-  const ladder = state.ladder?.[0]
-  if (!ladder) {
-    return (
-      <div className="min-h-screen bg-silver-50 flex items-center justify-center">
-        <p className="text-silver-500">Initializing ladder calculator…</p>
-      </div>
-    )
-  }
+  // Use empty object as fallback so all hooks below run unconditionally (React rules-of-hooks)
+  const ladder = state.ladder?.[0] || {}
+  const ladderId = state.ladder?.[0]?.id
 
   // Defaults overlay (legacy ladder rows had different fields)
   const s = {
@@ -229,8 +224,10 @@ export default function Ladder() {
     instBreakdown: ladder.instBreakdown || DEFAULT_INST_BREAKDOWN,
   }
 
-  const set = (field, value) =>
-    dispatch({ type: 'UPDATE_LADDER_ROW', payload: { id: ladder.id, [field]: value } })
+  const set = (field, value) => {
+    if (!ladderId) return // wait for init useEffect to add the row
+    dispatch({ type: 'UPDATE_LADDER_ROW', payload: { id: ladderId, [field]: value } })
+  }
 
   const setFabSub = (compKey, subKey, value) => {
     const next = {
@@ -824,6 +821,4 @@ export default function Ladder() {
           <p className="text-xs text-silver-400">Triple Weld Inc. · Steel Estimator Pro · Ladder v2 (Excel v5.1 match)</p>
         </div>
       </div>
-    </div>
-  )
-}
+    </
