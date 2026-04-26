@@ -246,24 +246,24 @@ function getEffectiveFabPerPc(row) {
   if (row.fabPerPcOverride != null && row.fabPerPcOverride !== '' && row.fabPerPcOverride !== 0) {
     return toNum(row.fabPerPcOverride);
   }
-  return toNum(row.setup) + toNum(row.cut) + toNum(row.drill) + toNum(row.feed) + toNum(row.weld) + toNum(row.grind) + toNum(row.paint);
+  return (toNum(row.setup) + toNum(row.cut) + toNum(row.drill) + toNum(row.feed) + toNum(row.weld) + toNum(row.grind) + toNum(row.paint)) / 60;
 }
 
 function getEffectiveInstPerPc(row) {
   if (row.instPerPcOverride != null && row.instPerPcOverride !== '' && row.instPerPcOverride !== 0) {
     return toNum(row.instPerPcOverride);
   }
-  return toNum(row.unload) + toNum(row.rig) + toNum(row.fit) + toNum(row.bolt) + toNum(row.touchUp);
+  return (toNum(row.unload) + toNum(row.rig) + toNum(row.fit) + toNum(row.bolt) + toNum(row.touchUp)) / 60;
 }
 
 /* ─── The Data Row ─── */
 function DataRow({ row, index, fabRate, installRate, onUpdate, onDelete }) {
   const totalLbs = toNum(row.qty) * toNum(row.lengthFt) * toNum(row.wtPerFt);
   const totalTon = totalLbs / 2000;
-  const calcFabPerPc = toNum(row.setup) + toNum(row.cut) + toNum(row.drill) + toNum(row.feed) + toNum(row.weld) + toNum(row.grind) + toNum(row.paint);
+  const calcFabPerPc = (toNum(row.setup) + toNum(row.cut) + toNum(row.drill) + toNum(row.feed) + toNum(row.weld) + toNum(row.grind) + toNum(row.paint)) / 60;
   const fabPerPc = getEffectiveFabPerPc(row);
   const totFab = fabPerPc * toNum(row.qty) * (toNum(row.fabCrew) || 1);
-  const calcInstPerPc = toNum(row.unload) + toNum(row.rig) + toNum(row.fit) + toNum(row.bolt) + toNum(row.touchUp);
+  const calcInstPerPc = (toNum(row.unload) + toNum(row.rig) + toNum(row.fit) + toNum(row.bolt) + toNum(row.touchUp)) / 60;
   const instPerPc = getEffectiveInstPerPc(row);
   const totInst = instPerPc * toNum(row.qty) * (toNum(row.instCrew) || 1);
   const matCost = totalLbs * 1.15;
@@ -497,8 +497,8 @@ export default function StructuralTakeoff() {
     'Mark','Dwg Ref','Type','Profile',
     'Qty','Length (ft)','Wt/ft (lb)','Total (lb)','Total (ton)',
     'Base Pl (lb)','Anchors/pc',
-    'Setup','Cut','Drill','Feed','Weld','Grind','Paint','Fab/Pc','Tot Fab','Fab Crew',
-    'Unload','Rig','Fit','Bolt','Touch-up','Inst/Pc','Tot Inst','Inst Crew',
+    'Setup (min)','Cut (min)','Drill (min)','Feed (min)','Weld (min)','Grind (min)','Paint (min)','Fab/Pc (hrs)','Tot Fab (hrs)','Fab Crew',
+    'Unload (min)','Rig (min)','Fit (min)','Bolt (min)','Touch-up (min)','Inst/Pc (hrs)','Tot Inst (hrs)','Inst Crew',
     'Material $','Fab $','Install $','Row Total',
     'Notes',
   ];
