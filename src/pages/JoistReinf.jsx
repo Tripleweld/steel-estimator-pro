@@ -35,7 +35,7 @@ const defaultRow = () => ({
 
 export default function JoistReinf() {
   const { state, dispatch } = useProject();
-  const rows = state.joistReinfRows || [];
+  const rows = state.joistReinf || [];
 
   const addRow = () => dispatch({ type: 'ADD_JOIST_REINF_ROW', payload: defaultRow() });
 
