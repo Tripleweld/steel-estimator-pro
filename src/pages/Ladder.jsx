@@ -821,4 +821,6 @@ export default function Ladder() {
           <p className="text-xs text-silver-400">Triple Weld Inc. · Steel Estimator Pro · Ladder v2 (Excel v5.1 match)</p>
         </div>
       </div>
-    </
+    </div>
+  )
+}
