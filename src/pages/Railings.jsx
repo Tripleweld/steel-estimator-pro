@@ -23,6 +23,53 @@ const COMPONENTS = [
   { key: 'basePlates',   label: 'Base plates',        section: 'FB 102x13',     lbPerFt: 6.81,  notes: '~5" plate per post' },
 ];
 
+const SECTION_CATALOG = {
+  rails: [
+    { name: 'Pipe 25 Sch40 (1")',     lbPerFt: 1.69 },
+    { name: 'Pipe 32 Sch40 (1.25")',  lbPerFt: 2.27 },
+    { name: 'Pipe 38 Sch40 (1.5")',   lbPerFt: 2.72 },
+    { name: 'Pipe 50 Sch40 (2")',     lbPerFt: 3.65 },
+    { name: 'Pipe 64 Sch40 (2.5")',   lbPerFt: 5.79 },
+    { name: 'HSS Round 38x3.2',         lbPerFt: 2.55 },
+    { name: 'HSS Round 50x3.2',         lbPerFt: 3.45 },
+    { name: 'HSS 25x25x3.2',            lbPerFt: 1.55 },
+    { name: 'HSS 38x38x3.2',            lbPerFt: 2.41 },
+    { name: 'HSS 50x50x3.2',            lbPerFt: 3.27 },
+    { name: 'HSS 64x64x4.8',            lbPerFt: 5.69 },
+    { name: 'FB 25x6 (1"x1/4")',      lbPerFt: 0.40 },
+    { name: 'FB 38x10 (1.5"x3/8")',   lbPerFt: 1.92 },
+    { name: 'FB 50x10 (2"x3/8")',     lbPerFt: 2.55 },
+    { name: 'FB 50x13 (2"x1/2")',     lbPerFt: 3.40 },
+  ],
+  posts: [
+    { name: 'HSS 38x38x3.2',            lbPerFt: 2.41 },
+    { name: 'HSS 50x50x3.2',            lbPerFt: 3.27 },
+    { name: 'HSS 50x50x4.8',            lbPerFt: 4.66 },
+    { name: 'HSS 64x64x4.8',            lbPerFt: 5.69 },
+    { name: 'Pipe 50 Sch40 (2")',     lbPerFt: 3.65 },
+    { name: 'Pipe 38 Sch40 (1.5")',   lbPerFt: 2.72 },
+    { name: 'L76x76x6 angle',           lbPerFt: 4.90 },
+    { name: 'L51x51x6 angle',           lbPerFt: 3.20 },
+  ],
+  pickets: [
+    { name: 'SQ 13x13 (1/2")',         lbPerFt: 0.45 },
+    { name: 'SQ 16x16 (5/8")',         lbPerFt: 0.68 },
+    { name: 'SQ 19x19 (3/4")',         lbPerFt: 0.96 },
+    { name: 'Round 13 (1/2")',         lbPerFt: 0.36 },
+    { name: 'Round 16 (5/8")',         lbPerFt: 0.55 },
+    { name: 'Round 19 (3/4")',         lbPerFt: 0.79 },
+    { name: 'FB 25x6 (1"x1/4")',      lbPerFt: 0.40 },
+    { name: 'FB 38x6 (1.5"x1/4")',    lbPerFt: 0.61 },
+  ],
+  basePlates: [
+    { name: 'FB 76x10 (3"x3/8")',     lbPerFt: 4.08 },
+    { name: 'FB 102x10 (4"x3/8")',    lbPerFt: 5.45 },
+    { name: 'FB 102x13 (4"x1/2")',    lbPerFt: 6.81 },
+    { name: 'FB 152x13 (6"x1/2")',    lbPerFt: 10.20 },
+  ],
+};
+const CATALOG_KEY = { topRail:'rails', bottomRail:'rails', posts:'posts', pickets:'pickets', intermediate:'rails', brackets:'posts', returns:'rails', basePlates:'basePlates' };
+
 /* Default fab minutes per piece per component (Excel hours × 60) */
 const DEFAULT_FAB_MIN = {
   topRail:      { setup: 6, cut: 5, drill: 0, feed: 6, weld: 9, grind: 6, paint: 3 },
@@ -170,6 +217,7 @@ function computeRailing(row, materialRates, galvRatePerLb, fabRate, installRate,
   const finishUpcharge = fc.upcharge;
 
   // BOM rows
+  const sectionOverride = row.sectionOverride || {};
   const bom = COMPONENTS.map(c => {
     const qty = qtyMap[c.key];
     const lenEa = lenEachFt[c.key];
@@ -180,7 +228,8 @@ function computeRailing(row, materialRates, galvRatePerLb, fabRate, installRate,
     const totalLbs = totalLnFt * lbPerFt;
     const galvCost = totalLbs * finishUpcharge;
     const matCost = totalLbs * matRate;
-    return { ...c, qty, lenEa, totalLnFt, lbPerFt, totalLbs, galvCost, matCost };
+    const section = sectionOverride[c.key] || c.section;
+    return { ...c, section, qty, lenEa, totalLnFt, lbPerFt, totalLbs, galvCost, matCost };
   });
 
   const totalLbs = bom.reduce((s, r) => s + r.totalLbs, 0);
@@ -328,32 +377,32 @@ function SummaryCard({ label, value, color = 'blue' }) {
    ═══════════════════════════════════════════════════════════════ */
 function RailingDiagram({row,calc}){
 const t=row.type||'Guardrail',h=Number(row.heightMm)||1070,L=Number(row.lengthFt)||20;
-const np=Math.min(Math.max(2,calc.postsCount||4),7),pk=Math.min(calc.picketsCount||0,30);
-const G=t==='Guardrail',Wl=t==='Wall-Mounted Handrail',I=t==='Intermediate Rail';
-const Vw=400,Vh=180,tp=30,fl=150,lf=35,rt=365,sp=(rt-lf)/Math.max(1,np-1);
-const pcks=G&&pk>0?[...Array(pk)].map((_,i)=>lf+(i+1)*((rt-lf)/(pk+1))):[];
-const psts=[...Array(np)].map((_,i)=>lf+i*sp);
+const inc=row.incl||{},sTop=inc.topRail!==false,sBot=!!inc.bottomRail,sPst=inc.posts!==false,sPk=!!inc.pickets,sInt=!!inc.intermediate,sBr=!!inc.brackets;
+const np=sPst?Math.min(Math.max(2,calc.postsCount||4),7):0,pk=sPk?Math.min(calc.picketsCount||0,30):0;
+const Vw=400,Vh=180,tp=30,fl=150,lf=35,rt=365,sp=np>1?(rt-lf)/(np-1):0;
+const pcks=sPk&&pk>0?[...Array(pk)].map((_,i)=>lf+(i+1)*((rt-lf)/(pk+1))):[];
+const psts=np>0?[...Array(np)].map((_,i)=>lf+i*sp):[];
 return (<svg viewBox={`0 0 ${Vw} ${Vh}`} className='w-full max-w-[460px] h-auto'>
 <text x={Vw/2} y='15' textAnchor='middle' fontSize='11' fill='#fb923c' fontWeight='bold'>{t.toUpperCase()}</text>
 <line x1='5' y1={fl} x2={Vw-5} y2={fl} stroke='#94a3b8' strokeWidth='2'/>
 {[...Array(14)].map((_,i)=>(<line key={'h'+i} x1={10+i*28} y1={fl+1} x2={16+i*28} y2={fl+9} stroke='#64748b' strokeWidth='1'/>))}
-{Wl?(<g>
+{sBr?(<g>
 <rect x='20' y={tp-15} width='14' height={fl-tp+25} fill='#374151'/>
 <text x='27' y={tp-20} textAnchor='middle' fontSize='9' fill='#cbd5e1'>Wall</text>
 {[0.25,0.55,0.85].map((p,i)=>{const bx=lf+(rt-lf)*p,by=tp+(fl-tp)*0.35;return (<g key={'b'+i}><line x1='34' y1={by} x2={bx} y2={by} stroke='#6e6e7a' strokeWidth='2'/><circle cx={bx} cy={by} r='3' fill='#f97316'/></g>);})}
-<line x1='36' y1={tp+(fl-tp)*0.35} x2={rt} y2={tp+(fl-tp)*0.35} stroke='#f97316' strokeWidth='4'/>
+{sTop&&(<line x1='36' y1={tp+(fl-tp)*0.35} x2={rt} y2={tp+(fl-tp)*0.35} stroke='#f97316' strokeWidth='4'/>)}
 </g>):(<g>
 {psts.map((x,i)=>(<line key={'p'+i} x1={x} y1={tp} x2={x} y2={fl} stroke='#6e6e7a' strokeWidth='3.5'/>))}
-<line x1={lf-8} y1={tp} x2={rt+8} y2={tp} stroke='#f97316' strokeWidth='4'/>
-{(G||I)&&(<line x1={lf-8} y1={fl-12} x2={rt+8} y2={fl-12} stroke='#f97316' strokeWidth='3'/>)}
-{I&&(<line x1={lf-8} y1={tp+(fl-tp)*0.5} x2={rt+8} y2={tp+(fl-tp)*0.5} stroke='#fb923c' strokeWidth='2.5'/>)}
+{sTop&&(<line x1={lf-8} y1={tp} x2={rt+8} y2={tp} stroke='#f97316' strokeWidth='4'/>)}
+{sBot&&(<line x1={lf-8} y1={fl-12} x2={rt+8} y2={fl-12} stroke='#f97316' strokeWidth='3'/>)}
+{sInt&&(<line x1={lf-8} y1={tp+(fl-tp)*0.5} x2={rt+8} y2={tp+(fl-tp)*0.5} stroke='#fb923c' strokeWidth='2.5'/>)}
 {pcks.map((x,i)=>(<line key={'k'+i} x1={x} y1={tp+2} x2={x} y2={fl-12} stroke='#9ca3af' strokeWidth='1'/>))}
 </g>)}
 <line x1={Vw-22} y1={tp} x2={Vw-22} y2={fl} stroke='#cbd5e1' strokeWidth='1'/>
 <polygon points={`${Vw-25},${tp+5} ${Vw-19},${tp+5} ${Vw-22},${tp}`} fill='#cbd5e1'/>
 <polygon points={`${Vw-25},${fl-5} ${Vw-19},${fl-5} ${Vw-22},${fl}`} fill='#cbd5e1'/>
 <text x={Vw-15} y={(tp+fl)/2+3} fontSize='10' fill='#e2e8f0'>{h}mm</text>
-<text x={(lf+rt)/2} y={Vh-5} textAnchor='middle' fontSize='10' fill='#e2e8f0'>{L.toFixed(1)} ft · {calc.postsCount||0} posts{G?` · ${pk} pickets`:''}</text>
+<text x={(lf+rt)/2} y={Vh-5} textAnchor='middle' fontSize='10' fill='#e2e8f0'>{L.toFixed(1)} ft · {sPst?(calc.postsCount||0):0} posts{sPk?` · ${pk} pickets`:''}{sBot?' · bot':''}{sInt?' · mid':''}{sBr?' · wall-mtd':''}</text>
 </svg>);}
 
 function RailingCard({ row, idx, calc, fabRate, installRate, onUpdate, onDelete, onCopy }) {
@@ -369,6 +418,17 @@ function RailingCard({ row, idx, calc, fabRate, installRate, onUpdate, onDelete,
   const setLbPerFt = (comp) => (v) => {
     const tree = row.lbPerFtOverride || {};
     onUpdate(row.id, { lbPerFtOverride: { ...tree, [comp]: v } });
+  };
+  const setSection = (compKey) => (e) => {
+    const newName = e.target.value;
+    const tree = row.sectionOverride || {};
+    const lbTree = row.lbPerFtOverride || {};
+    const cat = SECTION_CATALOG[CATALOG_KEY[compKey]] || [];
+    const found = cat.find(s => s.name === newName);
+    onUpdate(row.id, {
+      sectionOverride: { ...tree, [compKey]: newName },
+      lbPerFtOverride: { ...lbTree, [compKey]: found ? found.lbPerFt : '' }
+    });
   };
 
   const checks = calc.checks;
@@ -537,7 +597,11 @@ function RailingCard({ row, idx, calc, fabRate, installRate, onUpdate, onDelete,
                         />
                       </td>
                       <td className="px-2 py-1 text-white">{b.label}</td>
-                      <td className="px-2 py-1 text-steel-300 font-mono">{b.section}</td>
+                      <td className="px-2 py-1">
+                        <select value={(row.sectionOverride||{})[b.key]||b.section} onChange={setSection(b.key)} className="bg-steel-900 border border-blue-500/30 rounded px-1 py-0.5 text-[11px] text-steel-200 font-mono max-w-[170px] focus:outline-none">
+                          {(()=>{const cat=SECTION_CATALOG[CATALOG_KEY[b.key]]||[];const cur=(row.sectionOverride||{})[b.key]||b.section;const inCat=cat.find(s=>s.name===cur);const opts=inCat?cat:[{name:cur,lbPerFt:b.lbPerFt},...cat];return opts.map(s=><option key={s.name} value={s.name} style={{backgroundColor:'#0c1222'}}>{s.name}</option>);})()}
+                        </select>
+                      </td>
                       <td className="px-2 py-1 text-right text-cyan-300 font-mono">{fmtNum(b.qty)}</td>
                       <td className="px-2 py-1 text-right text-steel-300 font-mono">{fmtNum(b.lenEa, 2)}</td>
                       <td className="px-2 py-1 text-right text-steel-300 font-mono">{fmtNum(b.totalLnFt, 2)}</td>
