@@ -7,7 +7,7 @@ import { useProject } from '../context/ProjectContext';
    ═══════════════════════════════════════════════════════════════ */
 
 const RAIL_TYPES = ['Guardrail', 'Handrail', 'Wall-Mounted Handrail', 'Intermediate Rail'];
-const FINISHES = ['Paint', 'Galvanized'];
+const FINISHES = ['Paint', 'Galvanized', 'Stainless Steel 304', 'Stainless Steel 316', 'Powder Coated'];
 const INSTALL_METHODS = ['Baseplate', 'Core Drill'];
 const ANCHOR_TYPES = ['Galvanized', 'Stainless Steel'];
 
@@ -74,6 +74,7 @@ function defaultRailingExtras() {
     mark: '',
     drawingRef: '',
     finish: 'Paint',
+    incl: { topRail: true, bottomRail: true, posts: true, pickets: true, intermediate: false, brackets: false, returns: true, basePlates: true },
     complexity: 1.1,
     postSpacingFt: 4,
     railsTopBot: 2,
@@ -110,21 +111,33 @@ function computeRailing(row, materialRates, galvRatePerLb, fabRate, installRate,
   const isWallHr = type === 'Wall-Mounted Handrail';
   const isInter = type === 'Intermediate Rail';
 
-  // Auto-derived counts
-  const postsCount = postSp > 0 ? Math.ceil(lengthFt / postSp) + 1 : 0;
-  const picketsCount = isGuard ? Math.ceil((lengthFt * 304.8) / picketSp) : 0;
+  // Include toggles — per-component on/off (defaults derived from type)
+  const incl = row.incl || {
+    topRail: true,
+    bottomRail: isGuard,
+    posts: true,
+    pickets: isGuard,
+    intermediate: isInter,
+    brackets: isWallHr,
+    returns: true,
+    basePlates: row.installMethod === 'Baseplate',
+  };
+
+  // Auto-derived counts (only when included)
+  const postsCount = (incl.posts && postSp > 0) ? Math.ceil(lengthFt / postSp) + 1 : 0;
+  const picketsCount = incl.pickets ? Math.ceil((lengthFt * 304.8) / picketSp) : 0;
   const returnsCount = toNum(row.returnsCount);
 
   // Per-component qty + length-each
   const qtyMap = {
-    topRail: 1,
-    bottomRail: isGuard ? 1 : 0,
+    topRail: incl.topRail ? 1 : 0,
+    bottomRail: incl.bottomRail ? 1 : 0,
     posts: postsCount,
     pickets: picketsCount,
-    intermediate: isInter ? 2 : 0,
-    brackets: isWallHr ? Math.ceil(lengthFt / 4) + 1 : 0,
-    returns: returnsCount * 2,
-    basePlates: row.installMethod === 'Baseplate' ? postsCount : 0,
+    intermediate: incl.intermediate ? 2 : 0,
+    brackets: incl.brackets ? Math.ceil(lengthFt / 4) + 1 : 0,
+    returns: incl.returns ? returnsCount * 2 : 0,
+    basePlates: incl.basePlates ? postsCount : 0,
   };
   const lenEachFt = {
     topRail: lengthFt,
@@ -142,9 +155,18 @@ function computeRailing(row, materialRates, galvRatePerLb, fabRate, installRate,
   (materialRates || []).forEach(r => { matRateMap[r.item] = toNum(r.rate); });
   const rateStruct = matRateMap['Structural steel'] || 1.00;
   const rateGalv = matRateMap['Galvanized steel'] || 1.20;
-  const rateStl = matRateMap['Stainless steel'] || 3.00;
-  const matRate = row.finish === 'Galvanized' ? rateGalv : (row.material === 'Stainless steel' ? rateStl : rateStruct);
-  const galvUpcharge = galvRatePerLb || 0.80;
+  const rateSS304 = matRateMap['Stainless Steel 304'] || matRateMap['Stainless steel'] || 3.50;
+  const rateSS316 = matRateMap['Stainless Steel 316'] || 5.50;
+  const finishCfg = {
+    'Paint':              { matRate: rateStruct, upcharge: 0 },
+    'Galvanized':         { matRate: rateGalv,   upcharge: galvRatePerLb || 0.80 },
+    'Stainless Steel 304':{ matRate: rateSS304,  upcharge: 0 },
+    'Stainless Steel 316':{ matRate: rateSS316,  upcharge: 0 },
+    'Powder Coated':      { matRate: rateStruct, upcharge: 1.50 },
+  };
+  const fc = finishCfg[row.finish] || finishCfg['Paint'];
+  const matRate = fc.matRate;
+  const finishUpcharge = fc.upcharge;
 
   // BOM rows
   const bom = COMPONENTS.map(c => {
@@ -155,7 +177,7 @@ function computeRailing(row, materialRates, galvRatePerLb, fabRate, installRate,
       ? toNum(row.lbPerFtOverride[c.key])
       : c.lbPerFt;
     const totalLbs = totalLnFt * lbPerFt;
-    const galvCost = row.finish === 'Galvanized' ? totalLbs * galvUpcharge : 0;
+    const galvCost = totalLbs * finishUpcharge;
     const matCost = totalLbs * matRate;
     return { ...c, qty, lenEa, totalLnFt, lbPerFt, totalLbs, galvCost, matCost };
   });
@@ -451,6 +473,7 @@ function RailingCard({ row, idx, calc, fabRate, installRate, onUpdate, onDelete,
               <table className="w-full text-xs whitespace-nowrap">
                 <thead className="bg-steel-800/40">
                   <tr className="text-[10px] text-steel-400 uppercase">
+                    <th className="px-2 py-1 text-center">Incl</th>
                     <th className="px-2 py-1 text-left">Item</th>
                     <th className="px-2 py-1 text-left">Section</th>
                     <th className="px-2 py-1 text-right">Qty</th>
@@ -458,14 +481,25 @@ function RailingCard({ row, idx, calc, fabRate, installRate, onUpdate, onDelete,
                     <th className="px-2 py-1 text-right">Total lnft</th>
                     <th className="px-2 py-1 text-right">lb/ft</th>
                     <th className="px-2 py-1 text-right">Total lbs</th>
-                    <th className="px-2 py-1 text-right">Galv $</th>
+                    <th className="px-2 py-1 text-right">Finish $</th>
                     <th className="px-2 py-1 text-right">Material $</th>
                     <th className="px-2 py-1 text-left">Notes</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {calc.bom.map((b) => (
-                    <tr key={b.key} className="border-t border-steel-800/60">
+                  {calc.bom.map((b) => {
+                    const inclMap = row.incl || {};
+                    const isOn = inclMap[b.key] !== false && (inclMap[b.key] === true || b.qty > 0);
+                    return (
+                    <tr key={b.key} className={`border-t border-steel-800/60 ${isOn ? '' : 'opacity-50'}`}>
+                      <td className="px-2 py-1 text-center">
+                        <input
+                          type="checkbox"
+                          checked={!!inclMap[b.key]}
+                          onChange={(e) => onUpdate(row.id, { incl: { ...inclMap, [b.key]: e.target.checked } })}
+                          className="accent-blue-500 w-4 h-4 cursor-pointer"
+                        />
+                      </td>
                       <td className="px-2 py-1 text-white">{b.label}</td>
                       <td className="px-2 py-1 text-steel-300 font-mono">{b.section}</td>
                       <td className="px-2 py-1 text-right text-cyan-300 font-mono">{fmtNum(b.qty)}</td>
@@ -485,9 +519,10 @@ function RailingCard({ row, idx, calc, fabRate, installRate, onUpdate, onDelete,
                       <td className="px-2 py-1 text-right text-green-400 font-mono">{fmtDollar(b.matCost)}</td>
                       <td className="px-2 py-1 text-steel-500 text-[10px]">{b.notes}</td>
                     </tr>
-                  ))}
+                    );
+                  })}
                   <tr className="bg-steel-800/40 border-t border-steel-600 font-semibold">
-                    <td colSpan={6} className="px-2 py-1.5 text-right text-steel-300 uppercase text-[10px]">Material Subtotal (incl. 3% waste) →</td>
+                    <td colSpan={7} className="px-2 py-1.5 text-right text-steel-300 uppercase text-[10px]">Material Subtotal (incl. 3% waste) →</td>
                     <td className="px-2 py-1.5 text-right text-white font-mono">{fmtNum(calc.totalLbs, 1)}</td>
                     <td className="px-2 py-1.5 text-right text-amber-300 font-mono">{fmtDollar(calc.galvSubtotal)}</td>
                     <td className="px-2 py-1.5 text-right text-green-400 font-mono">{fmtDollar(calc.matSubtotal)}</td>
