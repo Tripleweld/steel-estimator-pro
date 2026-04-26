@@ -187,6 +187,159 @@ function SectionCard({ icon: Icon, title, subtitle, children }) {
   )
 }
 
+// ─── Ladder type sketches (inline SVG) ───
+function LadderSketch({ type, config, cageRequired }) {
+  // Simple, schematic SVG sketches showing the geometry of each ladder type
+  const stroke = '#475569'      // steel-600
+  const accent = '#dc2626'      // fire-600
+  const muted = '#cbd5e1'       // silver-300
+  const SH = 280                // svg height
+  const SW = 220                // svg width
+  // Common rung pattern for vertical ladders
+  const verticalRungs = (x1, x2, yTop, yBot, n = 8) => {
+    const out = []
+    for (let i = 1; i <= n; i++) {
+      const y = yTop + ((yBot - yTop) * i) / (n + 1)
+      out.push(<line key={i} x1={x1} y1={y} x2={x2} y2={y} stroke={stroke} strokeWidth="2" />)
+    }
+    return out
+  }
+  // Cage hoops (horizontal arcs around vertical ladder)
+  const cageHoops = (cx, yTop, yBot, n = 4) => {
+    const out = []
+    const step = (yBot - yTop) / (n + 1)
+    for (let i = 1; i <= n; i++) {
+      const y = yTop + step * i
+      out.push(
+        <ellipse key={i} cx={cx} cy={y} rx="38" ry="10" stroke={muted} strokeWidth="1.5" fill="none" />
+      )
+    }
+    return out
+  }
+
+  let body = null
+  if (type === 'Ship Ladder') {
+    // Inclined ladder (~70°) with treads (steps) and handrails on both sides
+    body = (
+      <g>
+        {/* Floor */}
+        <line x1="20" y1="260" x2={SW - 20} y2="260" stroke={stroke} strokeWidth="2" />
+        {/* Stringers (inclined) */}
+        <line x1="60" y1="260" x2="120" y2="40" stroke={stroke} strokeWidth="3" />
+        <line x1="100" y1="260" x2="160" y2="40" stroke={stroke} strokeWidth="3" />
+        {/* Treads (perpendicular to stringers, every step) */}
+        {[0.1, 0.25, 0.4, 0.55, 0.7, 0.85].map((t, i) => {
+          const yA = 260 - t * 220
+          const xA = 60 + t * 60
+          const xB = 100 + t * 60
+          return <line key={i} x1={xA} y1={yA} x2={xB} y2={yA} stroke={stroke} strokeWidth="2" />
+        })}
+        {/* Handrails (parallel above stringers) */}
+        <line x1="40" y1="252" x2="100" y2="32" stroke={accent} strokeWidth="2" strokeDasharray="3 2" />
+        <line x1="120" y1="252" x2="180" y2="32" stroke={accent} strokeWidth="2" strokeDasharray="3 2" />
+        {/* Vertical posts for handrails */}
+        <line x1="40" y1="252" x2="60" y2="260" stroke={accent} strokeWidth="2" />
+        <line x1="180" y1="32" x2="160" y2="40" stroke={accent} strokeWidth="2" />
+        {/* Top platform indicator */}
+        <line x1="100" y1="40" x2="200" y2="40" stroke={stroke} strokeWidth="2" />
+      </g>
+    )
+  } else if (config === 'Over Parapet' || type === 'Roof Access') {
+    // Roof access: ladder on outside up to platform over parapet, descent ladder inside
+    body = (
+      <g>
+        {/* Ground floor */}
+        <line x1="10" y1="260" x2={SW - 10} y2="260" stroke={stroke} strokeWidth="2" />
+        {/* Roof line + parapet */}
+        <line x1="10" y1="120" x2={SW - 10} y2="120" stroke={stroke} strokeWidth="2" />
+        <rect x="120" y="80" width="90" height="40" fill="#e2e8f0" stroke={stroke} strokeWidth="1.5" />
+        <text x="165" y="105" textAnchor="middle" fontSize="9" fill={stroke}>parapet</text>
+        {/* Outside ladder rails (up to platform) */}
+        <line x1="50" y1="260" x2="50" y2="60" stroke={stroke} strokeWidth="3" />
+        <line x1="80" y1="260" x2="80" y2="60" stroke={stroke} strokeWidth="3" />
+        {verticalRungs(50, 80, 60, 260, 8)}
+        {/* Extension above */}
+        <line x1="50" y1="60" x2="50" y2="40" stroke={accent} strokeWidth="2" strokeDasharray="3 2" />
+        <line x1="80" y1="60" x2="80" y2="40" stroke={accent} strokeWidth="2" strokeDasharray="3 2" />
+        {/* Platform on top of parapet */}
+        <line x1="50" y1="60" x2="120" y2="60" stroke={stroke} strokeWidth="3" />
+        <line x1="50" y1="60" x2="50" y2="55" stroke={accent} strokeWidth="1.5" />
+        {/* Step-over stile (handrails) */}
+        <line x1="80" y1="60" x2="80" y2="30" stroke={accent} strokeWidth="2" />
+        <line x1="120" y1="60" x2="120" y2="30" stroke={accent} strokeWidth="2" />
+        <line x1="80" y1="30" x2="120" y2="30" stroke={accent} strokeWidth="2" />
+        {/* Descent ladder (inside, from platform down to roof) */}
+        <line x1="140" y1="80" x2="140" y2="180" stroke={stroke} strokeWidth="2" strokeDasharray="2 2" />
+        <line x1="160" y1="80" x2="160" y2="180" stroke={stroke} strokeWidth="2" strokeDasharray="2 2" />
+        <text x="195" y="135" fontSize="9" fill={stroke}>descent</text>
+        {cageRequired && cageHoops(65, 80, 240, 4)}
+      </g>
+    )
+  } else if (config === 'Through Hatch') {
+    // Vertical ladder going through a roof hatch with extension above
+    body = (
+      <g>
+        <line x1="10" y1="260" x2={SW - 10} y2="260" stroke={stroke} strokeWidth="2" />
+        {/* Roof line with hatch opening */}
+        <line x1="10" y1="100" x2="80" y2="100" stroke={stroke} strokeWidth="2.5" />
+        <line x1="120" y1="100" x2={SW - 10} y2="100" stroke={stroke} strokeWidth="2.5" />
+        <text x={SW - 10} y="95" textAnchor="end" fontSize="9" fill={stroke}>roof</text>
+        {/* Hatch label */}
+        <text x="100" y="92" textAnchor="middle" fontSize="9" fill={accent}>hatch</text>
+        {/* Vertical ladder rails */}
+        <line x1="85" y1="260" x2="85" y2="60" stroke={stroke} strokeWidth="3" />
+        <line x1="115" y1="260" x2="115" y2="60" stroke={stroke} strokeWidth="3" />
+        {verticalRungs(85, 115, 60, 250, 9)}
+        {/* Extension above hatch */}
+        <line x1="85" y1="60" x2="85" y2="30" stroke={accent} strokeWidth="2" strokeDasharray="3 2" />
+        <line x1="115" y1="60" x2="115" y2="30" stroke={accent} strokeWidth="2" strokeDasharray="3 2" />
+        <text x="100" y="22" textAnchor="middle" fontSize="9" fill={accent}>extension</text>
+        {cageRequired && cageHoops(100, 100, 240, 4)}
+      </g>
+    )
+  } else {
+    // Default: standard fixed/caged vertical ladder
+    body = (
+      <g>
+        <line x1="10" y1="260" x2={SW - 10} y2="260" stroke={stroke} strokeWidth="2" />
+        {/* Wall on right */}
+        <line x1="180" y1="20" x2="180" y2="260" stroke={muted} strokeWidth="2" />
+        <text x="200" y="140" textAnchor="middle" fontSize="9" fill={muted} transform="rotate(90 200 140)">wall</text>
+        {/* Side rails */}
+        <line x1="85" y1="260" x2="85" y2="50" stroke={stroke} strokeWidth="3" />
+        <line x1="125" y1="260" x2="125" y2="50" stroke={stroke} strokeWidth="3" />
+        {verticalRungs(85, 125, 50, 250, 10)}
+        {/* Extension above (3.5 ft min) */}
+        <line x1="85" y1="50" x2="85" y2="20" stroke={accent} strokeWidth="2" strokeDasharray="3 2" />
+        <line x1="125" y1="50" x2="125" y2="20" stroke={accent} strokeWidth="2" strokeDasharray="3 2" />
+        <text x="105" y="14" textAnchor="middle" fontSize="9" fill={accent}>ext.</text>
+        {/* Wall brackets */}
+        {[110, 175, 240].map((y, i) => (
+          <line key={i} x1="125" y1={y} x2="180" y2={y} stroke={stroke} strokeWidth="1.5" />
+        ))}
+        {/* Cage if required */}
+        {cageRequired && cageHoops(105, 80, 240, 4)}
+        {cageRequired && (
+          <text x="55" y="155" fontSize="9" fill={muted} transform="rotate(-90 55 155)">cage</text>
+        )}
+      </g>
+    )
+  }
+
+  return (
+    <div className="flex h-full flex-col items-center justify-center">
+      <svg viewBox={`0 0 ${SW} ${SH}`} className="w-full max-w-[220px]" preserveAspectRatio="xMidYMid meet">
+        {body}
+      </svg>
+      <p className="mt-2 text-center text-xs font-semibold text-steel-700">
+        {type}
+        {config !== 'Standard' && <span className="text-silver-500"> · {config}</span>}
+        {cageRequired && <span className="text-fire-600"> · caged</span>}
+      </p>
+    </div>
+  )
+}
+
 /* ──────────────────────────────────────────────────────────────────────────── */
 export default function Ladder() {
   const { state, dispatch } = useProject()
@@ -220,6 +373,8 @@ export default function Ladder() {
     platformWidthFt: ladder.platformWidthFt ?? 3,
     platformDepthFt: ladder.platformDepthFt ?? 3,
     method: ladder.method || 'Detailed',
+    fabCrew: ladder.fabCrew ?? null,
+    instCrew: ladder.instCrew ?? null,
     fabBreakdown: ladder.fabBreakdown || DEFAULT_FAB_BREAKDOWN,
     instBreakdown: ladder.instBreakdown || DEFAULT_INST_BREAKDOWN,
   }
@@ -251,7 +406,7 @@ export default function Ladder() {
     return found ? found.value : fallback
   }
   const rungSpacingDefault = limitOf('Rung spacing (ladder)', 12)
-  const cageHeightThresholdM = limitOf('Cage required above', 6)
+  const cageHeightThresholdM = limitOf('Cage required above', 5)
 
   // ── Geometry calculations ──
   const geom = useMemo(() => {
@@ -338,6 +493,10 @@ export default function Ladder() {
   // ── Labour ──
   const fabRate = state.rates?.labourRates?.fabRate ?? 50
   const installRate = state.rates?.labourRates?.installRate ?? 55
+  const defFabCrew = state.rates?.labourRates?.fabCrew ?? 2
+  const defInstCrew = state.rates?.labourRates?.installCrew ?? 4
+  const fabCrew = s.fabCrew == null || s.fabCrew === '' ? defFabCrew : Math.max(toNum(s.fabCrew), 1)
+  const instCrew = s.instCrew == null || s.instCrew === '' ? defInstCrew : Math.max(toNum(s.instCrew), 1)
   const fabComplexity = 1.2
   const instComplexity = 1.3
 
@@ -380,8 +539,8 @@ export default function Ladder() {
   })
   const instHrsDetailed = instComponents.reduce((sum, c) => sum + c.totalHrs, 0)
 
-  const fabHrsFinal = (s.method === 'Detailed' ? fabHrsDetailed : fabHrsSimple) * fabComplexity
-  const instHrsFinal = (s.method === 'Detailed' ? instHrsDetailed : instHrsSimple) * instComplexity
+  const fabHrsFinal = (s.method === 'Detailed' ? fabHrsDetailed : fabHrsSimple) * fabCrew * fabComplexity
+  const instHrsFinal = (s.method === 'Detailed' ? instHrsDetailed : instHrsSimple) * instCrew * instComplexity
   const fabLabourCost = fabHrsFinal * fabRate
   const instLabourCost = instHrsFinal * installRate
   const labourTotal = fabLabourCost + instLabourCost
@@ -414,33 +573,41 @@ export default function Ladder() {
         </div>
 
         {/* ─── 1. SETUP ─── */}
-        <SectionCard icon={Settings2} title="Setup" subtitle="Type, finish, side rail & mark">
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            <div>
-              <FieldLabel>Type</FieldLabel>
-              <Select value={s.type} onChange={(v) => set('type', v)} options={TYPE_OPTIONS} />
+        <SectionCard icon={Settings2} title="Setup" subtitle="Type, finish, side rail & mark — sketch on the right shows the selected configuration">
+          <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+            {/* Selectors take 2/3 */}
+            <div className="lg:col-span-2 space-y-4">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <div>
+                  <FieldLabel>Type</FieldLabel>
+                  <Select value={s.type} onChange={(v) => set('type', v)} options={TYPE_OPTIONS} />
+                </div>
+                <div>
+                  <FieldLabel>Finish</FieldLabel>
+                  <Select value={s.finish} onChange={(v) => set('finish', v)} options={FINISH_OPTIONS} />
+                </div>
+                <div>
+                  <FieldLabel>Side Rail Section</FieldLabel>
+                  <Select value={s.sideRail} onChange={(v) => set('sideRail', v)} options={SIDE_RAIL_OPTIONS} />
+                </div>
+                <div>
+                  <FieldLabel>Mark</FieldLabel>
+                  <TextInput value={s.mark} onChange={(v) => set('mark', v)} />
+                </div>
+                <div>
+                  <FieldLabel>Config</FieldLabel>
+                  <Select value={s.config} onChange={(v) => set('config', v)} options={CONFIG_OPTIONS} />
+                </div>
+                <div>
+                  <FieldLabel>Counterbalance?</FieldLabel>
+                  <Select value={s.counterbalance} onChange={(v) => set('counterbalance', v)} options={COUNTERBALANCE_OPTIONS} />
+                </div>
+              </div>
             </div>
-            <div>
-              <FieldLabel>Finish</FieldLabel>
-              <Select value={s.finish} onChange={(v) => set('finish', v)} options={FINISH_OPTIONS} />
-            </div>
-            <div>
-              <FieldLabel>Side Rail Section</FieldLabel>
-              <Select value={s.sideRail} onChange={(v) => set('sideRail', v)} options={SIDE_RAIL_OPTIONS} />
-            </div>
-            <div>
-              <FieldLabel>Mark</FieldLabel>
-              <TextInput value={s.mark} onChange={(v) => set('mark', v)} />
-            </div>
-          </div>
-          <div className="mt-3 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            <div>
-              <FieldLabel>Config</FieldLabel>
-              <Select value={s.config} onChange={(v) => set('config', v)} options={CONFIG_OPTIONS} />
-            </div>
-            <div>
-              <FieldLabel>Counterbalance?</FieldLabel>
-              <Select value={s.counterbalance} onChange={(v) => set('counterbalance', v)} options={COUNTERBALANCE_OPTIONS} />
+            {/* Sketch takes 1/3 */}
+            <div className="rounded-lg border border-silver-200 bg-silver-50 p-4">
+              <p className="mb-2 text-center text-[10px] font-semibold uppercase tracking-wider text-silver-500">Visual reference</p>
+              <LadderSketch type={s.type} config={s.config} cageRequired={geom.cageRequired} />
             </div>
           </div>
         </SectionCard>
@@ -593,11 +760,19 @@ export default function Ladder() {
         </SectionCard>
 
         {/* ─── 5. LABOUR ─── */}
-        <SectionCard icon={Wrench} title="Labour" subtitle="Detailed (sum of fab/install breakdowns) or Simple (hrs/lb). Complexity baked: 1.20× fab, 1.30× install">
-          <div className="mb-3 flex items-center gap-3">
-            <FieldLabel>Method:</FieldLabel>
-            <div className="flex-1 max-w-[200px]">
+        <SectionCard icon={Wrench} title="Labour" subtitle="Detailed (sum of fab/install breakdowns) or Simple (hrs/lb). Complexity baked: 1.20× fab, 1.30× install. Crew = # people × hrs/pc">
+          <div className="mb-4 grid grid-cols-1 gap-4 sm:grid-cols-3">
+            <div>
+              <FieldLabel>Method</FieldLabel>
               <Select value={s.method} onChange={(v) => set('method', v)} options={METHOD_OPTIONS} />
+            </div>
+            <div>
+              <FieldLabel>Fab crew (# people) <span className="text-silver-400">[default {defFabCrew}]</span></FieldLabel>
+              <NumInput value={s.fabCrew ?? defFabCrew} onChange={(v) => set('fabCrew', v)} step="1" />
+            </div>
+            <div>
+              <FieldLabel>Install crew (# people) <span className="text-silver-400">[default {defInstCrew}]</span></FieldLabel>
+              <NumInput value={s.instCrew ?? defInstCrew} onChange={(v) => set('instCrew', v)} step="1" />
             </div>
           </div>
           <div className="overflow-x-auto">
@@ -613,7 +788,7 @@ export default function Ladder() {
               </thead>
               <tbody className="divide-y divide-silver-100">
                 <tr className="even:bg-steel-50">
-                  <td className="px-4 py-2.5 font-medium text-steel-700">Shop fabrication (×{fabComplexity.toFixed(2)})</td>
+                  <td className="px-4 py-2.5 font-medium text-steel-700">Shop fabrication (crew {fabCrew} ×{fabComplexity.toFixed(2)})</td>
                   <td className="px-4 py-2.5 text-right font-mono text-steel-600">
                     {fmtNum(s.method === 'Detailed' ? fabHrsDetailed : fabHrsSimple, 1)}
                   </td>
@@ -622,7 +797,7 @@ export default function Ladder() {
                   <td className="px-4 py-2.5 text-right font-mono font-semibold text-steel-800">{fmt(fabLabourCost)}</td>
                 </tr>
                 <tr className="even:bg-steel-50">
-                  <td className="px-4 py-2.5 font-medium text-steel-700">Field install (×{instComplexity.toFixed(2)})</td>
+                  <td className="px-4 py-2.5 font-medium text-steel-700">Field install (crew {instCrew} ×{instComplexity.toFixed(2)})</td>
                   <td className="px-4 py-2.5 text-right font-mono text-steel-600">
                     {fmtNum(s.method === 'Detailed' ? instHrsDetailed : instHrsSimple, 1)}
                   </td>
