@@ -16,6 +16,9 @@ const defaultMaterialRates = [
   { id: 4, item: 'OWSJ (get supplier quote)', rate: 0, unit: '$/LF' },
   { id: 5, item: 'Steel deck 38mm 20GA', rate: 5.00, unit: '$/sqft' },
   { id: 6, item: 'Anchors/bolts (per unit)', rate: 8.00, unit: '$/unit' },
+  { id: 7, item: 'Stainless Steel 304', rate: 3.50, unit: '$/lb' },
+  { id: 8, item: 'Stainless Steel 316', rate: 5.50, unit: '$/lb' },
+  { id: 9, item: 'Powder Coat', rate: 1.50, unit: '$/lb' },
 ]
 
 /* Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂ Labour Rates Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂ */
