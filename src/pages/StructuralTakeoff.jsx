@@ -258,11 +258,11 @@ function getEffectiveInstPerPc(row) {
 
 
 /* ─── Joist Reinforcement Sync Table ─── 
-   Auto-reads from JoistReinf Calculator (state.joistReinfRows).
+   Auto-reads from JoistReinf Calculator (state.joistReinf).
    Fab/Inst hours are overridable inline. */
 function JoistReinfSyncTable({ fabRate, installRate }) {
   const { state } = useProject();
-  const jrRows = state.joistReinfRows || [];
+  const jrRows = state.joistReinf || [];
   const [ovr, setOvr] = useState({});
   const gv = (id, f, cv) => { const k = id+'_'+f; return ovr[k] != null ? ovr[k] : cv; };
   const sv = (id, f, v) => setOvr(p => ({...p, [id+'_'+f]: v === '' ? null : Number(v) || 0}));
