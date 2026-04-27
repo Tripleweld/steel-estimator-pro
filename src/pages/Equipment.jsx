@@ -80,7 +80,7 @@ export default function Equipment() {
     equipment.forEach((row) => {
       const qty = Number(row.qty) || 0;
       if (qty > 0) activeCount++;
-      totalRental += calcEquipRentalCost(row);
+      totalRental += (({Day:row.dayRate,Week:row.weekRate,Month:row.monthRate}[row.period]||0)*(row.qty||0)*(row.duration||0));
       totalPickup += Number(row.pickup) || 0;
       totalDropoff += Number(row.dropoff) || 0;
     });
@@ -101,7 +101,7 @@ export default function Equipment() {
 
   /* --- line total helper -------------------------------------------- */
   const lineTotal = (row) => {
-    const rental = calcEquipRentalCost(row);
+    const rental = (({Day:row.dayRate,Week:row.weekRate,Month:row.monthRate}[row.period]||0)*(row.qty||0)*(row.duration||0));
     const pickup = Number(row.pickup) || 0;
     const dropoff = Number(row.dropoff) || 0;
     return rental + pickup + dropoff;
@@ -248,6 +248,7 @@ export default function Equipment() {
                         <th className="px-3 py-2.5 text-right text-xs font-semibold uppercase tracking-wider">Month Rate</th>
                         <th className="px-3 py-2.5 text-center text-xs font-semibold uppercase tracking-wider">Period</th>
                         <th className="px-3 py-2.5 text-center text-xs font-semibold uppercase tracking-wider">Qty</th>
+                        <th className="px-3 py-2.5 text-center text-xs font-semibold uppercase tracking-wider">Duration</th>
                         <th className="px-3 py-2.5 text-right text-xs font-semibold uppercase tracking-wider">Rental Cost</th>
                         <th className="px-3 py-2.5 text-right text-xs font-semibold uppercase tracking-wider">Pickup $</th>
                         <th className="px-3 py-2.5 text-right text-xs font-semibold uppercase tracking-wider">Dropoff $</th>
@@ -263,7 +264,7 @@ export default function Equipment() {
                         </tr>
                       ) : (
                         visible.map((row) => {
-                          const rental = calcEquipRentalCost(row);
+                          const rental = (({Day:row.dayRate,Week:row.weekRate,Month:row.monthRate}[row.period]||0)*(row.qty||0)*(row.duration||0));
                           const lt = lineTotal(row);
                           const isActive = (Number(row.qty) || 0) > 0;
 
@@ -311,6 +312,19 @@ export default function Equipment() {
                                   value={row.qty || 0}
                                   onChange={(e) =>
                                     updateRow(row.id, 'qty', parseInt(e.target.value, 10) || 0)
+                                  }
+                                  className="w-16 rounded border border-silver-300 bg-white px-2 py-1 text-center font-mono text-sm text-steel-900 focus:border-fire-500 focus:outline-none focus:ring-1 focus:ring-fire-500"
+                                />
+                              </td>
+
+                              {/* Duration input */}
+                              <td className="px-3 py-2 text-center">
+                                <input
+                                  type="number"
+                                  min="0"
+                                  value={row.duration || 0}
+                                  onChange={(e) =>
+                                    updateRow(row.id, 'duration', parseInt(e.target.value, 10) || 0)
                                   }
                                   className="w-16 rounded border border-silver-300 bg-white px-2 py-1 text-center font-mono text-sm text-steel-900 focus:border-fire-500 focus:outline-none focus:ring-1 focus:ring-fire-500"
                                 />
