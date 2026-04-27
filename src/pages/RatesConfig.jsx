@@ -859,48 +859,25 @@ export default function RatesConfig() {
               <div key={cat} className="p-4 rounded-lg bg-steel-900/60 border border-steel-700/50">
                 <h3 className="text-sm font-semibold text-steel-300 mb-3 uppercase tracking-wide">{cat}</h3>
                 <div className="hidden lg:grid grid-cols-12 gap-1 text-xs text-steel-500 font-medium pb-2 border-b border-steel-700/40 mb-2">
-                  <div className="col-span-2">Item</div>
-                  <div className="col-span-1 text-right">Day $</div>
-                  <div className="col-span-1 text-right">Week $</div>
-                  <div className="col-span-1 text-right">Month $</div>
-                  <div className="col-span-1 text-center">Period</div>
-                  <div className="col-span-1 text-center">Qty</div>
-                  <div className="col-span-1 text-center">Duration</div>
-                  <div className="col-span-1 text-center">Pickup $</div>
-                  <div className="col-span-1 text-center">Dropoff $</div>
-                  <div className="col-span-1 text-right">Total</div>
+                  <div className="col-span-4">Item</div>
+                  <div className="col-span-1 text-right">Day Rate</div>
+                  <div className="col-span-1 text-right">Week Rate</div>
+                  <div className="col-span-1 text-right">Month Rate</div>
+                  <div className="col-span-2 text-right">Pickup Rate</div>
+                  <div className="col-span-2 text-right">Dropoff Rate</div>
+                  <div className="col-span-1"></div>
                 </div>
-                {items.map((item) => {
-                  const rateMap = { Day: item.dayRate, Week: item.weekRate, Month: item.monthRate };
-                  const selectedRate = rateMap[item.period] || item.dayRate;
-                  const total = selectedRate * (item.qty || 0) * (item.duration || 1) + (item.pickup || 0) + (item.dropoff || 0);
-                  return (
-                    <div key={item.id} className="grid grid-cols-1 lg:grid-cols-12 gap-1 items-center py-1.5 border-b border-steel-800/30 last:border-0">
-                      <div className="col-span-2 text-sm text-white truncate" title={item.item}>{item.item}</div>
-                      <div className="col-span-1"><BlueInput type="number" step="1" value={item.dayRate} onChange={(e) => updateEquip(item.id, { dayRate: Number(e.target.value) })} className="text-right text-xs" /></div>
-                      <div className="col-span-1"><BlueInput type="number" step="1" value={item.weekRate} onChange={(e) => updateEquip(item.id, { weekRate: Number(e.target.value) })} className="text-right text-xs" /></div>
-                      <div className="col-span-1"><BlueInput type="number" step="1" value={item.monthRate} onChange={(e) => updateEquip(item.id, { monthRate: Number(e.target.value) })} className="text-right text-xs" /></div>
-                      <div className="col-span-1">
-                        <select
-                          value={item.period || 'Day'}
-                          onChange={(e) => updateEquip(item.id, { period: e.target.value })}
-                          className="w-full bg-steel-900 border border-blue-500/30 rounded px-1 py-1.5 text-sm text-white focus:outline-none focus:ring-1 focus:ring-blue-500/50"
-                        >
-                          <option value="Day" style={{ backgroundColor: "#0c1222", color: "white" }}>Day</option>
-                          <option value="Week" style={{ backgroundColor: "#0c1222", color: "white" }}>Week</option>
-                          <option value="Month" style={{ backgroundColor: "#0c1222", color: "white" }}>Month</option>
-                        </select>
-                      </div>
-                      <div className="col-span-1"><BlueInput type="number" min="0" value={item.qty || 0} onChange={(e) => updateEquip(item.id, { qty: Number(e.target.value) })} className="text-center" /></div>
-                      <div className="col-span-1"><BlueInput type="number" min="0" value={item.duration || 0} onChange={(e) => updateEquip(item.id, { duration: Number(e.target.value) })} className="text-center" /></div>
-                      <div className="col-span-1"><BlueInput type="text" inputMode="decimal" value={item.pickup || ''} onChange={(e) => updateEquip(item.id, { pickup: Number(e.target.value) || 0 })} className="text-center text-xs" /></div>
-                      <div className="col-span-1"><BlueInput type="text" inputMode="decimal" value={item.dropoff || ''} onChange={(e) => updateEquip(item.id, { dropoff: Number(e.target.value) || 0 })} className="text-center text-xs" /></div>
-                      <div className="col-span-1 text-sm text-right font-medium text-green-400">{fmt(total)}</div>
-                    </div>
-                  );
-                })}
-              </div>
-            ))}
+                {items.map((item) => (
+                  <div key={item.id} className="grid grid-cols-1 lg:grid-cols-12 gap-1 items-center py-1.5 border-b border-steel-800/30 last:border-0">
+                    <div className="col-span-4 text-sm text-white truncate" title={item.item}>{item.item}</div>
+                    <div className="col-span-1"><BlueInput type="number" step="1" value={item.dayRate} onChange={(e) => updateEquip(item.id, { dayRate: Number(e.target.value) })} className="text-right text-xs" /></div>
+                    <div className="col-span-1"><BlueInput type="number" step="1" value={item.weekRate} onChange={(e) => updateEquip(item.id, { weekRate: Number(e.target.value) })} className="text-right text-xs" /></div>
+                    <div className="col-span-1"><BlueInput type="number" step="1" value={item.monthRate} onChange={(e) => updateEquip(item.id, { monthRate: Number(e.target.value) })} className="text-right text-xs" /></div>
+                    <div className="col-span-2"><BlueInput type="number" step="1" value={item.pickup || 0} onChange={(e) => updateEquip(item.id, { pickup: Number(e.target.value) || 0 })} className="text-right text-xs" /></div>
+                    <div className="col-span-2"><BlueInput type="number" step="1" value={item.dropoff || 0} onChange={(e) => updateEquip(item.id, { dropoff: Number(e.target.value) || 0 })} className="text-right text-xs" /></div>
+                    <div className="col-span-1"></div>
+                  </div>
+                ))
           </div>
         )}
       </div>
