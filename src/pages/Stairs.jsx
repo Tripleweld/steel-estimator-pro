@@ -91,7 +91,7 @@ const COLUMN_OPTIONS = [
 ]
 const PRESET_OPTIONS = ['Service Stair', 'Architectural', 'Heavy Duty', 'Egress Only']
 const FINISH_OPTIONS = ['Shop Primed', 'Galvanized']
-const TREAD_TYPE_OPTIONS = ['Pan Tread (Galv)', 'Pan Tread (Mild)', 'Checker Plate', 'Grating']
+const TREAD_TYPE_OPTIONS = ['Pan Tread (Galv)', 'Pan Tread (Mild)', 'Checker Plate', 'Grating', 'Channel Grating Diamond (Galv)', 'Channel Grating Round (Galv)']
 const METHOD_OPTIONS = ['Detailed', 'Simple']
 
 const COMPLEXITY_MAP = {
@@ -161,7 +161,7 @@ function computeBOM(s, g, overrides = {}, disabled = {}) {
   const flightsSafe = Math.max(g.flights, 1)
   const rows = [
     ['stringers',       'Stringers',           s.stringerSection,    2 * flightsSafe,                      g.stringerLengthPerFlightFt,                 0,                            `2 per flight × ${flightsSafe}`],
-    ['treadAngles',     'Tread angles',        'L76x76x6',           s.treadType === 'Grating' ? 0 : g.numTreads * 4, 1,                                            s.treadType === 'Grating' ? 0 : g.numTreads * 4, s.treadType === 'Grating' ? 'n/a — grating has integral mounting plates' : '4 per tread: vertical + horizontal angle at each stringer'],
+    ['treadAngles',     'Tread angles',        'L76x76x6',           (s.treadType === 'Grating' || s.treadType.startsWith('Channel Grating')) ? 0 : g.numTreads * 4, 1, (s.treadType === 'Grating' || s.treadType.startsWith('Channel Grating')) ? 0 : g.numTreads * 4, (s.treadType === 'Grating' || s.treadType.startsWith('Channel Grating')) ? 'n/a — grating tread has integral end plates' : '4 per tread: vertical + horizontal angle at each stringer'],
     ['landingFrame',    'Landing frame',       'L76x76x6',           4 * Math.max(g.numLandings, 0),       (wMm + lMm) / 304.8,                         16 * Math.max(g.numLandings, 0), 'perimeter angles per landing'],
     ['connPlates',      'Conn plates',         'FB 102x13',          4 * flightsSafe,                      0.5,                                          16 * flightsSafe,             `top/bottom × ${flightsSafe}`],
     ['kickplate',       'Kickplate',           'FB 102x6',           2 * flightsSafe,                      g.stringerLengthPerFlightFt,                 0,                            'toe board, both sides per flight'],
@@ -431,6 +431,8 @@ export default function Stairs() {
   else if (s.treadType === 'Pan Tread (Mild)') treadUnitRate = findMiscRate('Pan tread (mild)') || 55
   else if (s.treadType === 'Checker Plate') treadUnitRate = findMiscRate('Checker plate tread') || 85
   else if (s.treadType === 'Grating') treadUnitRate = findMiscRate('Galv grating') || 25
+  else if (s.treadType === 'Channel Grating Diamond (Galv)') treadUnitRate = findMiscRate('Channel grating diamond (galv)') || 95
+  else if (s.treadType === 'Channel Grating Round (Galv)') treadUnitRate = findMiscRate('Channel grating round (galv)') || 110
 
   const treadQty = geom.numTreads
   const treadCost =
