@@ -122,6 +122,7 @@ function defaultRailingExtras() {
     drawingRef: '',
     finish: 'Paint',
     incl: { topRail: true, bottomRail: true, posts: true, pickets: true, intermediate: false, brackets: false, returns: true, basePlates: true },
+    sectionOverride: {},
     complexity: 1.1,
     postSpacingFt: 4,
     railsTopBot: 2,
@@ -287,11 +288,12 @@ function computeRailing(row, materialRates, galvRatePerLb, fabRate, installRate,
   const codeLimitHandrailMax = 1065;
   const codeLimitPicketMax = 100;
   const codeLimitPostSpacingMax = 6;
+  const actsAsGuard = incl.bottomRail || incl.pickets;
   const checks = {
-    guardHeight: !isGuard || heightMm >= codeLimitGuardMin,
+    guardHeight: !actsAsGuard || heightMm >= codeLimitGuardMin,
     handrailHeight: type !== 'Handrail' || (heightMm >= codeLimitHandrailMin && heightMm <= codeLimitHandrailMax),
-    picketSpacing: !isGuard || picketSp <= codeLimitPicketMax,
-    postSpacing: postSp <= codeLimitPostSpacingMax,
+    picketSpacing: !incl.pickets || picketSp <= codeLimitPicketMax,
+    postSpacing: !incl.posts || postSp <= codeLimitPostSpacingMax,
   };
 
   return {
