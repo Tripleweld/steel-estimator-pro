@@ -123,6 +123,8 @@ const defaultMiscMetalsRates = [
   { id: 4, item: 'Galv grating', rate: 25, unit: '$/sqft' },
   { id: 5, item: 'Guardrail pre-fab', rate: 95, unit: '$/lnft' },
   { id: 6, item: 'Handrail pre-fab', rate: 65, unit: '$/lnft' },
+  { id: 7, item: 'Channel grating diamond (galv)', rate: 95, unit: '$/tread' },
+  { id: 8, item: 'Channel grating round (galv)', rate: 110, unit: '$/tread' },
 ]
 
 /* Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂ Code Limits (OBC / OHSA) Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂ */
