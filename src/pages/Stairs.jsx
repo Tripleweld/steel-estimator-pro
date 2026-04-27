@@ -47,6 +47,19 @@ const SECTION_WEIGHTS = {
   'HSS 152x152x6.4': 13.80, 'HSS 152x152x8.0': 16.90,
   'HSS 203x203x6.4': 18.40, 'HSS 203x203x8.0': 22.50,
   'Grating 32x32': 10.0, // lb/sqft
+  // Steel bar grating (Accurate Screen 19-4 / 19-2 spacing) — lb/sqft
+  'Grating 3/4x1/8 (19-4)': 3.93,
+  'Grating 3/4x3/16 (19-4)': 5.58,
+  'Grating 1x1/8 (19-4)': 5.03, 'Grating 1x1/8 (19-2)': 5.50,
+  'Grating 1x3/16 (19-4)': 7.23, 'Grating 1x3/16 (19-2)': 7.87,
+  'Grating 1-1/4x1/8 (19-4)': 6.12, 'Grating 1-1/4x1/8 (19-2)': 6.76,
+  'Grating 1-1/4x3/16 (19-4)': 8.87, 'Grating 1-1/4x3/16 (19-2)': 9.51,
+  'Grating 1-1/2x1/8 (19-4)': 7.23, 'Grating 1-1/2x1/8 (19-2)': 7.87,
+  'Grating 1-1/2x3/16 (19-4)': 10.51, 'Grating 1-1/2x3/16 (19-2)': 11.15,
+  'Grating 1-3/4x3/16 (19-4)': 12.17, 'Grating 1-3/4x3/16 (19-2)': 12.81,
+  'Grating 2x3/16 (19-4)': 13.81, 'Grating 2x3/16 (19-2)': 14.45,
+  'Grating 2-1/4x3/16 (19-4)': 15.45, 'Grating 2-1/4x3/16 (19-2)': 16.09,
+  'Grating 2-1/2x3/16 (19-4)': 17.11, 'Grating 2-1/2x3/16 (19-2)': 17.75,
   // Smaller / extra rods + angles for selection menu
   'Rod 13mm': 0.42, 'L38x38x6': 3.06, 'L51x51x9.5': 4.65,
   'FB 51x13': 5.20, 'FB 76x13': 7.77,
@@ -60,7 +73,8 @@ const SECTION_OPTIONS = [
   { group: 'Rods', items: ['Rod 13mm','Rod 16mm','Rod 19mm','Rod 22mm','Rod 25mm'] },
   { group: 'Pipes', items: ['Pipe 27 Sch40','Pipe 33 Sch40','Pipe 38 Sch40','Pipe 42 Sch40','Pipe 48 Sch40'] },
   { group: 'HSS', items: ['HSS 51x51x4.8','HSS 64x64x4.8','HSS 76x76x4.8','HSS 76x76x6.4','HSS 89x89x4.8','HSS 89x89x6.4','HSS 102x102x4.8','HSS 102x102x6.4','HSS 127x127x6.4','HSS 127x127x8.0','HSS 152x152x6.4','HSS 152x152x8.0','HSS 203x203x6.4','HSS 203x203x8.0'] },
-  { group: 'Grating', items: ['Grating 32x32'] },
+  { group: 'Grating 19-4 (4" cross-bar)', items: ['Grating 32x32','Grating 3/4x1/8 (19-4)','Grating 3/4x3/16 (19-4)','Grating 1x1/8 (19-4)','Grating 1x3/16 (19-4)','Grating 1-1/4x1/8 (19-4)','Grating 1-1/4x3/16 (19-4)','Grating 1-1/2x1/8 (19-4)','Grating 1-1/2x3/16 (19-4)','Grating 1-3/4x3/16 (19-4)','Grating 2x3/16 (19-4)','Grating 2-1/4x3/16 (19-4)','Grating 2-1/2x3/16 (19-4)'] },
+  { group: 'Grating 19-2 (2" cross-bar, heavy traffic)', items: ['Grating 1x1/8 (19-2)','Grating 1x3/16 (19-2)','Grating 1-1/4x1/8 (19-2)','Grating 1-1/4x3/16 (19-2)','Grating 1-1/2x1/8 (19-2)','Grating 1-1/2x3/16 (19-2)','Grating 1-3/4x3/16 (19-2)','Grating 2x3/16 (19-2)','Grating 2-1/4x3/16 (19-2)','Grating 2-1/2x3/16 (19-2)'] },
 ]
 
 const STRINGER_OPTIONS = [
