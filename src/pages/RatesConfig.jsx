@@ -877,7 +877,9 @@ export default function RatesConfig() {
                     <div className="col-span-2"><BlueInput type="number" step="1" value={item.dropoff || 0} onChange={(e) => updateEquip(item.id, { dropoff: Number(e.target.value) || 0 })} className="text-right text-xs" /></div>
                     <div className="col-span-1"></div>
                   </div>
-                ))
+                ))}
+              </div>
+            ))}
           </div>
         )}
       </div>
