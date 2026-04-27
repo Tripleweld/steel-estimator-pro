@@ -126,7 +126,7 @@ const INST_SUBSTEPS = ['unload', 'rig', 'fit', 'bolt', 'touchup', 'qc']
 const INST_LABELS = ['Unload', 'Rig', 'Fit', 'Bolt', 'Touch-up', 'QC']
 
 // Build the Material BOM from current setup + computed geometry
-function computeBOM(s, g, overrides = {}) {
+function computeBOM(s, g, overrides = {}, disabled = {}) {
   const wMm = g.width
   const lMm = g.landingDepth
   const fH = g.f2fHeight
@@ -153,10 +153,13 @@ function computeBOM(s, g, overrides = {}) {
     const lenEaOverridden = ovLen != null && ovLen !== '' && Number(ovLen) !== Number(lenEa)
     const finalSection = sectionOverridden ? ovSec : section
     const finalLenEa = lenEaOverridden ? Number(ovLen) : lenEa
+    const isDisabled = !!disabled[key]
+    const effectiveQty = isDisabled ? 0 : qty
+    const effectiveHoles = isDisabled ? 0 : holes
     const lbPerFt = SECTION_WEIGHTS[finalSection] || 0
-    const totalLnft = qty * finalLenEa
+    const totalLnft = effectiveQty * finalLenEa
     const totalLbs = totalLnft * lbPerFt
-    return { key, label, section: finalSection, defaultSection: section, qty, lenEa: finalLenEa, defaultLenEa: lenEa, sectionOverridden, lenEaOverridden, totalLnft, lbPerFt, totalLbs, holes, notes }
+    return { key, label, section: finalSection, defaultSection: section, qty: effectiveQty, defaultQty: qty, lenEa: finalLenEa, defaultLenEa: lenEa, sectionOverridden, lenEaOverridden, isDisabled, totalLnft, lbPerFt, totalLbs, holes: effectiveHoles, notes }
   })
 }
 
@@ -279,6 +282,14 @@ export default function Stairs() {
     set('bomOverrides', cur)
   }
 
+  // Toggle BOM item enabled/disabled. Disabled => qty 0 (excluded from totals).
+  const toggleBomItem = (key) => {
+    const cur = { ...(s.bomDisabled || {}) }
+    if (cur[key]) delete cur[key]
+    else cur[key] = true
+    set('bomDisabled', cur)
+  }
+
   const setFabSub = (compKey, subKey, value) => {
     const next = {
       ...s.fabBreakdown,
@@ -359,10 +370,10 @@ export default function Stairs() {
   ]
 
   // ── Material BOM ──
-  const bom = useMemo(() => computeBOM(s, geom, s.bomOverrides || {}), [
+  const bom = useMemo(() => computeBOM(s, geom, s.bomOverrides || {}, s.bomDisabled || {}), [
     s.stringerSection, s.columnSection, geom.f2fHeight, geom.rise, geom.run, geom.width,
     geom.landingDepth, geom.flights, geom.colsPerLanding, geom.numTreads, geom.numLandings,
-    geom.stringerLengthFt, geom.stringerLengthPerFlightFt, s.bomOverrides, s.treadType,
+    geom.stringerLengthFt, geom.stringerLengthPerFlightFt, s.bomOverrides, s.bomDisabled, s.treadType,
   ])
 
   // Material rates from context
@@ -630,8 +641,13 @@ export default function Stairs() {
               </thead>
               <tbody className="divide-y divide-silver-100">
                 {bom.map((b) => (
-                  <tr key={b.key} className="even:bg-steel-50">
-                    <td className="px-3 py-2 font-medium text-steel-700">{b.label}</td>
+                  <tr key={b.key} className={`even:bg-steel-50 ${b.isDisabled ? 'opacity-50' : ''}`}>
+                    <td className="px-3 py-2 font-medium text-steel-700">
+                      <label className="flex items-center gap-2 cursor-pointer">
+                        <input type="checkbox" checked={!b.isDisabled} onChange={() => toggleBomItem(b.key)} className="h-3.5 w-3.5 rounded border-silver-300 text-fire-500 focus:ring-fire-400" />
+                        <span className={b.isDisabled ? 'line-through' : ''}>{b.label}</span>
+                      </label>
+                    </td>
                     <td className="px-2 py-1" title={b.sectionOverridden ? `Default: ${b.defaultSection}` : ''}>
                       <TextInput
                         value={b.section}
