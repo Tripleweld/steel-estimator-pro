@@ -64,9 +64,17 @@ export default function Layout({ children }) {
           <div className="flex items-center gap-3">
             {/* TW logo mark */}
             <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-fire-500 to-fire-700 shadow-lg shadow-fire-600/30">
-              <span className="text-sm font-black text-white tracking-tighter">
-                TW
-              </span>
+              <svg viewBox="0 0 40 40" className="h-7 w-7" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                {/* I-beam silhouette */}
+                <path d="M8 9 H32 V13.5 H22.5 V26.5 H32 V31 H8 V26.5 H17.5 V13.5 H8 Z" fill="white" fillOpacity="0.22"/>
+                {/* TW initials */}
+                <text x="20" y="25.5" textAnchor="middle" fontSize="13" fontWeight="900" fill="white" fontFamily="Inter, system-ui, sans-serif" style={{letterSpacing:'-0.5px'}}>TW</text>
+                {/* Welding arc spark */}
+                <circle cx="31.5" cy="8.5" r="2.6" fill="#fef3c7"/>
+                <circle cx="31.5" cy="8.5" r="1.3" fill="#fbbf24"/>
+                <line x1="31.5" y1="8.5" x2="35" y2="5" stroke="#fef3c7" strokeWidth="0.7" strokeLinecap="round"/>
+                <line x1="31.5" y1="8.5" x2="35" y2="12" stroke="#fef3c7" strokeWidth="0.7" strokeLinecap="round"/>
+              </svg>
             </div>
             {!collapsed && (
               <div className="min-w-0">
