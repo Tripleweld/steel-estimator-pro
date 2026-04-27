@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useMemo } from 'react';
+import React, { useState, useCallback, useMemo, useEffect } from 'react';
 import { useProject } from '../context/ProjectContext';
 
 /* ═══════════════════════════════════════════════════════════════
@@ -118,6 +118,7 @@ function defaultRailingExtras() {
   const lbPerFtOverride = {};
   COMPONENTS.forEach(c => { lbPerFtOverride[c.key] = ''; });
   return {
+    type: 'Guardrail',
     mark: '',
     drawingRef: '',
     finish: 'Paint',
@@ -807,18 +808,17 @@ export default function Railings() {
   // Pre-fill new rows with extras (the reducer creates a base row; we then update with extras)
   const addRailing = useCallback(() => {
     dispatch({ type: 'ADD_RAILING_ROW' });
-    // Mark/extras applied via update on next tick; use setTimeout(0) to ensure id exists
-    setTimeout(() => {
-      const next = (state.railings || []);
-      // Newest is the last added — but we use Date.now ids, so find the highest id not yet enriched
-      const target = (next.length ? next[next.length - 1] : null);
-      if (target && target.fabMin == null) {
+  }, [dispatch]);
+
+  // Auto-enrich newly added railings with full defaults (replaces buggy setTimeout pattern)
+  useEffect(() => {
+    (state.railings || []).forEach((r, i) => {
+      if (r && r.fabMin == null) {
         const extras = defaultRailingExtras();
-        const idx = next.length; // 1-based index for default mark
-        dispatch({ type: 'UPDATE_RAILING_ROW', payload: { id: target.id, ...extras, mark: `R-${idx}`, lengthFt: target.lengthFt || 20 } });
+        dispatch({ type: 'UPDATE_RAILING_ROW', payload: { id: r.id, ...extras, mark: r.mark || `R-${i+1}`, lengthFt: r.lengthFt || 20 } });
       }
-    }, 0);
-  }, [dispatch, state.railings]);
+    });
+  }, [state.railings, dispatch]);
 
   const updateRailing = useCallback((id, fields) => {
     dispatch({ type: 'UPDATE_RAILING_ROW', payload: { id, ...fields } });
@@ -829,17 +829,22 @@ export default function Railings() {
   }, [dispatch]);
 
   const copyRailing = useCallback((row) => {
-    const newId = Date.now();
-    const extras = defaultRailingExtras();
+    window.__pendingCopyRow = row;
     dispatch({ type: 'ADD_RAILING_ROW' });
-    setTimeout(() => {
-      const next = (state.railings || []);
-      const target = next[next.length - 1];
-      if (target) {
-        dispatch({ type: 'UPDATE_RAILING_ROW', payload: { ...extras, ...row, id: target.id, mark: (row.mark || 'R') + '-copy' } });
+  }, [dispatch]);
+
+  // Apply pending copy data to newly added row
+  useEffect(() => {
+    if (window.__pendingCopyRow && state.railings && state.railings.length) {
+      const target = state.railings[state.railings.length - 1];
+      if (target && target.fabMin == null) {
+        const src = window.__pendingCopyRow;
+        window.__pendingCopyRow = null;
+        const extras = defaultRailingExtras();
+        dispatch({ type: 'UPDATE_RAILING_ROW', payload: { ...extras, ...src, id: target.id, mark: (src.mark || 'R') + '-copy' } });
       }
-    }, 0);
-  }, [dispatch, state.railings]);
+    }
+  }, [state.railings, dispatch]);
 
   // Compute per-railing totals
   const computed = useMemo(() => railings.map(r => ({
