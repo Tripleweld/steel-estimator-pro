@@ -133,7 +133,7 @@ function computeBOM(s, g) {
   const flightsSafe = Math.max(g.flights, 1)
   const rows = [
     ['stringers',       'Stringers',           s.stringerSection,    2 * flightsSafe,                      g.stringerLengthPerFlightFt,                 0,                            `2 per flight × ${flightsSafe}`],
-    ['treadAngles',     'Tread angles',        'L76x76x6',           g.numTreads * 2,                      wMm / 304.8,                                 g.numTreads * 2 * 2,          '2 per tread'],
+    ['treadAngles',     'Tread angles',        'L76x76x6',           s.treadType === 'Grating' ? 0 : g.numTreads * 4, 1,                                            s.treadType === 'Grating' ? 0 : g.numTreads * 4, s.treadType === 'Grating' ? 'n/a — grating has integral mounting plates' : '4 per tread: vertical + horizontal angle at each stringer'],
     ['landingFrame',    'Landing frame',       'L76x76x6',           4 * Math.max(g.numLandings, 0),       (wMm + lMm) / 304.8,                         16 * Math.max(g.numLandings, 0), 'perimeter angles per landing'],
     ['connPlates',      'Conn plates',         'FB 102x13',          4 * flightsSafe,                      0.5,                                          16 * flightsSafe,             `top/bottom × ${flightsSafe}`],
     ['kickplate',       'Kickplate',           'FB 102x6',           2 * flightsSafe,                      g.stringerLengthPerFlightFt,                 0,                            'toe board, both sides per flight'],
