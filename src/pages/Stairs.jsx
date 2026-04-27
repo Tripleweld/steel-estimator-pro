@@ -47,7 +47,21 @@ const SECTION_WEIGHTS = {
   'HSS 152x152x6.4': 13.80, 'HSS 152x152x8.0': 16.90,
   'HSS 203x203x6.4': 18.40, 'HSS 203x203x8.0': 22.50,
   'Grating 32x32': 10.0, // lb/sqft
+  // Smaller / extra rods + angles for selection menu
+  'Rod 13mm': 0.42, 'L38x38x6': 3.06, 'L51x51x9.5': 4.65,
+  'FB 51x13': 5.20, 'FB 76x13': 7.77,
 }
+
+// Grouped sections for BOM dropdowns (channels, angles, flat bars, rods, pipes, HSS, grating)
+const SECTION_OPTIONS = [
+  { group: 'Channels', items: ['C150x12','C180x15','C200x21','C230x22','C230x30','C250x23','C310x31','C310x37','C310x45'] },
+  { group: 'Angles', items: ['L38x38x6','L51x51x6','L51x51x9.5','L64x64x6','L76x76x6','L76x76x9.5','L102x102x6','L102x102x9.5'] },
+  { group: 'Flat Bars', items: ['FB 38x6','FB 51x6','FB 51x10','FB 51x13','FB 64x10','FB 64x13','FB 76x6','FB 76x10','FB 76x13','FB 102x6','FB 102x13','FB 152x6'] },
+  { group: 'Rods', items: ['Rod 13mm','Rod 16mm','Rod 19mm','Rod 22mm','Rod 25mm'] },
+  { group: 'Pipes', items: ['Pipe 27 Sch40','Pipe 33 Sch40','Pipe 38 Sch40','Pipe 42 Sch40','Pipe 48 Sch40'] },
+  { group: 'HSS', items: ['HSS 51x51x4.8','HSS 64x64x4.8','HSS 76x76x4.8','HSS 76x76x6.4','HSS 89x89x4.8','HSS 89x89x6.4','HSS 102x102x4.8','HSS 102x102x6.4','HSS 127x127x6.4','HSS 127x127x8.0','HSS 152x152x6.4','HSS 152x152x8.0','HSS 203x203x6.4','HSS 203x203x8.0'] },
+  { group: 'Grating', items: ['Grating 32x32'] },
+]
 
 const STRINGER_OPTIONS = [
   'C150x12', 'C180x15', 'C200x21', 'C230x22', 'C230x30',
@@ -649,11 +663,22 @@ export default function Stairs() {
                       </label>
                     </td>
                     <td className="px-2 py-1" title={b.sectionOverridden ? `Default: ${b.defaultSection}` : ''}>
-                      <TextInput
+                      <select
                         value={b.section}
-                        onChange={(v) => setBomOverride(b.key, 'section', v === b.defaultSection ? '' : v)}
-                        className={`!py-1 !text-xs ${b.sectionOverridden ? '!bg-amber-50 !border-amber-300 !text-amber-900' : ''}`}
-                      />
+                        onChange={(e) => setBomOverride(b.key, 'section', e.target.value === b.defaultSection ? '' : e.target.value)}
+                        className={`w-full rounded border px-1.5 py-1 text-xs font-mono outline-none focus:ring-1 focus:ring-fire-500 ${b.sectionOverridden ? 'bg-amber-50 border-amber-300 text-amber-900' : 'bg-silver-50 border-silver-200 text-steel-800'}`}
+                      >
+                        {!SECTION_OPTIONS.some((g) => g.items.includes(b.section)) && (
+                          <option value={b.section}>{b.section}</option>
+                        )}
+                        {SECTION_OPTIONS.map((g) => (
+                          <optgroup key={g.group} label={g.group}>
+                            {g.items.map((it) => (
+                              <option key={it} value={it}>{it}</option>
+                            ))}
+                          </optgroup>
+                        ))}
+                      </select>
                     </td>
                     <td className="px-3 py-2 text-right font-mono text-steel-600">{fmtNum(b.qty)}</td>
                     <td className="px-2 py-1" title={b.lenEaOverridden ? `Default: ${fmtNum(b.defaultLenEa, 2)}` : ''}>
@@ -675,7 +700,14 @@ export default function Stairs() {
                 <tr className="bg-amber-50/40">
                   <td className="px-3 py-2 font-medium text-steel-700">Custom</td>
                   <td className="px-2 py-1">
-                    <TextInput value={s.customSection} onChange={(v) => set('customSection', v)} className="!py-1 !text-xs" />
+                    <select value={s.customSection || ''} onChange={(e) => set('customSection', e.target.value)} className="w-full rounded border border-silver-200 bg-silver-50 px-1.5 py-1 text-xs font-mono text-steel-800 outline-none focus:ring-1 focus:ring-fire-500">
+                      <option value="">— select —</option>
+                      {SECTION_OPTIONS.map((g) => (
+                        <optgroup key={g.group} label={g.group}>
+                          {g.items.map((it) => (<option key={it} value={it}>{it}</option>))}
+                        </optgroup>
+                      ))}
+                    </select>
                   </td>
                   <td className="px-2 py-1">
                     <NumInput value={s.customQty} onChange={(v) => set('customQty', v)} className="!py-1 !text-xs text-right" />
