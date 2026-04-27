@@ -126,7 +126,7 @@ const INST_SUBSTEPS = ['unload', 'rig', 'fit', 'bolt', 'touchup', 'qc']
 const INST_LABELS = ['Unload', 'Rig', 'Fit', 'Bolt', 'Touch-up', 'QC']
 
 // Build the Material BOM from current setup + computed geometry
-function computeBOM(s, g) {
+function computeBOM(s, g, overrides = {}) {
   const wMm = g.width
   const lMm = g.landingDepth
   const fH = g.f2fHeight
@@ -146,10 +146,17 @@ function computeBOM(s, g) {
     ['midLandingBrace', 'Mid-landing brace',   'L76x76x6',           g.numLandings * 2,                    wMm / 304.8,                                 0,                            'cross bracing'],
   ]
   return rows.map(([key, label, section, qty, lenEa, holes, notes]) => {
-    const lbPerFt = SECTION_WEIGHTS[section] || 0
-    const totalLnft = qty * lenEa
+    const ov = overrides[key] || {}
+    const ovSec = ov.section
+    const ovLen = ov.lenEa
+    const sectionOverridden = ovSec != null && ovSec !== '' && ovSec !== section
+    const lenEaOverridden = ovLen != null && ovLen !== '' && Number(ovLen) !== Number(lenEa)
+    const finalSection = sectionOverridden ? ovSec : section
+    const finalLenEa = lenEaOverridden ? Number(ovLen) : lenEa
+    const lbPerFt = SECTION_WEIGHTS[finalSection] || 0
+    const totalLnft = qty * finalLenEa
     const totalLbs = totalLnft * lbPerFt
-    return { key, label, section, qty, lenEa, totalLnft, lbPerFt, totalLbs, holes, notes }
+    return { key, label, section: finalSection, defaultSection: section, qty, lenEa: finalLenEa, defaultLenEa: lenEa, sectionOverridden, lenEaOverridden, totalLnft, lbPerFt, totalLbs, holes, notes }
   })
 }
 
@@ -258,6 +265,20 @@ export default function Stairs() {
 
   const set = (field, value) => dispatch({ type: 'SET_STAIRS', payload: { [field]: value } })
 
+  // Override per BOM row (section or length each). Empty string clears the override.
+  const setBomOverride = (key, field, value) => {
+    const cur = { ...(s.bomOverrides || {}) }
+    const row = { ...(cur[key] || {}) }
+    if (value === '' || value == null) {
+      delete row[field]
+    } else {
+      row[field] = value
+    }
+    if (Object.keys(row).length === 0) delete cur[key]
+    else cur[key] = row
+    set('bomOverrides', cur)
+  }
+
   const setFabSub = (compKey, subKey, value) => {
     const next = {
       ...s.fabBreakdown,
@@ -338,10 +359,10 @@ export default function Stairs() {
   ]
 
   // ── Material BOM ──
-  const bom = useMemo(() => computeBOM(s, geom), [
+  const bom = useMemo(() => computeBOM(s, geom, s.bomOverrides || {}), [
     s.stringerSection, s.columnSection, geom.f2fHeight, geom.rise, geom.run, geom.width,
     geom.landingDepth, geom.flights, geom.colsPerLanding, geom.numTreads, geom.numLandings,
-    geom.stringerLengthFt,
+    geom.stringerLengthFt, geom.stringerLengthPerFlightFt, s.bomOverrides, s.treadType,
   ])
 
   // Material rates from context
@@ -611,9 +632,21 @@ export default function Stairs() {
                 {bom.map((b) => (
                   <tr key={b.key} className="even:bg-steel-50">
                     <td className="px-3 py-2 font-medium text-steel-700">{b.label}</td>
-                    <td className="px-3 py-2 font-mono text-steel-600">{b.section}</td>
+                    <td className="px-2 py-1" title={b.sectionOverridden ? `Default: ${b.defaultSection}` : ''}>
+                      <TextInput
+                        value={b.section}
+                        onChange={(v) => setBomOverride(b.key, 'section', v === b.defaultSection ? '' : v)}
+                        className={`!py-1 !text-xs ${b.sectionOverridden ? '!bg-amber-50 !border-amber-300 !text-amber-900' : ''}`}
+                      />
+                    </td>
                     <td className="px-3 py-2 text-right font-mono text-steel-600">{fmtNum(b.qty)}</td>
-                    <td className="px-3 py-2 text-right font-mono text-steel-600">{fmtNum(b.lenEa, 2)}</td>
+                    <td className="px-2 py-1" title={b.lenEaOverridden ? `Default: ${fmtNum(b.defaultLenEa, 2)}` : ''}>
+                      <NumInput
+                        value={b.lenEaOverridden ? b.lenEa : fmtNum(b.lenEa, 2)}
+                        onChange={(v) => setBomOverride(b.key, 'lenEa', v === '' ? '' : v)}
+                        className={`!py-1 !text-xs text-right ${b.lenEaOverridden ? '!bg-amber-50 !border-amber-300 !text-amber-900' : ''}`}
+                      />
+                    </td>
                     <td className="px-3 py-2 text-right font-mono text-steel-600">{fmtNum(b.totalLnft, 2)}</td>
                     <td className="px-3 py-2 text-right font-mono text-steel-600">{fmtNum(b.lbPerFt, 2)}</td>
                     <td className="px-3 py-2 text-right font-mono text-steel-600">{fmtNum(b.totalLbs, 1)}</td>
