@@ -4,6 +4,7 @@ import {
   CheckCircle, AlertTriangle, Settings2, ListTree, Layers
 } from 'lucide-react'
 import { useProject } from '../context/ProjectContext'
+import StairsSketch from './StairsSketch'
 
 /* ────────────────────────────────────────────────────────────────────────────
    STAIRS — Parametric Calculator with OBC Validation
@@ -39,7 +40,12 @@ const SECTION_WEIGHTS = {
   'Pipe 27 Sch40': 0.85, 'Pipe 33 Sch40': 1.13, 'Pipe 42 Sch40': 1.68,
   'Pipe 48 Sch40': 1.88,
   'HSS 51x51x4.8': 2.46, 'HSS 64x64x4.8': 3.05, 'HSS 76x76x4.8': 3.65,
-  'HSS 76x76x6.4': 4.74, 'HSS 102x102x4.8': 4.85, 'HSS 102x102x6.4': 6.32,
+  'HSS 76x76x6.4': 4.74,
+  'HSS 89x89x4.8': 5.97, 'HSS 89x89x6.4': 7.73,
+  'HSS 102x102x4.8': 6.82, 'HSS 102x102x6.4': 9.01,
+  'HSS 127x127x6.4': 11.30, 'HSS 127x127x8.0': 13.80,
+  'HSS 152x152x6.4': 13.80, 'HSS 152x152x8.0': 16.90,
+  'HSS 203x203x6.4': 18.40, 'HSS 203x203x8.0': 22.50,
   'Grating 32x32': 10.0, // lb/sqft
 }
 
@@ -48,8 +54,12 @@ const STRINGER_OPTIONS = [
   'C250x23', 'C310x31', 'C310x37', 'C310x45',
 ]
 const COLUMN_OPTIONS = [
-  'HSS 51x51x4.8', 'HSS 64x64x4.8', 'HSS 76x76x4.8',
-  'HSS 76x76x6.4', 'HSS 102x102x4.8', 'HSS 102x102x6.4',
+  'HSS 51x51x4.8', 'HSS 64x64x4.8', 'HSS 76x76x4.8', 'HSS 76x76x6.4',
+  'HSS 89x89x4.8', 'HSS 89x89x6.4',
+  'HSS 102x102x4.8', 'HSS 102x102x6.4',
+  'HSS 127x127x6.4', 'HSS 127x127x8.0',
+  'HSS 152x152x6.4', 'HSS 152x152x8.0',
+  'HSS 203x203x6.4', 'HSS 203x203x8.0',
 ]
 const PRESET_OPTIONS = ['Service Stair', 'Architectural', 'Heavy Duty', 'Egress Only']
 const FINISH_OPTIONS = ['Shop Primed', 'Galvanized']
@@ -275,13 +285,14 @@ export default function Stairs() {
     const numRisers = rise > 0 ? Math.ceil(fH / rise) : 0
     const numTreads = Math.max(numRisers - 1, 0)
     const numLandings = Math.max(flights - 1, 0)
+    const risersPerFlight = flights > 0 ? Math.ceil(numRisers / flights) : numRisers
     const totalRunMm = numTreads * runMm
     const angleDeg = atanDeg(rise, runMm)
     const stringerLengthFt = Math.sqrt(fH * fH + totalRunMm * totalRunMm) / 304.8
     return {
       f2fHeight: fH, rise, run: runMm, width, landingDepth: ld, flights, colsPerLanding,
       columnSection: s.columnSection,
-      numRisers, numTreads, numLandings, totalRunMm, angleDeg, stringerLengthFt,
+      numRisers, numTreads, numLandings, risersPerFlight, totalRunMm, angleDeg, stringerLengthFt,
     }
   }, [s.f2fHeight, s.rise, s.run, s.width, s.landingDepth, s.flights, s.colsPerLanding, s.columnSection])
 
@@ -309,10 +320,10 @@ export default function Stairs() {
       ok: geom.run >= runMin,
     },
     {
-      label: `Max ${risersMaxBeforeLanding} risers before landing`,
-      requirement: `OBC 3.4 limits risers before landing`,
-      value: `${fmtNum(geom.numRisers)}`,
-      ok: geom.numRisers > 0 && geom.numRisers <= risersMaxBeforeLanding,
+      label: `Max ${risersMaxBeforeLanding} risers per flight`,
+      requirement: `OBC 3.4: max ${risersMaxBeforeLanding} risers per flight before a landing`,
+      value: `${fmtNum(geom.risersPerFlight)} / flight (${fmtNum(geom.numRisers)} total ÷ ${fmtNum(geom.flights)} flights)`,
+      ok: geom.risersPerFlight > 0 && geom.risersPerFlight <= risersMaxBeforeLanding,
     },
     {
       label: 'Width ≥ 900mm (public)',
@@ -532,6 +543,11 @@ export default function Stairs() {
               <NumInput value={s.colsPerLanding} onChange={(v) => set('colsPerLanding', v)} />
             </div>
           </div>
+        </SectionCard>
+
+        {/* ─── Visual Sketch ─── */}
+        <SectionCard icon={ListTree} title="Visual Reference" subtitle="Side view: height, flights, angle, landings, columns based on inputs">
+          <StairsSketch geom={geom} finish={s.finish} />
         </SectionCard>
 
         {/* ─── 3. OBC COMPLIANCE ─── */}
