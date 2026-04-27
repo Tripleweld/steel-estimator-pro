@@ -132,16 +132,16 @@ function computeBOM(s, g) {
   const fH = g.f2fHeight
   const flightsSafe = Math.max(g.flights, 1)
   const rows = [
-    ['stringers',       'Stringers',           s.stringerSection,    2,                                    g.stringerLengthFt,                          0,                            'C-channel stringers'],
+    ['stringers',       'Stringers',           s.stringerSection,    2 * flightsSafe,                      g.stringerLengthPerFlightFt,                 0,                            `2 per flight × ${flightsSafe}`],
     ['treadAngles',     'Tread angles',        'L76x76x6',           g.numTreads * 2,                      wMm / 304.8,                                 g.numTreads * 2 * 2,          '2 per tread'],
-    ['landingFrame',    'Landing frame',       'L76x76x6',           4 * Math.max(g.numLandings, 1),       (wMm + lMm) / 304.8,                         16 * Math.max(g.numLandings, 1), 'perimeter angles'],
-    ['connPlates',      'Conn plates',         'FB 102x13',          4,                                    0.5,                                          16,                           'top/bottom/landing'],
-    ['kickplate',       'Kickplate',           'FB 102x6',           2,                                    g.stringerLengthFt,                          0,                            'toe board'],
-    ['anchorBolts',     'Anchor bolts',        'Rod 19mm',           8,                                    0.5,                                          0,                            '4 top + 4 bottom'],
+    ['landingFrame',    'Landing frame',       'L76x76x6',           4 * Math.max(g.numLandings, 0),       (wMm + lMm) / 304.8,                         16 * Math.max(g.numLandings, 0), 'perimeter angles per landing'],
+    ['connPlates',      'Conn plates',         'FB 102x13',          4 * flightsSafe,                      0.5,                                          16 * flightsSafe,             `top/bottom × ${flightsSafe}`],
+    ['kickplate',       'Kickplate',           'FB 102x6',           2 * flightsSafe,                      g.stringerLengthPerFlightFt,                 0,                            'toe board, both sides per flight'],
+    ['anchorBolts',     'Anchor bolts',        'Rod 19mm',           8 * flightsSafe,                      0.5,                                          0,                            `4 top + 4 bottom × ${flightsSafe}`],
     ['landingCols',     'Landing columns',     s.columnSection,      g.numLandings * g.colsPerLanding,     (g.numLandings * fH) / 304.8 / flightsSafe,  0,                            ''],
     ['landingBeams',    'Landing beams',       'L76x76x6',           g.numLandings * 4,                    wMm / 304.8,                                 0,                            ''],
     ['landingGrating',  'Landing grating',     'Grating 32x32',      g.numLandings,                        (wMm * lMm) / 92903,                         0,                            'sqft area'],
-    ['nosingStrips',    'Nosing strips',       'FB 38x6',            g.numTreads * g.flights,              wMm / 304.8,                                 0,                            'abrasive nosing'],
+    ['nosingStrips',    'Nosing strips',       'FB 38x6',            g.numTreads,                          wMm / 304.8,                                 0,                            'abrasive nosing, 1 per tread'],
     ['hrExtensions',    'Handrail extensions', 'Pipe 42 Sch40',      g.numLandings * 2,                    3,                                            0,                            'at each landing'],
     ['midLandingBrace', 'Mid-landing brace',   'L76x76x6',           g.numLandings * 2,                    wMm / 304.8,                                 0,                            'cross bracing'],
   ]
@@ -286,13 +286,17 @@ export default function Stairs() {
     const numTreads = Math.max(numRisers - 1, 0)
     const numLandings = Math.max(flights - 1, 0)
     const risersPerFlight = flights > 0 ? Math.ceil(numRisers / flights) : numRisers
+    const treadsPerFlight = Math.max(risersPerFlight - 1, 0)
     const totalRunMm = numTreads * runMm
+    const flightRiseMm = flights > 0 ? fH / flights : fH
+    const flightRunMm = treadsPerFlight * runMm
     const angleDeg = atanDeg(rise, runMm)
     const stringerLengthFt = Math.sqrt(fH * fH + totalRunMm * totalRunMm) / 304.8
+    const stringerLengthPerFlightFt = Math.sqrt(flightRiseMm * flightRiseMm + flightRunMm * flightRunMm) / 304.8
     return {
       f2fHeight: fH, rise, run: runMm, width, landingDepth: ld, flights, colsPerLanding,
       columnSection: s.columnSection,
-      numRisers, numTreads, numLandings, risersPerFlight, totalRunMm, angleDeg, stringerLengthFt,
+      numRisers, numTreads, numLandings, risersPerFlight, treadsPerFlight, totalRunMm, flightRunMm, angleDeg, stringerLengthFt, stringerLengthPerFlightFt,
     }
   }, [s.f2fHeight, s.rise, s.run, s.width, s.landingDepth, s.flights, s.colsPerLanding, s.columnSection])
 
