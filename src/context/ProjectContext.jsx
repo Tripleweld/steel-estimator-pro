@@ -1,4 +1,4 @@
-import { createContext, useContext, useReducer } from 'react'
+import { createContext, useContext, useReducer, useEffect } from 'react'
 
 const ProjectContext = createContext(null)
 
@@ -407,6 +407,17 @@ function projectReducer(state, action) {
       return { ...state, softCosts: state.softCosts.filter(r => r.id !== action.payload), isDirty: true }
 
     /* Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂ Reset Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂ */
+    case 'ENSURE_MATERIAL_RATES': {
+      const existing = state.rates.materialRates.map(r => r.item);
+      let nextId = state.rates.materialRates.reduce((m, r) => Math.max(m, r.id || 0), 0);
+      const missing = (action.payload || []).filter(req => !existing.includes(req.item)).map(req => {
+        nextId++;
+        return { id: nextId, item: req.item, rate: req.rate, unit: req.unit || '$/lb' };
+      });
+      if (missing.length === 0) return state;
+      return { ...state, rates: { ...state.rates, materialRates: [...state.rates.materialRates, ...missing] } };
+    }
+
     case 'RESET_TO_DEFAULTS':
       return { ...JSON.parse(JSON.stringify(defaultState)), projectInfo: { ...defaultProjectInfo, quoteNumber: generateQuoteNumber() } }
 
@@ -433,6 +444,13 @@ function projectReducer(state, action) {
 
 export function ProjectProvider({ children }) {
   const [state, dispatch] = useReducer(projectReducer, defaultState)
+  useEffect(() => {
+    dispatch({ type: 'ENSURE_MATERIAL_RATES', payload: [
+      { item: 'Stainless Steel 304', rate: 3.50, unit: '$/lb' },
+      { item: 'Stainless Steel 316', rate: 5.50, unit: '$/lb' },
+      { item: 'Powder Coat', rate: 1.50, unit: '$/lb' },
+    ]})
+  }, [])
   return (
     <ProjectContext.Provider value={{ state, dispatch }}>
       {children}
