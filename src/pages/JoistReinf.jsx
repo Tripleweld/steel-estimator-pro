@@ -32,6 +32,24 @@ const PLATE_SIZES = [
 ];
 const plateLbsPerFt = (w, t) => w * t * 3.4032;
 
+/* ── Angle sizes for web reinforcement (lbs/ft) ── */
+const ANGLE_SIZES = [
+  { label: 'L1×1×1/8', lbsPerFt: 0.80 },
+  { label: 'L1×1×3/16', lbsPerFt: 1.16 },
+  { label: 'L1-1/4×1-1/4×1/8', lbsPerFt: 1.01 },
+  { label: 'L1-1/2×1-1/2×1/8', lbsPerFt: 1.23 },
+  { label: 'L1-1/2×1-1/2×3/16', lbsPerFt: 1.80 },
+  { label: 'L2×2×1/8', lbsPerFt: 1.65 },
+  { label: 'L2×2×3/16', lbsPerFt: 2.44 },
+  { label: 'L2×2×1/4', lbsPerFt: 3.19 },
+  { label: 'L2-1/2×2-1/2×1/8', lbsPerFt: 2.08 },
+  { label: 'L2-1/2×2-1/2×3/16', lbsPerFt: 3.07 },
+  { label: 'L2-1/2×2-1/2×1/4', lbsPerFt: 4.10 },
+  { label: 'L3×3×3/16', lbsPerFt: 3.71 },
+  { label: 'L3×3×1/4', lbsPerFt: 4.90 },
+  { label: 'Custom', lbsPerFt: 0 },
+];
+
 /* ── SJI Joist Types ── */
 const K_SERIES = [
   '8K1','10K1','12K1','12K3','12K5',
@@ -98,6 +116,7 @@ const defaultRow = () => ({
   chord_topLbsPerFt: BAR_WEIGHTS['3/4'],
   chord_topLength: 0,
   chord_botType: 'plate',
+  chord_botBarsPerChord: 2,
   chord_botBarDia: '3/4',
   chord_botPlateSize: 'PL 4×3/8',
   chord_botPlateW: 4,
@@ -110,12 +129,14 @@ const defaultRow = () => ({
   chord_crewSize: 2,
   // Web
   web_qtyPerJoist: 0,
-  web_barDia: '3/4',
-  web_barLbsPerFt: BAR_WEIGHTS['3/4'],
+  web_angleSize: 'L1-1/2×1-1/2×1/8',
+  web_angleLbsPerFt: 1.23,
   web_vertQty: 0,
   web_vertLength: 0,
+  web_vertLengthAuto: true,
   web_diagQty: 0,
   web_diagLength: 0,
+  web_diagLengthAuto: true,
   web_minPerWeld: 5,
   notes: '',
 });
@@ -135,25 +156,35 @@ function calcRow(r) {
   const topLbs = Number(r.chord_topLbsPerFt) || 0;
   const botLbs = Number(r.chord_botLbsPerFt) || 0;
 
+  const isBotBar = r.chord_botType === 'bar';
+  const botBars = isBotBar ? (Number(r.chord_botBarsPerChord) || 2) : 1;
+
   // Top welds: ((topLen_ft × 12 / spacing) + 4 extra) × 2 sides × bars
   const topWelds = topLen > 0 ? Math.ceil(((topLen * 12) / spacing + 4) * 2 * bars) : 0;
-  // Bottom welds: similar pattern
-  const botWelds = botLen > 0 ? Math.ceil(((botLen * 12) / spacing + 4) * 2) : 0;
+  // Bottom welds: if bars → same formula as top (per bar, 2 sides); if plate → 2 continuous sides
+  const botWelds = botLen > 0
+    ? (isBotBar
+        ? Math.ceil(((botLen * 12) / spacing + 4) * 2 * botBars)
+        : Math.ceil(((botLen * 12) / spacing + 4) * 2))
+    : 0;
   const chordTotalWelds = topWelds + botWelds;
   const chordWeldInches = chordTotalWelds * weldSize;
   const chordHrs = (chordTotalWelds * chordMinPerWeld) / 60;
-  // Material: (topLbs × topLen × 2bars + botLbs × botLen) × qty × markup
-  const chordMaterial = (topLbs * topLen * bars + botLbs * botLen) * qty * MATERIAL_MARKUP;
+  // Material: (topLbs × topLen × topBars + botLbs × botLen �� botBars) × qty × markup
+  const chordMaterial = (topLbs * topLen * bars + botLbs * botLen * botBars) * qty * MATERIAL_MARKUP;
   // Install: qty × hours × crewSize × rate + material
   const chordInstall = qty * chordHrs * crewSize * INSTALL_RATE + chordMaterial;
 
   // WEB calculations
   const webQty = Number(r.web_qtyPerJoist) || 0;
-  const webLbs = Number(r.web_barLbsPerFt) || 0;
+  const webLbs = Number(r.web_angleLbsPerFt) || 0;
+  const joistDepthIn = parseInt(r.joistType) || 24;
   const vertQ = Number(r.web_vertQty) || 0;
-  const vertL = Number(r.web_vertLength) || 0;
+  // Auto-calc vertical length from joist depth (in → ft) if auto mode, else manual
+  const vertL = r.web_vertLengthAuto ? (joistDepthIn / 12) : (Number(r.web_vertLength) || 0);
   const diagQ = Number(r.web_diagQty) || 0;
-  const diagL = Number(r.web_diagLength) || 0;
+  // Auto-calc diagonal length: hypotenuse based on depth and typical panel width (~depth)
+  const diagL = r.web_diagLengthAuto ? (Math.sqrt(2) * joistDepthIn / 12) : (Number(r.web_diagLength) || 0);
   const webMinPerWeld = Number(r.web_minPerWeld) || 5;
 
   // Web welds: each member has 2 ends × 2 sides = 4 welds
@@ -170,7 +201,7 @@ function calcRow(r) {
   const totalWeeks = totalDays / 5;
   const totalMaterial = chordMaterial + webMaterial;
   const totalInstall = chordInstall + webInstall;
-  const totalWeight = (topLbs * topLen * bars + botLbs * botLen
+  const totalWeight = (topLbs * topLen * bars + botLbs * botLen * botBars
     + webLbs * (vertQ * vertL + diagQ * diagL) * 2) * qty;
   const perJoist = qty > 0 ? totalInstall / qty : 0;
 
@@ -181,7 +212,189 @@ function calcRow(r) {
   };
 }
 
-/* ─┈ Info Legend (collapsible) ─┈ */
+/* ── Reactive Cross-Section Diagram ── */
+function JoistCrossSection({ row }) {
+  const isBotBar = row.chord_botType === 'bar';
+  const bars = Number(row.chord_barsPerChord) || 2;
+  const method = row.reinfMethod || '';
+  const hasWeb = (Number(row.web_vertQty) || 0) + (Number(row.web_diagQty) || 0) > 0;
+  const vertQ = Number(row.web_vertQty) || 0;
+  const diagQ = Number(row.web_diagQty) || 0;
+
+  // Parse joist depth from type (e.g. "24K8" → 24)
+  const depth = parseInt(row.joistType) || 24;
+  const series = row.joistType?.match(/[A-Z]+/)?.[0] || 'K';
+
+  // SVG dimensions and scaling
+  const W = 520, H = 260, pad = 30;
+  const joistW = 320; // horizontal span of joist section
+  const jX = (W - joistW) / 2; // left edge
+  const topY = pad + 30;
+  const botY = H - pad - 30;
+  const midY = (topY + botY) / 2;
+  const chordH = 10; // chord thickness
+
+  // Colors
+  const steel = '#334155'; // steel-800
+  const fire = '#dc2626';  // fire-600
+  const blue = '#2563eb';  // blue-600
+  const silver = '#94a3b8'; // silver-400
+  const orange = '#ea580c'; // orange-600
+
+  // Top chord bars (circles)
+  const topBarR = bars >= 2 ? 6 : 8;
+  const topBars = [];
+  for (let i = 0; i < Math.min(bars, 4); i++) {
+    const spacing = 18;
+    const startX = jX + joistW / 2 - ((Math.min(bars, 4) - 1) * spacing) / 2;
+    topBars.push({ cx: startX + i * spacing, cy: topY - topBarR - 2 });
+  }
+
+  // Bottom element
+  const botPlateW = isBotBar ? 0 : (Number(row.chord_botPlateW) || 4) * 3;
+  const botPlateT = isBotBar ? 0 : Math.max(3, (Number(row.chord_botPlateT) || 0.25) * 12);
+  const botBarsArr = [];
+  const botBarQty = isBotBar ? (Number(row.chord_botBarsPerChord) || 2) : 0;
+  if (isBotBar) {
+    const botBarCount = Math.min(botBarQty, 4);
+    for (let i = 0; i < botBarCount; i++) {
+      const spacing = 18;
+      const startX = jX + joistW / 2 - ((botBarCount - 1) * spacing) / 2;
+      botBarsArr.push({ cx: startX + i * spacing, cy: botY + topBarR + 4 });
+    }
+  }
+
+  // Web members — zigzag pattern
+  const webPanels = Math.max(vertQ + diagQ, 6);
+  const panelW = joistW / webPanels;
+
+  return (
+    <div className="rounded-lg border border-silver-200 bg-white p-4">
+      <div className="flex items-center gap-2 mb-2">
+        <svg className="h-4 w-4 text-fire-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="18" height="18" rx="2" /><line x1="3" y1="12" x2="21" y2="12" /><line x1="12" y1="3" x2="12" y2="21" /></svg>
+        <h4 className="text-sm font-bold text-steel-700">Section View</h4>
+        <span className="ml-auto text-xs text-silver-400">{row.joistType} — {row.reinfMethod}</span>
+      </div>
+      <svg viewBox={`0 0 ${W} ${H}`} className="w-full max-w-[520px] mx-auto" style={{ height: 'auto' }}>
+        {/* Background */}
+        <rect x="0" y="0" width={W} height={H} fill="none" />
+
+        {/* Depth dimension line (left side) */}
+        <line x1={jX - 20} y1={topY} x2={jX - 20} y2={botY} stroke={silver} strokeWidth="0.8" />
+        <line x1={jX - 25} y1={topY} x2={jX - 15} y2={topY} stroke={silver} strokeWidth="0.8" />
+        <line x1={jX - 25} y1={botY} x2={jX - 15} y2={botY} stroke={silver} strokeWidth="0.8" />
+        <text x={jX - 22} y={midY + 4} textAnchor="middle" fill={silver} fontSize="9" fontFamily="monospace" transform={`rotate(-90, ${jX - 22}, ${midY})`}>{depth}" deep</text>
+
+        {/* TOP CHORD — double angle shape */}
+        <rect x={jX} y={topY - chordH / 2} width={joistW} height={chordH} rx="1.5" fill={steel} opacity="0.85" />
+        <text x={jX + joistW + 8} y={topY + 3} fill={steel} fontSize="8" fontFamily="monospace" fontWeight="bold">TOP CHORD</text>
+
+        {/* BOTTOM CHORD — double angle shape */}
+        <rect x={jX} y={botY - chordH / 2} width={joistW} height={chordH} rx="1.5" fill={steel} opacity="0.85" />
+        <text x={jX + joistW + 8} y={botY + 3} fill={steel} fontSize="8" fontFamily="monospace" fontWeight="bold">BOT CHORD</text>
+
+        {/* WEB MEMBERS — V-pattern (Warren truss style) */}
+        {Array.from({ length: webPanels }, (_, i) => {
+          const x1 = jX + i * panelW;
+          const x2 = jX + (i + 0.5) * panelW;
+          const x3 = jX + (i + 1) * panelW;
+          return (
+            <g key={`web${i}`}>
+              <line x1={x1} y1={topY + chordH / 2} x2={x2} y2={botY - chordH / 2} stroke={silver} strokeWidth="1.2" strokeDasharray={hasWeb && i < vertQ ? "none" : "3,3"} opacity={hasWeb && i < vertQ + diagQ ? 0.9 : 0.3} />
+              <line x1={x2} y1={botY - chordH / 2} x2={x3} y2={topY + chordH / 2} stroke={silver} strokeWidth="1.2" strokeDasharray={hasWeb && i < diagQ ? "none" : "3,3"} opacity={hasWeb && i < vertQ + diagQ ? 0.9 : 0.3} />
+            </g>
+          );
+        })}
+
+        {/* TOP REINFORCEMENT BARS */}
+        {topBars.map((b, i) => (
+          <g key={`tb${i}`}>
+            <circle cx={b.cx} cy={b.cy} r={topBarR} fill="none" stroke={fire} strokeWidth="2" />
+            <circle cx={b.cx} cy={b.cy} r={1.5} fill={fire} />
+          </g>
+        ))}
+        {topBars.length > 0 && (
+          <text x={topBars[topBars.length - 1].cx + topBarR + 6} y={topBars[0].cy + 3} fill={fire} fontSize="8" fontFamily="monospace" fontWeight="bold">
+            {bars}× ⌀{row.chord_topBarDia}" bar
+          </text>
+        )}
+
+        {/* Weld symbols on top bars */}
+        {topBars.map((b, i) => (
+          <g key={`tw${i}`}>
+            <line x1={b.cx - 4} y1={b.cy + topBarR + 1} x2={b.cx + 4} y2={b.cy + topBarR + 1} stroke={orange} strokeWidth="1.5" />
+            <polygon points={`${b.cx - 3},${b.cy + topBarR + 1} ${b.cx},${b.cy + topBarR + 4} ${b.cx + 3},${b.cy + topBarR + 1}`} fill={orange} />
+          </g>
+        ))}
+
+        {/* BOTTOM REINFORCEMENT */}
+        {isBotBar ? (
+          <>
+            {/* Round bars on bottom */}
+            {botBarsArr.map((b, i) => (
+              <g key={`bb${i}`}>
+                <circle cx={b.cx} cy={b.cy} r={topBarR} fill="none" stroke={blue} strokeWidth="2" />
+                <circle cx={b.cx} cy={b.cy} r={1.5} fill={blue} />
+              </g>
+            ))}
+            {botBarsArr.length > 0 && (
+              <text x={botBarsArr[botBarsArr.length - 1].cx + topBarR + 6} y={botBarsArr[0].cy + 3} fill={blue} fontSize="8" fontFamily="monospace" fontWeight="bold">
+                {botBarQty}× ⌀{row.chord_botBarDia}" bar
+              </text>
+            )}
+            {/* Weld symbols */}
+            {botBarsArr.map((b, i) => (
+              <g key={`bw${i}`}>
+                <line x1={b.cx - 4} y1={b.cy - topBarR - 1} x2={b.cx + 4} y2={b.cy - topBarR - 1} stroke={orange} strokeWidth="1.5" />
+                <polygon points={`${b.cx - 3},${b.cy - topBarR - 1} ${b.cx},${b.cy - topBarR - 4} ${b.cx + 3},${b.cy - topBarR - 1}`} fill={orange} />
+              </g>
+            ))}
+          </>
+        ) : (
+          <>
+            {/* Plate on bottom */}
+            <rect x={jX + joistW / 2 - botPlateW / 2} y={botY + chordH / 2 + 2} width={botPlateW} height={botPlateT} rx="1" fill={blue} opacity="0.8" />
+            <text x={jX + joistW / 2 + botPlateW / 2 + 6} y={botY + chordH / 2 + botPlateT / 2 + 4} fill={blue} fontSize="8" fontFamily="monospace" fontWeight="bold">
+              {row.chord_botPlateSize}
+            </text>
+            {/* Weld symbols on plate */}
+            <line x1={jX + joistW / 2 - botPlateW / 2 + 3} y1={botY + chordH / 2 + 1} x2={jX + joistW / 2 - botPlateW / 2 + 9} y2={botY + chordH / 2 + 1} stroke={orange} strokeWidth="1.5" />
+            <line x1={jX + joistW / 2 + botPlateW / 2 - 9} y1={botY + chordH / 2 + 1} x2={jX + joistW / 2 + botPlateW / 2 - 3} y2={botY + chordH / 2 + 1} stroke={orange} strokeWidth="1.5" />
+          </>
+        )}
+
+        {/* Web reinforcement indicator */}
+        {hasWeb && (
+          <g>
+            <line x1={jX + joistW / 2} y1={topY + chordH} x2={jX + joistW / 2} y2={botY - chordH} stroke={fire} strokeWidth="2.5" opacity="0.7" />
+            <circle cx={jX + joistW / 2} cy={midY} r="4" fill={fire} opacity="0.7" />
+            <text x={jX + joistW / 2 + 10} y={midY + 3} fill={fire} fontSize="8" fontFamily="monospace" fontWeight="bold">
+              WEB: {vertQ}V + {diagQ}D
+            </text>
+          </g>
+        )}
+
+        {/* Legend bar */}
+        <rect x={pad} y={H - 18} width={W - pad * 2} height="16" rx="3" fill="#f8fafc" stroke="#e2e8f0" strokeWidth="0.5" />
+        <circle cx={pad + 12} cy={H - 10} r="4" fill="none" stroke={fire} strokeWidth="1.5" />
+        <text x={pad + 20} y={H - 7} fill={silver} fontSize="7" fontFamily="monospace">Top Reinf.</text>
+        <circle cx={pad + 80} cy={H - 10} r="4" fill="none" stroke={blue} strokeWidth="1.5" />
+        <text x={pad + 88} y={H - 7} fill={silver} fontSize="7" fontFamily="monospace">Bot Reinf.</text>
+        <line x1={pad + 148} y1={H - 13} x2={pad + 158} y2={H - 7} stroke={orange} strokeWidth="1.5" />
+        <text x={pad + 163} y={H - 7} fill={silver} fontSize="7" fontFamily="monospace">Welds</text>
+        <line x1={pad + 205} y1={H - 10} x2={pad + 218} y2={H - 10} stroke={silver} strokeWidth="1.2" />
+        <text x={pad + 222} y={H - 7} fill={silver} fontSize="7" fontFamily="monospace">Web Members</text>
+
+        {/* Series label */}
+        <text x={W / 2} y={16} textAnchor="middle" fill={steel} fontSize="10" fontFamily="monospace" fontWeight="bold">
+          {row.joistType} — {series === 'K' ? 'Standard' : series === 'LH' ? 'Long Span' : 'Deep Long Span'} — {method}
+        </text>
+      </svg>
+    </div>
+  );
+}
+
+/* ── Info Legend (collapsible) ── */
 function JoistInfoLegend() {
   const [open, setOpen] = useState(false);
   return (
@@ -236,7 +449,11 @@ function JRBlock({ row, index, onUpdate, onDelete, onDuplicate }) {
   // When bar diameter changes, auto-update lbs/ft
   const setTopBarDia = (dia) => { set('chord_topBarDia', dia); set('chord_topLbsPerFt', BAR_WEIGHTS[dia] || 0); };
   const setBotBarDia = (dia) => { set('chord_botBarDia', dia); set('chord_botLbsPerFt', BAR_WEIGHTS[dia] || 0); };
-  const setWebBarDia = (dia) => { set('web_barDia', dia); set('web_barLbsPerFt', BAR_WEIGHTS[dia] || 0); };
+  const setWebAngle = (label) => {
+    const a = ANGLE_SIZES.find(x => x.label === label) || ANGLE_SIZES[0];
+    set('web_angleSize', label);
+    set('web_angleLbsPerFt', a.lbsPerFt);
+  };
 
   // When plate size changes
   const setBotPlate = (label) => {
@@ -247,13 +464,17 @@ function JRBlock({ row, index, onUpdate, onDelete, onDuplicate }) {
     set('chord_botLbsPerFt', p.w > 0 ? plateLbsPerFt(p.w, p.t) : 0);
   };
 
-  // When reinf method changes, auto-set bot type
+  // When reinf method changes, auto-set bot type + defaults
   const setReinfMethod = (method) => {
     set('reinfMethod', method);
     if (method.includes('2 Bars') && method.includes('2 Bars Bot')) {
       set('chord_botType', 'bar');
+      set('chord_botBarsPerChord', 2);
+      set('chord_botLbsPerFt', BAR_WEIGHTS[row.chord_botBarDia] || BAR_WEIGHTS['3/4']);
     } else if (method.includes('Plate')) {
       set('chord_botType', 'plate');
+      const p = PLATE_SIZES.find(x => x.label === row.chord_botPlateSize) || PLATE_SIZES[3];
+      set('chord_botLbsPerFt', p.w > 0 ? plateLbsPerFt(p.w, p.t) : 0);
     }
   };
 
@@ -352,6 +573,10 @@ function JRBlock({ row, index, onUpdate, onDelete, onDuplicate }) {
               {isBotBar ? (
                 <>
                   <div>
+                    <label className={labelCls}>Bars / Chord</label>
+                    <input type="number" min="1" max="4" value={row.chord_botBarsPerChord || ''} onChange={e => setInt('chord_botBarsPerChord', e.target.value)} className={inCls} />
+                  </div>
+                  <div>
                     <label className={labelCls}>Bar Diameter</label>
                     <select value={row.chord_botBarDia} onChange={e => setBotBarDia(e.target.value)} className={selCls}>
                       {BAR_SIZES.map(s => <option key={s} value={s}>{s}"</option>)}
@@ -427,14 +652,14 @@ function JRBlock({ row, index, onUpdate, onDelete, onDuplicate }) {
                 <input type="number" min="0" value={row.web_qtyPerJoist || ''} onChange={e => setInt('web_qtyPerJoist', e.target.value)} className={inCls} />
               </div>
               <div>
-                <label className={labelCls}>Bar Diameter</label>
-                <select value={row.web_barDia} onChange={e => setWebBarDia(e.target.value)} className={selCls}>
-                  {BAR_SIZES.map(s => <option key={s} value={s}>{s}"</option>)}
+                <label className={labelCls}>Angle Size</label>
+                <select value={row.web_angleSize} onChange={e => setWebAngle(e.target.value)} className={selCls}>
+                  {ANGLE_SIZES.map(a => <option key={a.label} value={a.label}>{a.label}{a.lbsPerFt > 0 ? ` (${a.lbsPerFt} lbs/ft)` : ''}</option>)}
                 </select>
               </div>
               <div>
-                <label className={labelCls}>Bar Weight (lbs/ft)</label>
-                <input type="number" min="0" step="0.01" value={row.web_barLbsPerFt || ''} onChange={e => setNum('web_barLbsPerFt', e.target.value)} className={`${inCls} text-blue-600`} />
+                <label className={labelCls}>Angle Weight (lbs/ft)</label>
+                <input type="number" min="0" step="0.01" value={row.web_angleLbsPerFt || ''} onChange={e => setNum('web_angleLbsPerFt', e.target.value)} className={`${inCls} text-blue-600`} />
               </div>
               <div>
                 <label className={labelCls}>Min / Weld</label>
@@ -445,20 +670,38 @@ function JRBlock({ row, index, onUpdate, onDelete, onDuplicate }) {
                 <p className="text-[11px] font-bold text-steel-600 mb-1 uppercase tracking-wide">Members</p>
               </div>
               <div>
-                <label className={labelCls}>Vert. Bars Qty</label>
+                <label className={labelCls}>Vert. Angles Qty</label>
                 <input type="number" min="0" value={row.web_vertQty || ''} onChange={e => setInt('web_vertQty', e.target.value)} className={inCls} />
               </div>
               <div>
                 <label className={labelCls}>Vert. Length (ft)</label>
-                <input type="number" min="0" step="0.5" value={row.web_vertLength || ''} onChange={e => setNum('web_vertLength', e.target.value)} className={inCls} />
+                <div className="flex items-center gap-1">
+                  {row.web_vertLengthAuto ? (
+                    <span className="flex-1 px-1.5 py-1 text-xs font-mono text-right text-blue-600">{(parseInt(row.joistType) || 24) / 12} (auto)</span>
+                  ) : (
+                    <input type="number" min="0" step="0.5" value={row.web_vertLength || ''} onChange={e => setNum('web_vertLength', e.target.value)} className={`flex-1 ${inCls}`} />
+                  )}
+                  <button onClick={() => set('web_vertLengthAuto', !row.web_vertLengthAuto)} className={`text-[9px] px-1.5 py-0.5 rounded ${row.web_vertLengthAuto ? 'bg-blue-100 text-blue-600' : 'bg-silver-100 text-silver-500'}`} title="Toggle auto-calc from joist depth">
+                    {row.web_vertLengthAuto ? 'AUTO' : 'MAN'}
+                  </button>
+                </div>
               </div>
               <div>
-                <label className={labelCls}>Diag. Bars Qty</label>
+                <label className={labelCls}>Diag. Angles Qty</label>
                 <input type="number" min="0" value={row.web_diagQty || ''} onChange={e => setInt('web_diagQty', e.target.value)} className={inCls} />
               </div>
               <div>
                 <label className={labelCls}>Diag. Length (ft)</label>
-                <input type="number" min="0" step="0.5" value={row.web_diagLength || ''} onChange={e => setNum('web_diagLength', e.target.value)} className={inCls} />
+                <div className="flex items-center gap-1">
+                  {row.web_diagLengthAuto ? (
+                    <span className="flex-1 px-1.5 py-1 text-xs font-mono text-right text-blue-600">{(Math.sqrt(2) * (parseInt(row.joistType) || 24) / 12).toFixed(2)} (auto)</span>
+                  ) : (
+                    <input type="number" min="0" step="0.5" value={row.web_diagLength || ''} onChange={e => setNum('web_diagLength', e.target.value)} className={`flex-1 ${inCls}`} />
+                  )}
+                  <button onClick={() => set('web_diagLengthAuto', !row.web_diagLengthAuto)} className={`text-[9px] px-1.5 py-0.5 rounded ${row.web_diagLengthAuto ? 'bg-blue-100 text-blue-600' : 'bg-silver-100 text-silver-500'}`} title="Toggle auto-calc from joist depth">
+                    {row.web_diagLengthAuto ? 'AUTO' : 'MAN'}
+                  </button>
+                </div>
               </div>
             </div>
 
@@ -471,6 +714,9 @@ function JRBlock({ row, index, onUpdate, onDelete, onDuplicate }) {
               <div></div><div></div>
             </div>
           </div>
+
+          {/* CROSS-SECTION DIAGRAM */}
+          <JoistCrossSection row={row} />
 
           {/* JR TOTALS BAR */}
           <div className="rounded-lg bg-steel-800 p-3 grid grid-cols-3 lg:grid-cols-7 gap-3">
