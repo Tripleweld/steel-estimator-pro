@@ -359,13 +359,13 @@ function MomentConnectionRow({ row, index, fabRate, installRate, steelRate, onUp
       <td className="px-1 py-1 text-sm text-right text-steel-400 font-mono">{fmtNum(totalTon, 3)}</td>
       <td className="px-1 py-1"><input type="text" inputMode="decimal" value={row.basePlLb} onChange={set('basePlLb')} className={mcIn} style={{width:'55px'}} /></td>
       <td className="px-1 py-1"><input type="text" inputMode="decimal" value={row.anchorsPc} onChange={set('anchorsPc')} className={mcIn} style={{width:'55px'}} /></td>
-      <td className="px-1 py-1"><input type="text" inputMode="decimal" value={row.setup} onChange={set('setup')} className={mcIn} style={{width:'45px'}} /></td>
-      <td className="px-1 py-1"><input type="text" inputMode="decimal" value={row.cut} onChange={set('cut')} className={mcIn} style={{width:'45px'}} /></td>
-      <td className="px-1 py-1"><input type="text" inputMode="decimal" value={row.drill} onChange={set('drill')} className={mcIn} style={{width:'45px'}} /></td>
-      <td className="px-1 py-1"><input type="text" inputMode="decimal" value={row.feed} onChange={set('feed')} className={mcIn} style={{width:'45px'}} /></td>
-      <td className="px-1 py-1"><input type="text" inputMode="decimal" value={row.weld} onChange={set('weld')} className={mcIn} style={{width:'45px'}} /></td>
-      <td className="px-1 py-1"><input type="text" inputMode="decimal" value={row.grind} onChange={set('grind')} className={mcIn} style={{width:'45px'}} /></td>
-      <td className="px-1 py-1"><input type="text" inputMode="decimal" value={row.paint} onChange={set('paint')} className={mcIn} style={{width:'45px'}} /></td>
+      <td className="px-1 py-1">{row.section === 'steelDeck' ? <span className="text-steel-500 text-xs italic">—</span> : <input type="text" inputMode="decimal" value={row.setup} onChange={set('setup')} className={mcIn} style={{width:'45px'}} />}</td>
+      <td className="px-1 py-1">{row.section === 'steelDeck' ? <span className="text-steel-500 text-xs italic">—</span> : <input type="text" inputMode="decimal" value={row.cut} onChange={set('cut')} className={mcIn} style={{width:'45px'}} />}</td>
+      <td className="px-1 py-1">{row.section === 'steelDeck' ? <span className="text-steel-500 text-xs italic">—</span> : <input type="text" inputMode="decimal" value={row.drill} onChange={set('drill')} className={mcIn} style={{width:'45px'}} />}</td>
+      <td className="px-1 py-1">{row.section === 'steelDeck' ? <span className="text-steel-500 text-xs italic">—</span> : <input type="text" inputMode="decimal" value={row.feed} onChange={set('feed')} className={mcIn} style={{width:'45px'}} />}</td>
+      <td className="px-1 py-1">{row.section === 'steelDeck' ? <span className="text-steel-500 text-xs italic">—</span> : <input type="text" inputMode="decimal" value={row.weld} onChange={set('weld')} className={mcIn} style={{width:'45px'}} />}</td>
+      <td className="px-1 py-1">{row.section === 'steelDeck' ? <span className="text-steel-500 text-xs italic">—</span> : <input type="text" inputMode="decimal" value={row.grind} onChange={set('grind')} className={mcIn} style={{width:'45px'}} />}</td>
+      <td className="px-1 py-1">{row.section === 'steelDeck' ? <span className="text-steel-500 text-xs italic">—</span> : <input type="text" inputMode="decimal" value={row.paint} onChange={set('paint')} className={mcIn} style={{width:'45px'}} />}</td>
       <td className='px-1 py-1'><OverridableCell calcValue={calcFabPerPc} override={row.fabPerPcOverride} onOverride={(v) => onUpdate(row.id, { fabPerPcOverride: v })} colorClass='text-green-400' /></td>
       <td className={'px-1 py-1 ' + mcRo + ' text-white'}>{fmtNum(totFab, 2)}</td>
       <td className="px-1 py-1"><input type="text" inputMode="decimal" value={row.fabCrew || 1} onChange={e => onUpdate(row.id, { fabCrew: e.target.value })} className={mcIn} style={{width:'40px'}} /></td>
