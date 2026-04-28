@@ -1031,6 +1031,31 @@ export default function JoistReinf() {
     return { totalItems: rows.length, totalQty, totalWeight, totalTons: totalWeight / 2000, totalHrs, totalMaterial, totalInstall };
   }, [rows]);
 
+  // Sync computed values (weight, hours, cost) back to context so StructuralTakeoff can read them
+  useEffect(() => {
+    rows.forEach(r => {
+      const c = calcRow(r);
+      const q = Number(r.qty) || 1;
+      const weightLbs = Math.round(c.totalWeight);
+      const fabHrs = Math.round(c.chordHrs * q * 100) / 100;
+      const instHrs = Math.round(c.totalHrs * q * 100) / 100;
+      const materialCost = Math.round(c.totalMaterial);
+      const installCost = Math.round(c.totalInstall);
+      // Only dispatch if values actually changed to prevent infinite loops
+      if (r.weightLbs !== weightLbs || r.fabHrs !== fabHrs || r.instHrs !== instHrs
+          || r.materialCost !== materialCost || r.installCost !== installCost) {
+        dispatch({ type: 'UPDATE_JOIST_REINF_ROW', payload: {
+          id: r.id, weightLbs, fabHrs, instHrs, materialCost, installCost
+        }});
+      }
+    });
+  }, [rows.map(r => [r.qty, r.chord_topLength, r.chord_botLength, r.chord_barsPerChord,
+    r.chord_topLbsPerFt, r.chord_botLbsPerFt, r.chord_weldSpacing, r.chord_weldSize,
+    r.chord_minPerWeld, r.chord_crewSize, r.chord_botType, r.chord_botBarsPerChord,
+    r.chord_botPlateW, r.chord_botPlateT, r.web_qtyPerJoist, r.web_angleLbsPerFt,
+    r.web_vertQty, r.web_vertLength, r.web_vertLengthAuto, r.web_diagQty, r.web_diagLength,
+    r.web_diagLengthAuto, r.web_minPerWeld, r.joistType].join(',')).join('|')]);
+
   // Inject scrollbar CSS
   useEffect(() => {
     const id = 'jr-scrollbar-css';
