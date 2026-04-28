@@ -207,13 +207,7 @@ const defaultState = {
   rates: JSON.parse(JSON.stringify(defaultRates)),
   structural: [],
   miscMetals: [],
-  stairs: {
-    floorHeight: 3600,
-    stairWidth: 1100,
-    flights: 1,
-    landingDepth: 1200,
-    material: 'Structural steel',
-  },
+  stairs: [],
   stairsComputed: { totalLbs: 0, materialCost: 0, treadsTotal: 0, railingsTotal: 0, labourTotal: 0, grandTotal: 0, fabHrs: 0, instHrs: 0 },
   ladderComputed: { totalLbs: 0, materialCost: 0, labourTotal: 0, grandTotal: 0, fabHrs: 0, instHrs: 0 },
   miscMetalsStandard: {
@@ -380,8 +374,36 @@ function projectReducer(state, action) {
       return { ...state, miscMetals: state.miscMetals.filter(r => r.id !== action.payload), isDirty: true }
 
     /* Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂ Stairs Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂ */
-    case 'SET_STAIRS':
-      return { ...state, stairs: { ...state.stairs, ...action.payload }, isDirty: true }
+    case 'SET_STAIRS': {
+      // Backward compat: if state.stairs is array, merge into row by id (or first row)
+      let stairs = state.stairs;
+      if (!Array.isArray(stairs)) {
+        // Legacy object: migrate to single-element array
+        stairs = stairs && Object.keys(stairs).length > 0 ? [{ id: 1, ...stairs }] : [];
+      }
+      const targetId = action.payload?.id;
+      if (targetId != null) {
+        stairs = stairs.map(r => r.id === targetId ? { ...r, ...action.payload } : r);
+      } else if (stairs.length > 0) {
+        stairs = stairs.map((r, i) => i === 0 ? { ...r, ...action.payload } : r);
+      } else {
+        stairs = [{ id: Date.now(), ...action.payload }];
+      }
+      return { ...state, stairs, isDirty: true };
+    }
+    case 'ADD_STAIRS_ROW': {
+      let stairs = Array.isArray(state.stairs) ? state.stairs : (state.stairs && Object.keys(state.stairs).length > 0 ? [{ id: 1, ...state.stairs }] : []);
+      return { ...state, stairs: [...stairs, { id: Date.now() }], isDirty: true };
+    }
+    case 'UPDATE_STAIRS_ROW': {
+      let stairs = Array.isArray(state.stairs) ? state.stairs : (state.stairs && Object.keys(state.stairs).length > 0 ? [{ id: 1, ...state.stairs }] : []);
+      stairs = stairs.map(r => r.id === action.payload.id ? { ...r, ...action.payload } : r);
+      return { ...state, stairs, isDirty: true };
+    }
+    case 'DELETE_STAIRS_ROW': {
+      let stairs = Array.isArray(state.stairs) ? state.stairs : [];
+      return { ...state, stairs: stairs.filter(r => r.id !== action.payload), isDirty: true };
+    }
 
     /* Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂ Railings Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂ */
     case 'ADD_RAILING_ROW': {
