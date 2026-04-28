@@ -6,9 +6,9 @@ const fmtNum = (v, d = 0) =>
 
 // Schematic side-view of the stair: F2F height, flights, landings, angle, columns.
 function StairsSketch({ geom, finish }) {
-  const stroke = '#475569'
-  const accent = '#dc2626'
-  const muted = '#cbd5e1'
+  const stroke = '#e2e8f0'
+  const accent = '#f87171'
+  const muted = '#64748b'
   const SW = 360
   const SH = 280
   const flights = Math.max(Math.round(geom.flights || 1), 1)
