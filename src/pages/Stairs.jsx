@@ -522,9 +522,18 @@ export default function Stairs() {
   // ── Grand Total ──
   const grandTotal = totalMaterialCost + customMatCost + treadsTotal + railingsTotal + galvCost + labourTotal
 
-  // Dispatch computed totals to state for Misc Metals aggregation
+  // Dispatch computed totals to state for Misc Metals aggregation + persist per-row breakdown for cards
   useEffect(() => {
     dispatch({ type: 'SET_STAIRS_COMPUTED', payload: { totalLbs, materialCost: totalMaterialCost, treadsTotal, railingsTotal, labourTotal, grandTotal, fabHrs: fabHrsFinal, instHrs: instHrsFinal } })
+    // Persist breakdown onto the active stair row for card display
+    if (stairsId) {
+      const matBreakdown = (totalMaterialCost || 0) + (customMatCost || 0) + (treadsTotal || 0) + (railingsTotal || 0) + (galvCost || 0)
+      const cur = stairsArr[safeIdx]?.totalsCommit || {}
+      const nm = Math.round(matBreakdown), nf = Math.round(fabLabourCost), ni = Math.round(instLabourCost), nt = Math.round(grandTotal)
+      if (Math.round(cur.material || 0) !== nm || Math.round(cur.fab || 0) !== nf || Math.round(cur.install || 0) !== ni || Math.round(cur.total || 0) !== nt) {
+        dispatch({ type: 'UPDATE_STAIRS_ROW', payload: { id: stairsId, totalsCommit: { material: nm, fab: nf, install: ni, total: nt } } })
+      }
+    }
   }, [dispatch, totalLbs, totalMaterialCost, treadsTotal, railingsTotal, labourTotal, grandTotal, fabHrsFinal, instHrsFinal])
 
   // ── Benchmarks ──
@@ -590,11 +599,30 @@ export default function Stairs() {
                   </span>
                   <span className="text-steel-500 text-sm font-mono w-6">{i + 1}</span>
                   <span className="text-fire-400 font-bold w-20">{mark}</span>
-                  <span className="text-steel-200 text-sm font-medium">{treadType}</span>
-                  <span className="text-steel-400 text-sm">
+                  <span className="text-steel-200 text-sm font-medium w-32 truncate">{treadType}</span>
+                  <span className="text-steel-400 text-sm w-32">
                     {f2f > 0 ? `${f2f}mm · ` : ''}
                     {flights} flight{flights !== 1 ? 's' : ''}
                   </span>
+                  {/* Breakdown columns */}
+                  <div className="ml-auto flex items-center gap-3 text-xs font-mono">
+                    <div className="text-right">
+                      <div className="text-steel-500 text-[10px] uppercase tracking-wider">Material</div>
+                      <div className="text-steel-200">${(st.totalsCommit?.material ?? 0).toLocaleString()}</div>
+                    </div>
+                    <div className="text-right">
+                      <div className="text-steel-500 text-[10px] uppercase tracking-wider">Fab</div>
+                      <div className="text-steel-200">${(st.totalsCommit?.fab ?? 0).toLocaleString()}</div>
+                    </div>
+                    <div className="text-right">
+                      <div className="text-steel-500 text-[10px] uppercase tracking-wider">Install</div>
+                      <div className="text-steel-200">${(st.totalsCommit?.install ?? 0).toLocaleString()}</div>
+                    </div>
+                    <div className="text-right border-l border-steel-700 pl-3">
+                      <div className="text-fire-500 text-[10px] uppercase tracking-wider font-bold">Total</div>
+                      <div className="text-fire-400 font-bold">${(st.totalsCommit?.total ?? 0).toLocaleString()}</div>
+                    </div>
+                  </div>
                   <button
                     type="button"
                     onClick={(e) => {
@@ -604,7 +632,7 @@ export default function Stairs() {
                         setActiveIdx(Math.max(Math.min(safeIdx, stairsArr.length - 2), 0));
                       }
                     }}
-                    className="ml-auto p-1.5 rounded text-red-400 hover:bg-red-500/20 transition"
+                    className="p-1.5 rounded text-red-400 hover:bg-red-500/20 transition"
                     title={`Delete Stair ${i + 1}`}
                   >
                     <span className="text-base">✕</span>
