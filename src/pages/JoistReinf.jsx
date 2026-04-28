@@ -1038,7 +1038,8 @@ export default function JoistReinf() {
       const q = Number(r.qty) || 1;
       const weightLbs = Math.round(c.totalWeight);
       const fabHrs = Math.round(c.chordHrs * q * 100) / 100;
-      const instHrs = Math.round(c.totalHrs * q * 100) / 100;
+      // FIX: webHrs only, since c.totalHrs = c.chordHrs + c.webHrs and chord is already in fabHrs
+      const instHrs = Math.round((c.totalHrs - c.chordHrs) * q * 100) / 100;
       const materialCost = Math.round(c.totalMaterial);
       const installCost = Math.round(c.totalInstall);
       // Only dispatch if values actually changed to prevent infinite loops
