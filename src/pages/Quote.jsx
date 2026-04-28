@@ -112,8 +112,9 @@ export default function Quote() {
 
     const baseForPercent = totalMaterialCost + totalLabourCost + purchasedTotal + equipmentWithMarkup;
     const softCostTotal = softCosts.reduce((s, r) => {
-      if (r.type === 'flat') return s + (Number(r.amount) || 0);
-      if (r.type === 'percent') return s + (baseForPercent * (Number(r.percent) || 0)) / 100;
+      // (legacy flat handler removed)
+      if (r.unit === '%') return s + (baseForPercent * (Number(r.rate) || 0)) / 100;
+      return s + ((Number(r.qty) || 0) * (Number(r.rate) || 0));
       return s;
     }, 0);
 
