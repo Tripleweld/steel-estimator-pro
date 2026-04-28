@@ -539,7 +539,10 @@ function JoistReinfSyncTable({ fabRate, installRate }) {
 
 /* ─── The Data Row ─── */
 function DataRow({ row, index, fabRate, installRate, onUpdate, onDelete }) {
-  const totalLbs = toNum(row.qty) * toNum(row.lengthFt) * toNum(row.wtPerFt);
+  // Steel Deck: qty is sqft, wtPerFt is lb/sqft (no length)
+  const totalLbs = row.section === 'steelDeck'
+    ? toNum(row.qty) * toNum(row.wtPerFt)
+    : toNum(row.qty) * toNum(row.lengthFt) * toNum(row.wtPerFt);
   const totalTon = totalLbs / 2000;
   const calcFabPerPc = (toNum(row.setup) + toNum(row.cut) + toNum(row.drill) + toNum(row.feed) + toNum(row.weld) + toNum(row.grind) + toNum(row.paint)) / 60;
   const fabPerPc = getEffectiveFabPerPc(row);
@@ -683,6 +686,10 @@ function calcSectionTotals(rows, fabRate, installRate, steelRate) {
       const plbsft = plate ? plate.lbsPerFt : 0;
       lbs = r.wtOverride != null ? toNum(r.wtOverride) : toNum(r.plateQty) * plbsft * toNum(r.plateLengthFt);
       totalPcs += 1;
+    } else if (r.section === 'steelDeck') {
+      // Deck: qty=sqft, wtPerFt=lb/sqft
+      lbs = toNum(r.qty) * toNum(r.wtPerFt);
+      totalPcs += toNum(r.qty);
     } else {
       lbs = toNum(r.qty) * toNum(r.lengthFt) * toNum(r.wtPerFt);
       totalPcs += toNum(r.qty);
@@ -690,7 +697,9 @@ function calcSectionTotals(rows, fabRate, installRate, steelRate) {
     const fabPc = getEffectiveFabPerPc(r);
     const instPc = getEffectiveInstPerPc(r);
     totalLbs += lbs;
-    totFab += fabPc * (toNum(r.fabCrew)||1) * (toNum(r.qty)||1);
+    if (r.section !== 'steelDeck') {
+      totFab += fabPc * (toNum(r.fabCrew)||1) * (toNum(r.qty)||1);
+    }
     totInst += instPc * (toNum(r.instCrew)||1) * (toNum(r.qty)||1);
   });
   const totalTons = totalLbs / 2000;
