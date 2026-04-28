@@ -2,7 +2,7 @@ import React, { useState, useCallback, useMemo, useRef, useEffect, Component } f
 import { useProject } from '../context/ProjectContext';
 import AISC_SHAPES from '../data/aisc-shapes-data';
 
-/* Steel Deck profiles — [designation, type, wt/sqft] format matching AISC_SHAPES schema */
+/* Steel Deck profiles (rebuild trigger) — [designation, type, wt/sqft] format matching AISC_SHAPES schema */
 const DECK_PROFILES = [
   ['1-1/2" × 22 GA Deck', 'Deck', 1.66],
   ['1-1/2" × 20 GA Deck', 'Deck', 1.97],
