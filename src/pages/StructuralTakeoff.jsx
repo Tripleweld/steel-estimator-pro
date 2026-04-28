@@ -597,7 +597,9 @@ function DataRow({ row, index, fabRate, installRate, onUpdate, onDelete }) {
       {/* Base Pl */}
       <td className="px-1 py-1">{row.section === 'steelDeck' ? <span className="text-steel-500 text-xs italic">—</span> : <EditCell value={row.basePlLb} onChange={set('basePlLb')} type="text" inputMode="decimal" className="text-right w-16" />}</td>
       {/* Anchors */}
-      <td className="px-1 py-1">{row.section === 'steelDeck' ? <span className="text-steel-500 text-xs italic">—</span> : <EditCell value={row.anchorsPc} onChange={set('anchorsPc')} type="text" inputMode="decimal" className="text-right w-14" />}</td>
+      {row.section !== 'steelDeck' && (
+        <td className="px-1 py-1"><EditCell value={row.anchorsPc} onChange={set('anchorsPc')} type="text" inputMode="decimal" className="text-right w-16" /></td>
+      )
       {/* Fab hours: setup, cut, drill, feed, weld, grind, paint */}
       {['setup','cut','drill','feed','weld','grind','paint'].map(f => (
         <td key={f} className="px-1 py-1"><EditCell value={row[f]} onChange={set(f)} type="text" inputMode="decimal" className="text-right w-12" /></td>
