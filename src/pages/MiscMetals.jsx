@@ -154,6 +154,111 @@ const TIER1_SECTIONS = [
     multiplier: (row) => toNum(row.qty),
     unit: '$/each',
   },
+  {
+    key: 'lintels', title: 'Lintels', icon: Ruler, color: 'text-cyan-400',
+    columns: [
+      { field: 'angleSize', label: 'Angle Size', type: 'select', options: ['L102x102x9.5','L127x127x12.7','L152x152x12.7'], default: 'L102x102x9.5' },
+      { field: 'spanFt', label: 'Span (ft)', type: 'number', default: 6 },
+      { field: 'qty', label: 'Qty', type: 'number', default: 1 },
+    ],
+    rateLookup: (row) => row.angleSize && row.angleSize.includes('127') ? 'Lintel L127x127x12.7' : 'Lintel L102x102x9.5',
+    multiplier: (row) => toNum(row.qty) * toNum(row.spanFt),
+    unit: '$/lnft',
+  },
+  {
+    key: 'edgeAngles', title: 'Edge Angles', icon: Ruler, color: 'text-blue-400',
+    columns: [
+      { field: 'profile', label: 'Profile', type: 'select', options: ['L76x76x6','L102x102x9.5'], default: 'L76x76x6' },
+      { field: 'lnft', label: 'Total lnft', type: 'number', default: 20 },
+    ],
+    rateLookup: (row) => row.profile === 'L102x102x9.5' ? 'Edge angle L102x102x9.5' : 'Edge angle L76x76x6',
+    multiplier: (row) => toNum(row.lnft),
+    unit: '$/lnft',
+  },
+  {
+    key: 'bumperRails', title: 'Bumper Rails / Rub Rails', icon: Shield, color: 'text-orange-400',
+    columns: [
+      { field: 'profile', label: 'Pipe Size', type: 'select', options: ['Pipe 42 Sch40','Pipe 48 Sch40'], default: 'Pipe 42 Sch40' },
+      { field: 'lnft', label: 'Total lnft', type: 'number', default: 20 },
+    ],
+    rateLookup: (row) => row.profile === 'Pipe 48 Sch40' ? 'Bumper rail Pipe 48 Sch40' : 'Bumper rail Pipe 42 Sch40',
+    multiplier: (row) => toNum(row.lnft),
+    unit: '$/lnft',
+  },
+  {
+    key: 'wheelStops', title: 'Wheel Stops', icon: Box, color: 'text-yellow-400',
+    columns: [
+      { field: 'type', label: 'Type', type: 'select', options: ['Concrete precast','Steel fab'], default: 'Concrete precast' },
+      { field: 'qty', label: 'Qty', type: 'number', default: 1 },
+    ],
+    rateLookup: (row) => row.type === 'Steel fab' ? 'Wheel stop steel fab' : 'Wheel stop precast',
+    multiplier: (row) => toNum(row.qty),
+    unit: '$/each',
+  },
+  {
+    key: 'floorPlates', title: 'Floor Plates / Hatches', icon: Box, color: 'text-pink-400',
+    columns: [
+      { field: 'type', label: 'Type', type: 'select', options: ['Floor plate (sqft)','Sump cover','Roof hatch 30x36'], default: 'Floor plate (sqft)' },
+      { field: 'size', label: 'Sqft / size', type: 'number', default: 4 },
+      { field: 'qty', label: 'Qty', type: 'number', default: 1 },
+    ],
+    rateLookup: (row) => {
+      if (row.type === 'Roof hatch 30x36') return 'Roof hatch 30x36 std'
+      if (row.type === 'Sump cover') return 'Sump cover (galv)'
+      return 'Floor plate (checker) per sqft'
+    },
+    multiplier: (row) => row.type === 'Floor plate (sqft)' ? toNum(row.qty) * toNum(row.size) : toNum(row.qty),
+    unit: 'varies',
+  },
+  {
+    key: 'pipeSupports', title: 'Pipe Supports / Stanchions', icon: Anchor, color: 'text-emerald-400',
+    columns: [
+      { field: 'pipeSize', label: 'Pipe Size', type: 'select', options: ['Pipe 27 Sch40','Pipe 33 Sch40','Pipe 42 Sch40'], default: 'Pipe 33 Sch40' },
+      { field: 'heightFt', label: 'Height (ft)', type: 'number', default: 3 },
+      { field: 'qty', label: 'Qty', type: 'number', default: 1 },
+    ],
+    rateLookup: () => 'Pipe support stanchion',
+    multiplier: (row) => toNum(row.qty),
+    unit: '$/each',
+  },
+  {
+    key: 'anchorBolts', title: 'Anchor Bolt Assemblies', icon: Wrench, color: 'text-amber-400',
+    columns: [
+      { field: 'type', label: 'Type', type: 'select', options: ['J-bolt','L-bolt','Threaded rod'], default: 'J-bolt' },
+      { field: 'dia', label: 'Dia', type: 'select', options: ['1/2"','5/8"','3/4"','1"'], default: '3/4"' },
+      { field: 'lengthIn', label: 'Length (in)', type: 'number', default: 12 },
+      { field: 'qty', label: 'Qty', type: 'number', default: 1 },
+    ],
+    rateLookup: (row) => {
+      if (row.type === 'L-bolt') return 'Anchor bolt L-bolt 3/4"'
+      if (row.type === 'Threaded rod') return 'Anchor bolt threaded rod 3/4"'
+      return 'Anchor bolt J-bolt 3/4"'
+    },
+    multiplier: (row) => toNum(row.qty),
+    unit: '$/each',
+  },
+  {
+    key: 'equipDunnage', title: 'Equipment Dunnage', icon: Box, color: 'text-violet-400',
+    columns: [
+      { field: 'profile', label: 'Profile', type: 'text', default: 'W6x12' },
+      { field: 'lengthFt', label: 'Length (ft)', type: 'number', default: 8 },
+      { field: 'lbsPerFt', label: 'lb/ft', type: 'number', default: 12 },
+      { field: 'qty', label: 'Qty', type: 'number', default: 1 },
+    ],
+    rateLookup: () => 'Equipment dunnage (per lb)',
+    multiplier: (row) => toNum(row.qty) * toNum(row.lengthFt) * toNum(row.lbsPerFt),
+    unit: '$/lb',
+  },
+  {
+    key: 'architectural', title: 'Architectural / Signage', icon: Settings2, color: 'text-rose-400',
+    columns: [
+      { field: 'description', label: 'Description', type: 'text', default: '' },
+      { field: 'qty', label: 'Qty', type: 'number', default: 1 },
+    ],
+    rateLookup: () => 'Architectural / signage (lump)',
+    multiplier: (row) => toNum(row.qty),
+    unit: 'lump $ each',
+  },
 ]
 
 // ─── Generic StandardItemTable ───
@@ -467,7 +572,7 @@ export default function MiscMetals() {
                   <td className="px-2 py-2 text-right font-mono text-steel-100">{fmt(calcsTotal)}</td>
                 </tr>
                 <tr>
-                  <td className="px-2 py-2 font-medium text-steel-200">Tier 1 standard items (this page)</td>
+                  <td className="px-2 py-2 font-medium text-steel-200">Standard items — Tier 1+2+3 (this page)</td>
                   <td className="px-2 py-2 text-right font-mono text-steel-100">{fmt(tier1Total)}</td>
                 </tr>
               </tbody>
