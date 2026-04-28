@@ -530,14 +530,28 @@ export default function MiscMetals() {
   const standard = state.miscMetalsStandard || {}
 
   // Compute aggregation totals from calculators
-  const stairsC = state.stairsComputed || {}
-  const ladderC = state.ladderComputed || {}
-  const railings = state.railings || []
-  // joistReinf intentionally not aggregated here — handled in Structural Takeoff
-  const calcsTotal =
-    (stairsC.grandTotal || 0) +
-    (ladderC.grandTotal || 0) +
-    (railings.reduce((s, r) => s + Number(r.weightLbs || 0), 0) * 1.20) // crude estimate
+  // Itemized aggregation matching AggregationSection
+  const stairsArr = state.stairs || []
+  const ladderArr = state.ladder || []
+  const railingsArr = state.railings || []
+  const labourRates = state.rates?.labourRates || {}
+  const fabRate = labourRates.fabRate || 50
+  const installRate = labourRates.installRate || 55
+  const matRatesArr = state.rates?.materialRates || []
+  const lookupMatRate = (item) => {
+    const f = matRatesArr.find(r => r.item === item)
+    return f ? Number(f.rate) || 1 : 1
+  }
+  const stairsItemTotal = stairsArr.reduce((s, st) => s + Number(st.totalsCommit?.total || 0), 0)
+  const ladderItemTotal = ladderArr.reduce((s, l) => s + Number(l.totalsCommit?.total || 0), 0)
+  const railingsItemTotal = railingsArr.reduce((s, r) => {
+    const mr = lookupMatRate(r.material)
+    const m = (Number(r.weightLbs) || 0) * mr
+    const f = (Number(r.fabHrs) || 0) * fabRate
+    const i = (Number(r.instHrs) || 0) * installRate
+    return s + m + f + i
+  }, 0)
+  const calcsTotal = stairsItemTotal + ladderItemTotal + railingsItemTotal
 
   // Compute Tier-1 standard totals
   const findRate = (item) => {
@@ -552,12 +566,16 @@ export default function MiscMetals() {
       return sum + section.multiplier(row) * finalRate
     }, 0)
   }
-  const tier1Total = useMemo(
-    () => TIER1_SECTIONS.reduce((s, sec) => s + sectionSubtotal(sec), 0),
+  const standardTotal = useMemo(
+    () => [
+      ...TIER1_SECTIONS,
+      ...(typeof TIER2_SECTIONS !== 'undefined' ? TIER2_SECTIONS : []),
+      ...(typeof TIER3_SECTIONS !== 'undefined' ? TIER3_SECTIONS : []),
+    ].reduce((s, sec) => s + sectionSubtotal(sec), 0),
     [standard, miscRates]
   )
 
-  const grandTotal = calcsTotal + tier1Total
+  const grandTotal = calcsTotal + standardTotal
 
   return (
     <div className="min-h-screen bg-steel-950 text-white">
@@ -591,6 +609,28 @@ export default function MiscMetals() {
             dispatch={dispatch}
           />
         ))}
+
+        {/* ─── Misc Metals Grand Total (sums all sections) ─── */}
+        <SectionCard icon={Building2} title="Misc Metals — Grand Total" subtitle="Calculator items + standard items (Tier 1 / 2 / 3)" color="text-green-400">
+          <div className="rounded-xl border border-green-500/30 bg-green-950/20 p-5">
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 mb-4">
+              <div>
+                <div className="text-[10px] text-steel-400 uppercase tracking-wider">From Calculators</div>
+                <div className="text-lg font-bold font-mono text-steel-100">${Math.round(calcsTotal).toLocaleString()}</div>
+                <div className="text-[10px] text-steel-500">Stairs / Ladders / Railings</div>
+              </div>
+              <div>
+                <div className="text-[10px] text-steel-400 uppercase tracking-wider">Standard Items</div>
+                <div className="text-lg font-bold font-mono text-steel-100">${Math.round(standardTotal).toLocaleString()}</div>
+                <div className="text-[10px] text-steel-500">Tier 1 + 2 + 3</div>
+              </div>
+              <div className="border-l border-green-500/30 pl-4">
+                <div className="text-[10px] text-green-400 uppercase tracking-wider font-bold">Grand Total</div>
+                <div className="text-2xl font-bold font-mono text-green-400">${Math.round(grandTotal).toLocaleString()}</div>
+              </div>
+            </div>
+          </div>
+        </SectionCard>
 
 
         {/* Footer */}
