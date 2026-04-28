@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import {
   Calculator, ShieldCheck, Weight, Wrench, Hammer, BarChart3,
   CheckCircle, AlertTriangle, Settings2, ListTree, Layers
@@ -273,7 +273,17 @@ function StatCard({ label, value, unit, highlight }) {
 /* ──────────────────────────────────────────────────────────────────────────── */
 export default function Stairs() {
   const { state, dispatch } = useProject()
-  const legacy = state.stairs || {}
+  // Multi-stair: state.stairs is an array; fall back to legacy object shape if needed
+  const stairsArr = useMemo(() => {
+    const s = state.stairs;
+    if (Array.isArray(s)) return s;
+    if (s && typeof s === 'object' && Object.keys(s).length > 0) return [{ id: 1, ...s }];
+    return [];
+  }, [state.stairs])
+  const [activeIdx, setActiveIdx] = useState(0)
+  const safeIdx = Math.min(Math.max(activeIdx, 0), Math.max(stairsArr.length - 1, 0))
+  const stairsId = stairsArr[safeIdx]?.id
+  const legacy = stairsArr[safeIdx] || {}
 
   // Map legacy fields → new shape (backward-compatible)
   const legacyFinish =
@@ -307,7 +317,10 @@ export default function Stairs() {
     instBreakdown: legacy.instBreakdown || DEFAULT_INST_BREAKDOWN,
   }
 
-  const set = (field, value) => dispatch({ type: 'SET_STAIRS', payload: { [field]: value } })
+  const set = (field, value) => {
+    if (!stairsId) return;
+    dispatch({ type: 'UPDATE_STAIRS_ROW', payload: { id: stairsId, [field]: value } });
+  }
 
   // Override per BOM row (section or length each). Empty string clears the override.
   const setBomOverride = (key, field, value) => {
@@ -538,6 +551,64 @@ export default function Stairs() {
           </div>
         </div>
 
+        {/* Multi-stair tab nav */}
+        <div className="mb-6 flex flex-wrap items-center gap-2">
+          {stairsArr.map((st, i) => (
+            <button
+              key={st.id}
+              type="button"
+              onClick={() => setActiveIdx(i)}
+              className={`px-3 py-1.5 rounded-lg text-sm font-semibold transition ${
+                i === safeIdx
+                  ? 'bg-fire-600 text-white shadow-md'
+                  : 'bg-steel-700 text-steel-300 hover:bg-steel-600'
+              }`}
+            >
+              {`Stair ${i + 1}${st.mark ? ` — ${st.mark}` : ''}`}
+            </button>
+          ))}
+          <button
+            type="button"
+            onClick={() => {
+              const newIdx = stairsArr.length;
+              dispatch({ type: 'ADD_STAIRS_ROW' });
+              setActiveIdx(newIdx);
+            }}
+            className="px-3 py-1.5 rounded-lg text-sm font-semibold bg-blue-600 text-white hover:bg-blue-500"
+          >
+            + Add Stair
+          </button>
+          {stairsArr.length > 0 && (
+            <button
+              type="button"
+              onClick={() => {
+                if (window.confirm(`Delete Stair ${safeIdx + 1}?`)) {
+                  dispatch({ type: 'DELETE_STAIRS_ROW', payload: stairsId });
+                  setActiveIdx(Math.max(safeIdx - 1, 0));
+                }
+              }}
+              className="ml-auto px-3 py-1.5 rounded-lg text-sm font-semibold bg-red-500/20 text-red-300 hover:bg-red-500/40"
+            >
+              Delete current
+            </button>
+          )}
+        </div>
+
+        {stairsArr.length === 0 && (
+          <div className="mb-6 rounded-xl border border-dashed border-steel-600 bg-steel-900/40 p-10 text-center">
+            <Calculator className="mx-auto mb-3 h-10 w-10 text-steel-500" />
+            <p className="text-steel-300 mb-4">No stairs yet — click "+ Add Stair" above to start.</p>
+            <button
+              type="button"
+              onClick={() => { dispatch({ type: 'ADD_STAIRS_ROW' }); setActiveIdx(0); }}
+              className="px-4 py-2 rounded-lg bg-fire-600 text-white font-semibold hover:bg-fire-500"
+            >
+              + Add your first stair
+            </button>
+          </div>
+        )}
+
+        {stairsArr.length > 0 && (<>
         {/* ─── 1. SETUP ─── */}
         <SectionCard icon={Settings2} title="Setup" subtitle="Preset, finish, tread type, stringer & mark">
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -1140,6 +1211,8 @@ export default function Stairs() {
             </div>
           </details>
         </SectionCard>
+
+        </>)}
 
         {/* Footer */}
         <div className="mt-10 border-t border-steel-700/50 pt-6 text-center">
