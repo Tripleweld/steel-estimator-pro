@@ -9,7 +9,7 @@ const UNITS = ['ea', 'lnft', 'sqft', 'lb', 'ton', 'ls', 'set', 'lot'];
 
 export default function PurchasedItems() {
   const { state, dispatch } = useProject();
-  const rows = state.purchasedItems || [];
+  const rows = state.purchased || [];
 
   const summary = useMemo(() => {
     const totalItems = rows.length;
