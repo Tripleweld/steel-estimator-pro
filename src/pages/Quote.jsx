@@ -349,11 +349,13 @@ export default function Quote() {
                   {info.companyName || 'TRIPLE WELD INC.'}
                 </h2>
                 <p className="mt-1 text-sm font-semibold text-fire-600">
-                  CWB Certified Steel Fabrication &amp; Erection
+                  {info.companyTagline || 'CWB Certified Steel Fabrication & Erection'}
                 </p>
                 <p className="mt-2 text-xs text-steel-400">
-                  123 Industrial Rd, Unit 4 &bull; Anytown, ON &bull; (555) 123-4567 &bull;
-                  info@tripleweld.com
+                  {[info.companyAddress || '123 Industrial Rd, Unit 4, Anytown, ON',
+                    info.companyPhone || '(555) 123-4567',
+                    info.companyEmail || 'info@tripleweld.com'].join(' \u2022 ')}
+                  {info.companyWebsite ? (' \u2022 ' + info.companyWebsite) : ''}
                 </p>
               </div>
             </div>
