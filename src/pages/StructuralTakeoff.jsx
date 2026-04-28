@@ -460,12 +460,6 @@ function JoistReinfSyncTable({ fabRate, installRate }) {
   // Get structural steel rate from Rates & Config (default $1.00/lb)
   const steelRate = (state.rates?.materialRates || []).find(r => r.item === 'Structural steel')?.rate || 1.00;
 
-  const purchasedCosts = useMemo(() => {
-    const rows = state.purchased || [];
-    const joistCost = rows.filter(r => r.category === 'joists').reduce((s, r) => s + (Number(r.qty) || 0) * (Number(r.unitCost) || 0), 0);
-    const deckCost = rows.filter(r => r.category === 'deck').reduce((s, r) => s + (Number(r.qty) || 0) * (Number(r.unitCost) || 0), 0);
-    return { joists: joistCost, deck: deckCost };
-  }, [state.purchased]);
   const [ovr, setOvr] = useState({});
   const gv = (id, f, cv) => { const k = id+'_'+f; return ovr[k] != null ? ovr[k] : cv; };
   const sv = (id, f, v) => setOvr(p => ({...p, [id+'_'+f]: v === '' ? null : Number(v) || 0}));
@@ -704,6 +698,12 @@ function calcSectionTotals(rows, fabRate, installRate, steelRate) {
    ═══════════════════════════════════════════════════════════════ */
 function StructuralTakeoffInner() {
   const { state, dispatch } = useProject();
+  const purchasedCosts = useMemo(() => {
+    const pRows = state.purchased || [];
+    const joistCost = pRows.filter(r => r.category === 'joists').reduce((s, r) => s + (Number(r.qty) || 0) * (Number(r.unitCost) || 0), 0);
+    const deckCost = pRows.filter(r => r.category === 'deck').reduce((s, r) => s + (Number(r.qty) || 0) * (Number(r.unitCost) || 0), 0);
+    return { joists: joistCost, deck: deckCost };
+  }, [state.purchased]);
   const fabRate = toNum(state.rates?.labourRates?.fabRate ?? 50);
   const installRate = toNum(state.rates?.labourRates?.installRate ?? 55);
   const steelRate = (state.rates?.materialRates || []).find(m => m.item === 'Structural steel')?.rate ?? 1.00;
