@@ -1,6 +1,28 @@
-import React, { useState, useCallback, useMemo, useRef, useEffect } from 'react';
+import React, { useState, useCallback, useMemo, useRef, useEffect, Component } from 'react';
 import { useProject } from '../context/ProjectContext';
 import AISC_SHAPES from '../data/aisc-shapes-data';
+
+/* ─── Error Boundary ─── */
+class StructuralErrorBoundary extends Component {
+  constructor(props) { super(props); this.state = { hasError: false, error: null }; }
+  static getDerivedStateFromError(error) { return { hasError: true, error }; }
+  componentDidCatch(error, info) { console.error('StructuralTakeoff crash:', error, info); }
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="min-h-screen bg-steel-950 text-white p-6">
+          <div className="bg-red-900/40 border border-red-500/50 rounded-lg p-6 max-w-2xl mx-auto mt-12">
+            <h2 className="text-xl font-bold text-red-400 mb-2">Structural Takeoff Error</h2>
+            <p className="text-steel-300 mb-4">The page encountered an error. Try refreshing.</p>
+            <pre className="text-xs text-red-300 bg-steel-900 p-3 rounded overflow-auto max-h-40">{String(this.state.error)}</pre>
+            <button onClick={() => { this.setState({ hasError: false, error: null }); }} className="mt-4 px-4 py-2 bg-blue-600 hover:bg-blue-500 rounded text-sm font-semibold">Retry</button>
+          </div>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
 
 /* ─── Section definitions matching Excel layout ─── */
 const SECTIONS = [
@@ -497,7 +519,7 @@ function calcSectionTotals(rows, fabRate, installRate) {
 /* ═══════════════════════════════════════════════════════════════
    MAIN COMPONENT
    ═══════════════════════════════════════════════════════════════ */
-export default function StructuralTakeoff() {
+function StructuralTakeoffInner() {
   const { state, dispatch } = useProject();
   const fabRate = toNum(state.rates?.labourRates?.fabRate ?? 50);
   const installRate = toNum(state.rates?.labourRates?.installRate ?? 55);
@@ -717,4 +739,8 @@ export default function StructuralTakeoff() {
       </div>
     </div>
   );
+}
+
+export default function StructuralTakeoff() {
+  return <StructuralErrorBoundary><StructuralTakeoffInner /></StructuralErrorBoundary>;
 }
