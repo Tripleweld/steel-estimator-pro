@@ -2,17 +2,17 @@ import React, { useState, useCallback, useMemo, useRef, useEffect, Component } f
 import { useProject } from '../context/ProjectContext';
 import AISC_SHAPES from '../data/aisc-shapes-data';
 
-/* Steel Deck profiles [build 1777414428353] (rebuild trigger) — [designation, type, wt/sqft] format matching AISC_SHAPES schema */
+/* Steel Deck profiles [build 1777414428353] (rebuild trigger) â [designation, type, wt/sqft] format matching AISC_SHAPES schema */
 const DECK_PROFILES = [
-  ['1-1/2" × 22 GA Deck', 'Deck', 1.66],
-  ['1-1/2" × 20 GA Deck', 'Deck', 1.97],
-  ['1-1/2" × 18 GA Deck', 'Deck', 2.66],
-  ['3" × 22 GA Deck',     'Deck', 2.31],
-  ['3" × 20 GA Deck',     'Deck', 2.74],
-  ['3" × 18 GA Deck',     'Deck', 3.65],
+  ['1-1/2" Ã 22 GA Deck', 'Deck', 1.66],
+  ['1-1/2" Ã 20 GA Deck', 'Deck', 1.97],
+  ['1-1/2" Ã 18 GA Deck', 'Deck', 2.66],
+  ['3" Ã 22 GA Deck',     'Deck', 2.31],
+  ['3" Ã 20 GA Deck',     'Deck', 2.74],
+  ['3" Ã 18 GA Deck',     'Deck', 3.65],
 ];
 
-/* ─── Error Boundary ─── */
+/* âââ Error Boundary âââ */
 class StructuralErrorBoundary extends Component {
   constructor(props) { super(props); this.state = { hasError: false, error: null }; }
   static getDerivedStateFromError(error) { return { hasError: true, error }; }
@@ -34,7 +34,7 @@ class StructuralErrorBoundary extends Component {
   }
 }
 
-/* ─── Section definitions matching Excel layout ─── */
+/* âââ Section definitions matching Excel layout âââ */
 const SECTIONS = [
   { id: 'columns',        label: 'COLUMNS',                     prefix: 'C',     defaultRows: 5  },
   { id: 'beams',           label: 'BEAMS',                       prefix: 'B',     defaultRows: 5  },
@@ -71,7 +71,7 @@ PLATE_WIDTHS.forEach(w => {
 });
 
 
-/* ─── Helpers ─── */
+/* âââ Helpers âââ */
 const fmtNum = (v, d = 0) => {
   if (v == null || isNaN(v)) return d === 0 ? '0' : '0.' + '0'.repeat(d);
   return Number(v).toLocaleString('en-US', { minimumFractionDigits: d, maximumFractionDigits: d });
@@ -109,7 +109,7 @@ function makeEmptyRow(sectionId, prefix, index) {
   };
 }
 
-/* ─── Summary Card ─── */
+/* âââ Summary Card âââ */
 function SummaryCard({ label, value, color }) {
   const colorMap = {
     blue:  'border-blue-400/80 bg-blue-950 text-blue-100',
@@ -125,7 +125,7 @@ function SummaryCard({ label, value, color }) {
   );
 }
 
-/* ─── Editable Cell ─── */
+/* âââ Editable Cell âââ */
 function EditCell({ value, onChange, type = 'text', className = '', ...rest }) {
   return (
     <input
@@ -141,7 +141,7 @@ function EditCell({ value, onChange, type = 'text', className = '', ...rest }) {
   );
 }
 
-/* ─── Overridable Sum Cell ───
+/* âââ Overridable Sum Cell âââ
    Shows auto-calculated sum by default.
    When user types a value, it becomes the override.
    Clear the field completely to revert to auto-sum.
@@ -179,12 +179,12 @@ function OverridableCell({ calcValue, override, onOverride, colorClass }) {
           ? 'bg-amber-900/40 border border-amber-500/50'
           : 'bg-transparent border border-transparent'
       }`}
-      title={isOverridden ? `Override: ${override} (auto: ${fmtNum(calcValue, 1)})` : 'Auto-calculated — type to override'}
+      title={isOverridden ? `Override: ${override} (auto: ${fmtNum(calcValue, 1)})` : 'Auto-calculated â type to override'}
     />
   );
 }
 
-/* ─── Profile Search Dropdown ───
+/* âââ Profile Search Dropdown âââ
    Searchable dropdown populated with 1,606 AISC profiles.
    Type to filter, click or Enter to select.
    Auto-fills Wt/ft when a profile is selected. */
@@ -272,18 +272,18 @@ function ProfileSearch({ value, onSelect, profiles }) {
   );
 }
 
-/* ─── Section Header with collapse toggle ─── */
+/* âââ Section Header with collapse toggle âââ */
 function SectionHeader({ label, isOpen, onToggle, rowCount, sectionTotals, onAddRow }) {
   return (
     <div className="flex items-center justify-between bg-steel-800/80 border border-steel-700 rounded-lg px-4 py-2.5 mt-4 first:mt-0">
       <button onClick={onToggle} className="flex items-center gap-3 text-left flex-1">
-        <span className={`text-steel-400 transition-transform duration-200 ${isOpen ? 'rotate-90' : ''}`}>▶</span>
+        <span className={`text-steel-400 transition-transform duration-200 ${isOpen ? 'rotate-90' : ''}`}>â¶</span>
         <span className="text-sm font-bold uppercase tracking-wider text-fire-400">{label}</span>
         <span className="text-xs text-steel-500 font-mono">({rowCount} {rowCount === 1 ? 'row' : 'rows'})</span>
         {!isOpen && sectionTotals.totalLbs > 0 && (
           <span className="text-xs text-steel-400 ml-2">
-            — {fmtNum(sectionTotals.totalLbs)} lb / {fmtNum(sectionTotals.totalTons, 2)} ton
-            &nbsp;•&nbsp; {fmtDollar(sectionTotals.rowTotal)}
+            â {fmtNum(sectionTotals.totalLbs)} lb / {fmtNum(sectionTotals.totalTons, 2)} ton
+            &nbsp;â¢&nbsp; {fmtDollar(sectionTotals.rowTotal)}
           </span>
         )}
       </button>
@@ -297,7 +297,7 @@ function SectionHeader({ label, isOpen, onToggle, rowCount, sectionTotals, onAdd
   );
 }
 
-/* ─── Helper: get effective fab/inst per piece ─── */
+/* âââ Helper: get effective fab/inst per piece âââ */
 function getEffectiveFabPerPc(row) {
   if (row.fabPerPcOverride != null && row.fabPerPcOverride !== '' && row.fabPerPcOverride !== 0) {
     return toNum(row.fabPerPcOverride);
@@ -313,11 +313,11 @@ function getEffectiveInstPerPc(row) {
 }
 
 
-/* ─── Joist Reinforcement Sync Table ─── 
+/* âââ Joist Reinforcement Sync Table âââ 
    Auto-reads from JoistReinf Calculator (state.joistReinf).
    Fab/Inst hours are overridable inline. */
 
-/* ─── Moment Connection Row ─── */
+/* âââ Moment Connection Row âââ */
 function MomentConnectionRow({ row, index, fabRate, installRate, steelRate, onUpdate, onDelete }) {
   const plate = PLATE_LIBRARY.find(p => p.id === row.plateSize);
   const lbsPerFt = plate ? plate.lbsPerFt : 0;
@@ -351,7 +351,7 @@ function MomentConnectionRow({ row, index, fabRate, installRate, steelRate, onUp
           {PLATE_LIBRARY.map(p => <option key={p.id} value={p.id} style={{backgroundColor:'#0c1222',color:'white'}}>{p.label}</option>)}
         </select>
       </td>
-      <td className="px-1 py-1 text-sm text-right text-steel-400 font-mono" style={{minWidth:'70px'}}>{lbsPerFt > 0 ? fmtNum(lbsPerFt, 2) : '—'}</td>
+      <td className="px-1 py-1 text-sm text-right text-steel-400 font-mono" style={{minWidth:'70px'}}>{lbsPerFt > 0 ? fmtNum(lbsPerFt, 2) : 'â'}</td>
       <td className="px-1 py-1"><input type="text" inputMode="decimal" value={row.plateQty} onChange={e => onUpdate(row.id, { plateQty: e.target.value })} className={mcIn} style={{width:'50px'}} /></td>
       <td className="px-1 py-1"><input type="text" inputMode="decimal" value={row.plateLengthFt} onChange={e => onUpdate(row.id, { plateLengthFt: e.target.value })} className={mcIn} style={{width:'60px'}} /></td>
       <td className="px-1 py-1"><input type="text" inputMode="decimal" value={row.wtOverride != null ? row.wtOverride : ''} onChange={e => onUpdate(row.id, { wtOverride: e.target.value === '' ? null : e.target.value })} placeholder={fmtNum(pQty * lbsPerFt * pLen, 1)} className={mcIn + ' placeholder:text-steel-500'} style={{width:'70px'}} title="Override total weight (leave blank for auto)" /></td>
@@ -359,13 +359,13 @@ function MomentConnectionRow({ row, index, fabRate, installRate, steelRate, onUp
       <td className="px-1 py-1 text-sm text-right text-steel-400 font-mono">{fmtNum(totalTon, 3)}</td>
       <td className="px-1 py-1"><input type="text" inputMode="decimal" value={row.basePlLb} onChange={set('basePlLb')} className={mcIn} style={{width:'55px'}} /></td>
       <td className="px-1 py-1"><input type="text" inputMode="decimal" value={row.anchorsPc} onChange={set('anchorsPc')} className={mcIn} style={{width:'55px'}} /></td>
-      <td className="px-1 py-1">{row.section === 'steelDeck' ? <span className="text-steel-500 text-xs italic">—</span> : <input type="text" inputMode="decimal" value={row.setup} onChange={set('setup')} className={mcIn} style={{width:'45px'}} />}</td>
-      <td className="px-1 py-1">{row.section === 'steelDeck' ? <span className="text-steel-500 text-xs italic">—</span> : <input type="text" inputMode="decimal" value={row.cut} onChange={set('cut')} className={mcIn} style={{width:'45px'}} />}</td>
-      <td className="px-1 py-1">{row.section === 'steelDeck' ? <span className="text-steel-500 text-xs italic">—</span> : <input type="text" inputMode="decimal" value={row.drill} onChange={set('drill')} className={mcIn} style={{width:'45px'}} />}</td>
-      <td className="px-1 py-1">{row.section === 'steelDeck' ? <span className="text-steel-500 text-xs italic">—</span> : <input type="text" inputMode="decimal" value={row.feed} onChange={set('feed')} className={mcIn} style={{width:'45px'}} />}</td>
-      <td className="px-1 py-1">{row.section === 'steelDeck' ? <span className="text-steel-500 text-xs italic">—</span> : <input type="text" inputMode="decimal" value={row.weld} onChange={set('weld')} className={mcIn} style={{width:'45px'}} />}</td>
-      <td className="px-1 py-1">{row.section === 'steelDeck' ? <span className="text-steel-500 text-xs italic">—</span> : <input type="text" inputMode="decimal" value={row.grind} onChange={set('grind')} className={mcIn} style={{width:'45px'}} />}</td>
-      <td className="px-1 py-1">{row.section === 'steelDeck' ? <span className="text-steel-500 text-xs italic">—</span> : <input type="text" inputMode="decimal" value={row.paint} onChange={set('paint')} className={mcIn} style={{width:'45px'}} />}</td>
+      <td className="px-1 py-1">{row.section === 'steelDeck' ? <span className="text-steel-500 text-xs italic">â</span> : <input type="text" inputMode="decimal" value={row.setup} onChange={set('setup')} className={mcIn} style={{width:'45px'}} />}</td>
+      <td className="px-1 py-1">{row.section === 'steelDeck' ? <span className="text-steel-500 text-xs italic">â</span> : <input type="text" inputMode="decimal" value={row.cut} onChange={set('cut')} className={mcIn} style={{width:'45px'}} />}</td>
+      <td className="px-1 py-1">{row.section === 'steelDeck' ? <span className="text-steel-500 text-xs italic">â</span> : <input type="text" inputMode="decimal" value={row.drill} onChange={set('drill')} className={mcIn} style={{width:'45px'}} />}</td>
+      <td className="px-1 py-1">{row.section === 'steelDeck' ? <span className="text-steel-500 text-xs italic">â</span> : <input type="text" inputMode="decimal" value={row.feed} onChange={set('feed')} className={mcIn} style={{width:'45px'}} />}</td>
+      <td className="px-1 py-1">{row.section === 'steelDeck' ? <span className="text-steel-500 text-xs italic">â</span> : <input type="text" inputMode="decimal" value={row.weld} onChange={set('weld')} className={mcIn} style={{width:'45px'}} />}</td>
+      <td className="px-1 py-1">{row.section === 'steelDeck' ? <span className="text-steel-500 text-xs italic">â</span> : <input type="text" inputMode="decimal" value={row.grind} onChange={set('grind')} className={mcIn} style={{width:'45px'}} />}</td>
+      <td className="px-1 py-1">{row.section === 'steelDeck' ? <span className="text-steel-500 text-xs italic">â</span> : <input type="text" inputMode="decimal" value={row.paint} onChange={set('paint')} className={mcIn} style={{width:'45px'}} />}</td>
       <td className='px-1 py-1'><OverridableCell calcValue={calcFabPerPc} override={row.fabPerPcOverride} onOverride={(v) => onUpdate(row.id, { fabPerPcOverride: v })} colorClass='text-green-400' /></td>
       <td className={'px-1 py-1 ' + mcRo + ' text-white'}>{fmtNum(totFab, 2)}</td>
       <td className="px-1 py-1"><input type="text" inputMode="decimal" value={row.fabCrew || 1} onChange={e => onUpdate(row.id, { fabCrew: e.target.value })} className={mcIn} style={{width:'40px'}} /></td>
@@ -381,13 +381,13 @@ function MomentConnectionRow({ row, index, fabRate, installRate, steelRate, onUp
       <td className="px-1 py-1 text-sm text-right text-steel-300 font-mono">{fmtDollar(fabCost)}</td>
       <td className="px-1 py-1 text-sm text-right text-steel-300 font-mono">{fmtDollar(instCost)}</td>
       <td className="px-1 py-1 text-sm text-right text-white font-bold font-mono">{fmtDollar(rowTotal)}</td>
-      <td className="px-1 py-1 text-center"><button onClick={() => onDelete(row.id)} className="text-red-500 hover:text-red-400 text-xs">✕</button></td>
+      <td className="px-1 py-1 text-center"><button onClick={() => onDelete(row.id)} className="text-red-500 hover:text-red-400 text-xs">â</button></td>
     </tr>
   );
 }
 
 
-/* ─── Moment Connection Table ─── */
+/* âââ Moment Connection Table âââ */
 function MomentConnectionTable({ sectionRows, fabRate, installRate, steelRate, onUpdate, onDelete }) {
   const mcColGroups = [
     { label: 'Identification', cols: 3, color: 'bg-purple-800/60', border: 'border-purple-500' },
@@ -481,7 +481,7 @@ function JoistReinfSyncTable({ fabRate, installRate }) {
     </div>
   );
 
-  // weightLbs and instHrs from sync ALREADY include qty — do NOT multiply by q again
+  // weightLbs and instHrs from sync ALREADY include qty â do NOT multiply by q again
   let tW=0, tI=0, tMat=0, tIC=0;
   return (
     <div className="overflow-x-auto border border-steel-700 rounded-b-lg bg-steel-900/50">
@@ -537,7 +537,7 @@ function JoistReinfSyncTable({ fabRate, installRate }) {
   );
 }
 
-/* ─── The Data Row ─── */
+/* âââ The Data Row âââ */
 function DataRow({ row, index, fabRate, installRate, onUpdate, onDelete }) {
   // Steel Deck: qty is sqft, wtPerFt is lb/sqft (no length)
   const totalLbs = row.section === 'steelDeck'
@@ -576,7 +576,7 @@ function DataRow({ row, index, fabRate, installRate, onUpdate, onDelete }) {
           {MEMBER_TYPES.map(t => <option key={t} value={t} style={{ backgroundColor: "#0c1222", color: "white" }}>{t}</option>)}
         </select>
       </td>
-      {/* Profile — AISC searchable dropdown */}
+      {/* Profile â AISC searchable dropdown */}
       <td className="px-1 py-1">
         <ProfileSearch
           value={row.profile}
@@ -587,7 +587,7 @@ function DataRow({ row, index, fabRate, installRate, onUpdate, onDelete }) {
       {/* Qty */}
       <td className="px-1 py-1"><EditCell value={row.qty} onChange={set('qty')} type="text" inputMode="decimal" className="text-right w-14" /></td>
       {/* Length */}
-      <td className="px-1 py-1">{row.section === 'steelDeck' ? <span className="text-steel-500 text-xs italic">—</span> : <EditCell value={row.lengthFt} onChange={set('lengthFt')} type="text" inputMode="decimal" className="text-right w-16" />}</td>
+      <td className="px-1 py-1">{row.section === 'steelDeck' ? <span className="text-steel-500 text-xs italic">â</span> : <EditCell value={row.lengthFt} onChange={set('lengthFt')} type="text" inputMode="decimal" className="text-right w-16" />}</td>
       {/* Wt/ft */}
       <td className="px-1 py-1 text-right text-sm text-white font-mono">{row.wtPerFt || '--'}</td>
       {/* Total lb */}
@@ -597,16 +597,16 @@ function DataRow({ row, index, fabRate, installRate, onUpdate, onDelete }) {
       {/* Base Pl */}
       {row.section !== 'steelDeck' && (
         <td className="px-1 py-1"><EditCell value={row.basePlLb} onChange={set('basePlLb')} type="text" inputMode="decimal" className="text-right w-16" /></td>
-      )
+      )}
       {/* Anchors */}
       {row.section !== 'steelDeck' && (
         <td className="px-1 py-1"><EditCell value={row.anchorsPc} onChange={set('anchorsPc')} type="text" inputMode="decimal" className="text-right w-16" /></td>
-      )
+      )}
       {/* Fab hours: setup, cut, drill, feed, weld, grind, paint */}
       {['setup','cut','drill','feed','weld','grind','paint'].map(f => (
         <td key={f} className="px-1 py-1"><EditCell value={row[f]} onChange={set(f)} type="text" inputMode="decimal" className="text-right w-12" /></td>
       ))}
-      {/* Fab/Pc — overridable */}
+      {/* Fab/Pc â overridable */}
       <td className="px-1 py-1">
         <OverridableCell
           calcValue={calcFabPerPc}
@@ -618,12 +618,12 @@ function DataRow({ row, index, fabRate, installRate, onUpdate, onDelete }) {
       {/* Tot Fab */}
       <td className="px-1 py-1 text-right text-sm text-amber-300 font-mono font-bold">{fmtNum(totFab, 1)}</td>
       {/* Fab Crew */}
-      <td className="px-1 py-1">{row.section === 'steelDeck' ? <span className="text-steel-500 text-xs italic">—</span> : <EditCell value={row.fabCrew} onChange={set('fabCrew')} type="text" inputMode="decimal" className="text-right w-12" />}</td>
+      <td className="px-1 py-1">{row.section === 'steelDeck' ? <span className="text-steel-500 text-xs italic">â</span> : <EditCell value={row.fabCrew} onChange={set('fabCrew')} type="text" inputMode="decimal" className="text-right w-12" />}</td>
       {/* Install hours: unload, rig, fit, bolt, touchUp */}
       {['unload','rig','fit','bolt','touchUp'].map(f => (
         <td key={f} className="px-1 py-1"><EditCell value={row[f]} onChange={set(f)} type="text" inputMode="decimal" className="text-right w-12" /></td>
       ))}
-      {/* Inst/Pc — overridable */}
+      {/* Inst/Pc â overridable */}
       <td className="px-1 py-1">
         <OverridableCell
           calcValue={calcInstPerPc}
@@ -645,13 +645,13 @@ function DataRow({ row, index, fabRate, installRate, onUpdate, onDelete }) {
       <td className="px-1 py-1"><EditCell value={row.notes} onChange={set('notes')} placeholder="" className="w-24" /></td>
       {/* Delete */}
       <td className="px-1 py-1 text-center">
-        <button onClick={() => onDelete(row.id)} className="text-red-500/60 hover:text-red-400 text-xs">✕</button>
+        <button onClick={() => onDelete(row.id)} className="text-red-500/60 hover:text-red-400 text-xs">â</button>
       </td>
     </tr>
   );
 }
 
-/* ─── Section Totals Row ─── */
+/* âââ Section Totals Row âââ */
 function SectionTotalsRow({ rows, fabRate, installRate, purchasedMaterial = 0 }) {
   const t = calcSectionTotals(rows, fabRate, installRate);
   return (
@@ -680,7 +680,7 @@ function SectionTotalsRow({ rows, fabRate, installRate, purchasedMaterial = 0 })
   );
 }
 
-/* ─── Calculate totals for a section ─── */
+/* âââ Calculate totals for a section âââ */
 function calcSectionTotals(rows, fabRate, installRate, steelRate) {
   let totalPcs = 0, totalLbs = 0, totFab = 0, totInst = 0;
   rows.forEach(r => {
@@ -718,9 +718,9 @@ function calcSectionTotals(rows, fabRate, installRate, steelRate) {
   };
 }
 
-/* ═══════════════════════════════════════════════════════════════
+/* âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
    MAIN COMPONENT
-   ═══════════════════════════════════════════════════════════════ */
+   âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ */
 function StructuralTakeoffInner() {
   const { state, dispatch } = useProject();
   const purchasedCosts = useMemo(() => {
@@ -733,14 +733,14 @@ function StructuralTakeoffInner() {
   const installRate = toNum(state.rates?.labourRates?.installRate ?? 55);
   const steelRate = (state.rates?.materialRates || []).find(m => m.item === 'Structural steel')?.rate ?? 1.00;
 
-  /* ─── Row state: all rows stored flat, each has a .section field ─── */
+  /* âââ Row state: all rows stored flat, each has a .section field âââ */
   const [rows, setRows] = useState(() => {
     const saved = state.structuralRows;
     if (saved && saved.length > 0) return saved;
     return [];
   });
 
-  /* ─── Section open/close state ─── */
+  /* âââ Section open/close state âââ */
   const [openSections, setOpenSections] = useState(() => {
     const m = {};
     SECTIONS.forEach(s => { m[s.id] = true; });
@@ -751,7 +751,7 @@ function StructuralTakeoffInner() {
     setOpenSections(prev => ({ ...prev, [id]: !prev[id] }));
   }, []);
 
-  /* ─── Row CRUD ─── */
+  /* âââ Row CRUD âââ */
   const addRow = useCallback((sectionId) => {
     setRows(prev => {
       const sec = SECTIONS.find(s => s.id === sectionId);
@@ -782,17 +782,17 @@ function StructuralTakeoffInner() {
     setRows(prev => prev.filter(r => r.id !== id));
   }, []);
 
-  /* ─── Save rows to context on change ─── */
+  /* âââ Save rows to context on change âââ */
   useEffect(() => {
     dispatch({ type: 'SET_STRUCTURAL_ROWS', payload: rows });
   }, [rows, dispatch]);
 
-  /* ─── Grand totals ─── */
+  /* âââ Grand totals âââ */
   const grandTotals = useMemo(() => {
     return calcSectionTotals(rows, fabRate, installRate);
   }, [rows, fabRate, installRate]);
 
-  /* ─── Column headers ─── */
+  /* âââ Column headers âââ */
   const colGroups = [
     { label: 'Identification', cols: 4, color: 'bg-purple-800/60', border: 'border-purple-500' },
     { label: 'Quantity & Weight', cols: 5, color: 'bg-green-800/60', border: 'border-green-500' },
@@ -813,7 +813,7 @@ function StructuralTakeoffInner() {
     'Notes',
   ];
 
-  /* ───────────────── RENDER ───────────────── */
+  /* âââââââââââââââââ RENDER âââââââââââââââââ */
   return (
     <div className="min-h-screen bg-steel-950 text-white p-6 space-y-4">
       {/* Accent stripe */}
@@ -823,9 +823,9 @@ function StructuralTakeoffInner() {
       <div className="flex items-start justify-between">
         <div>
           <h1 className="text-2xl font-bold text-white flex items-center gap-2">
-            <span className="text-fire-400">⛑</span> Structural Steel Takeoff
+            <span className="text-fire-400">â</span> Structural Steel Takeoff
           </h1>
-          <p className="text-steel-400 text-sm mt-0.5">Division 05 12 00 — Structural Steel Framing</p>
+          <p className="text-steel-400 text-sm mt-0.5">Division 05 12 00 â Structural Steel Framing</p>
           <div className="flex gap-2 mt-2">
             <span className="px-2 py-0.5 bg-fire-600/80 text-white text-xs font-semibold rounded">Fab Rate: ${fabRate}/hr</span>
             <span className="px-2 py-0.5 bg-green-600/80 text-white text-xs font-semibold rounded">Install Rate: ${installRate}/hr</span>
@@ -842,7 +842,7 @@ function StructuralTakeoffInner() {
             })}
             className="px-3 py-1.5 bg-steel-700 hover:bg-steel-600 text-steel-300 text-xs font-semibold rounded transition-colors"
           >
-            {Object.values(openSections).every(v => v) ? '⊟ Collapse All' : '⊞ Expand All'}
+            {Object.values(openSections).every(v => v) ? 'â Collapse All' : 'â Expand All'}
           </button>
         </div>
       </div>
@@ -856,7 +856,7 @@ function StructuralTakeoffInner() {
         <SummaryCard label="Grand Total" value={fmtDollar(grandTotals.rowTotal)} color="red" />
       </div>
 
-      {/* ─── Sections ─── */}
+      {/* âââ Sections âââ */}
       <div className="space-y-1">
         {SECTIONS.map(sec => {
           const sectionRows = rows.filter(r => r.section === sec.id);
@@ -935,7 +935,7 @@ function StructuralTakeoffInner() {
       {/* Grand Total Bar */}
       <div className="bg-steel-800/80 border border-steel-600 rounded-lg p-4 mt-4">
         <div className="flex items-center justify-between">
-          <span className="text-lg font-bold text-white uppercase tracking-wider">Grand Totals — All Sections</span>
+          <span className="text-lg font-bold text-white uppercase tracking-wider">Grand Totals â All Sections</span>
           <div className="flex gap-6 text-sm font-mono">
             <span className="text-steel-300">{fmtNum(grandTotals.totalPcs)} pcs</span>
             <span className="text-steel-300">{fmtNum(grandTotals.totalLbs)} lb</span>
