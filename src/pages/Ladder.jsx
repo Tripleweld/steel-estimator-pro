@@ -573,8 +573,10 @@ export default function Ladder() {
 
   // Dispatch computed totals to state for Misc Metals aggregation
   useEffect(() => {
+    if (!ladderId) return
+    dispatch({ type: 'UPDATE_LADDER_ROW', payload: { id: ladderId, weightLbs: totalLbs, fabHrs: fabHrsFinal, instHrs: instHrsFinal, totalsCommit: { weight: totalLbs, materialCost: totalMaterialCost, fabCost: fabLabourCost, instCost: instLabourCost, labourTotal, total: grandTotal, fabHrs: fabHrsFinal, instHrs: instHrsFinal } } })
     dispatch({ type: 'SET_LADDER_COMPUTED', payload: { totalLbs, materialCost: totalMaterialCost, fabCost: fabLabourCost, instCost: instLabourCost, labourTotal, grandTotal, fabHrs: fabHrsFinal, instHrs: instHrsFinal } })
-  }, [dispatch, totalLbs, totalMaterialCost, labourTotal, grandTotal, fabHrsFinal, instHrsFinal])
+  }, [dispatch, ladderId, totalLbs, totalMaterialCost, fabLabourCost, instLabourCost, labourTotal, grandTotal, fabHrsFinal, instHrsFinal])
 
   // ── Benchmarks ──
   const dPerLb = totalLbs > 0 ? grandTotal / totalLbs : 0
