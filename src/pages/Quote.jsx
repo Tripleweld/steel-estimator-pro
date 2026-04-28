@@ -179,7 +179,8 @@ export default function Quote() {
     // STRUCTURAL TAKEOFF — group by section
     const SECT_LABELS = {
       columns: 'Columns', beams: 'Beams', momentConnections: 'Moment Connections',
-      roofOpeningFrames: 'Roof Opening Frames', joists: 'Joists (OWSJ)',
+      moment: 'Moment Connections', roofOpeningFrames: 'Roof Opening Frames',
+      roofFrames: 'Roof Opening Frames', joists: 'Joists (OWSJ)',
       joistReinforcement: 'Joist Reinforcement', joistReinf: 'Joist Reinforcement',
       bridging: 'Bridging', steelDeck: 'Steel Deck'
     };
@@ -255,10 +256,10 @@ export default function Quote() {
       return Number(c.qty || 0) * Number(c.rate || 0) > 0;
     });
     const softDesc = softNonZero.map(c => c.item).filter(Boolean).join(', ');
-    if (summary.softCostTotal > 0 || softDesc) {
+    if (summary.softCostTotal > 0) {
       rows.push({
         label: 'Soft Costs' + (softDesc ? ' (' + softDesc + ')' : ''),
-        total: summary.softCostTotal || 0
+        total: summary.softCostTotal
       });
     }
 
@@ -461,7 +462,7 @@ export default function Quote() {
                     <tr className="bg-silver-50">
                     <td className="px-4 py-2.5 font-semibold text-steel-900">Subtotal</td>
                     <td className="px-4 py-2.5 text-right font-semibold text-steel-900">
-                      {fmt(summary.subtotal)}
+                      {fmt(pricingItems.reduce((s,r)=>s+(Number(r.total)||0),0))}
                     </td>
                   </tr>
                   {summary.markupAmount > 0 && (
@@ -470,14 +471,14 @@ export default function Quote() {
                         Markup ({fmtNum(summary.markupPercent, 1)}%)
                       </td>
                       <td className="px-4 py-2.5 text-right text-steel-800">
-                        {fmt(summary.markupAmount)}
+                        {fmt(pricingItems.reduce((s,r)=>s+(Number(r.total)||0),0) * (Number(summary.markupPercent)||0) / 100)}
                       </td>
                     </tr>
                   )}
                   <tr className="bg-fire-50">
                     <td className="px-4 py-3 text-base font-bold text-fire-700">Bid Price</td>
                     <td className="px-4 py-3 text-right text-base font-bold text-fire-700">
-                      {fmt(summary.bidPrice)}
+                      {fmt(pricingItems.reduce((s,r)=>s+(Number(r.total)||0),0) * (1 + (Number(summary.markupPercent)||0)/100))}
                     </td>
                   </tr>
                   <tr>
@@ -485,13 +486,13 @@ export default function Quote() {
                       HST ({fmtNum(summary.hstPercent, 1)}%)
                     </td>
                     <td className="px-4 py-2.5 text-right text-steel-800">
-                      {fmt(summary.hstAmount)}
+                      {fmt(pricingItems.reduce((s,r)=>s+(Number(r.total)||0),0) * (1 + (Number(summary.markupPercent)||0)/100) * (Number(summary.hstPercent)||0) / 100)}
                     </td>
                   </tr>
                   <tr className="bg-steel-800">
                     <td className="px-4 py-3 text-base font-bold text-white">Grand Total</td>
                     <td className="px-4 py-3 text-right text-base font-bold text-fire-400">
-                      {fmt(summary.grandTotal)}
+                      {fmt(pricingItems.reduce((s,r)=>s+(Number(r.total)||0),0) * (1 + (Number(summary.markupPercent)||0)/100) * (1 + (Number(summary.hstPercent)||0)/100))}
                     </td>
                   </tr>
                 </tbody>
