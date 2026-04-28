@@ -125,6 +125,7 @@ const defaultMiscMetalsRates = [
   { id: 6, item: 'Handrail pre-fab', rate: 65, unit: '$/lnft' },
   { id: 7, item: 'Channel grating diamond (galv)', rate: 95, unit: '$/tread' },
   { id: 8, item: 'Channel grating round (galv)', rate: 110, unit: '$/tread' },
+  { id: 9, item: 'Bar grating tread (galv)', rate: 85, unit: '$/tread' },
 ]
 
 /* Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂ Code Limits (OBC / OHSA) Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂ */
