@@ -71,48 +71,48 @@ const defaultEngDrawings = {
 /* Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂ Equipment Rental Catalog Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂ */
 const defaultEquipment = [
   // Cranes
-  { id: 1, category: 'CRANES', item: 'Mobile Crane 35T', dayRate: 1500, weekRate: 6500, monthRate: 22000, period: 'Day', qty: 0, pickup: 0, dropoff: 0 },
-  { id: 2, category: 'CRANES', item: 'Mobile Crane 50T', dayRate: 2200, weekRate: 9500, monthRate: 32000, period: 'Day', qty: 0, pickup: 0, dropoff: 0 },
-  { id: 3, category: 'CRANES', item: 'Mobile Crane 80T', dayRate: 3000, weekRate: 13000, monthRate: 44000, period: 'Day', qty: 0, pickup: 0, dropoff: 0 },
-  { id: 4, category: 'CRANES', item: 'Mobile Crane 100T', dayRate: 3800, weekRate: 16500, monthRate: 55000, period: 'Day', qty: 0, pickup: 0, dropoff: 0 },
-  { id: 5, category: 'CRANES', item: 'Mobile Crane 160T', dayRate: 5500, weekRate: 24000, monthRate: 80000, period: 'Day', qty: 0, pickup: 0, dropoff: 0 },
-  { id: 6, category: 'CRANES', item: 'Carry Deck Crane 8T', dayRate: 800, weekRate: 3500, monthRate: 12000, period: 'Day', qty: 0, pickup: 0, dropoff: 0 },
+  { id: 1, category: 'CRANES', item: 'Mobile Crane 35T', dayRate: 1500, weekRate: 6500, monthRate: 22000, period: 'Day', qty: 0, pickup: 200, dropoff: 200 },
+  { id: 2, category: 'CRANES', item: 'Mobile Crane 50T', dayRate: 2200, weekRate: 9500, monthRate: 32000, period: 'Day', qty: 0, pickup: 200, dropoff: 200 },
+  { id: 3, category: 'CRANES', item: 'Mobile Crane 80T', dayRate: 3000, weekRate: 13000, monthRate: 44000, period: 'Day', qty: 0, pickup: 200, dropoff: 200 },
+  { id: 4, category: 'CRANES', item: 'Mobile Crane 100T', dayRate: 3800, weekRate: 16500, monthRate: 55000, period: 'Day', qty: 0, pickup: 200, dropoff: 200 },
+  { id: 5, category: 'CRANES', item: 'Mobile Crane 160T', dayRate: 5500, weekRate: 24000, monthRate: 80000, period: 'Day', qty: 0, pickup: 200, dropoff: 200 },
+  { id: 6, category: 'CRANES', item: 'Carry Deck Crane 8T', dayRate: 800, weekRate: 3500, monthRate: 12000, period: 'Day', qty: 0, pickup: 200, dropoff: 200 },
   // Telehandlers
-  { id: 7, category: 'TELEHANDLERS', item: 'Telehandler 6000lb / 36ft', dayRate: 400, weekRate: 2200, monthRate: 7500, period: 'Week', qty: 0, pickup: 0, dropoff: 0 },
-  { id: 8, category: 'TELEHANDLERS', item: 'Telehandler 8000lb / 42ft', dayRate: 550, weekRate: 3150, monthRate: 10500, period: 'Week', qty: 0, pickup: 0, dropoff: 0 },
-  { id: 9, category: 'TELEHANDLERS', item: 'Telehandler 10000lb / 48ft', dayRate: 650, weekRate: 3600, monthRate: 12000, period: 'Week', qty: 0, pickup: 0, dropoff: 0 },
-  { id: 10, category: 'TELEHANDLERS', item: 'Telehandler 12000lb / 55ft', dayRate: 800, weekRate: 4400, monthRate: 14500, period: 'Week', qty: 0, pickup: 0, dropoff: 0 },
+  { id: 7, category: 'TELEHANDLERS', item: 'Telehandler 6000lb / 36ft', dayRate: 400, weekRate: 2200, monthRate: 7500, period: 'Week', qty: 0, pickup: 200, dropoff: 200 },
+  { id: 8, category: 'TELEHANDLERS', item: 'Telehandler 8000lb / 42ft', dayRate: 550, weekRate: 3150, monthRate: 10500, period: 'Week', qty: 0, pickup: 200, dropoff: 200 },
+  { id: 9, category: 'TELEHANDLERS', item: 'Telehandler 10000lb / 48ft', dayRate: 650, weekRate: 3600, monthRate: 12000, period: 'Week', qty: 0, pickup: 200, dropoff: 200 },
+  { id: 10, category: 'TELEHANDLERS', item: 'Telehandler 12000lb / 55ft', dayRate: 800, weekRate: 4400, monthRate: 14500, period: 'Week', qty: 0, pickup: 200, dropoff: 200 },
   // Boom Lifts
-  { id: 11, category: 'BOOM LIFTS', item: 'Boom Lift 40ft Artic.', dayRate: 300, weekRate: 1650, monthRate: 5500, period: 'Week', qty: 0, pickup: 0, dropoff: 0 },
-  { id: 12, category: 'BOOM LIFTS', item: 'Boom Lift 45ft Artic.', dayRate: 350, weekRate: 1950, monthRate: 6500, period: 'Week', qty: 0, pickup: 0, dropoff: 0 },
-  { id: 13, category: 'BOOM LIFTS', item: 'Boom Lift 60ft Straight', dayRate: 450, weekRate: 2500, monthRate: 8500, period: 'Week', qty: 0, pickup: 0, dropoff: 0 },
-  { id: 14, category: 'BOOM LIFTS', item: 'Boom Lift 80ft Straight', dayRate: 600, weekRate: 3300, monthRate: 11000, period: 'Week', qty: 0, pickup: 0, dropoff: 0 },
-  { id: 15, category: 'BOOM LIFTS', item: 'Boom Lift 100ft Straight', dayRate: 850, weekRate: 4500, monthRate: 15000, period: 'Week', qty: 0, pickup: 0, dropoff: 0 },
-  { id: 16, category: 'BOOM LIFTS', item: 'Boom Lift 120ft Straight', dayRate: 1100, weekRate: 6000, monthRate: 20000, period: 'Week', qty: 0, pickup: 0, dropoff: 0 },
+  { id: 11, category: 'BOOM LIFTS', item: 'Boom Lift 40ft Artic.', dayRate: 300, weekRate: 1650, monthRate: 5500, period: 'Week', qty: 0, pickup: 200, dropoff: 200 },
+  { id: 12, category: 'BOOM LIFTS', item: 'Boom Lift 45ft Artic.', dayRate: 350, weekRate: 1950, monthRate: 6500, period: 'Week', qty: 0, pickup: 200, dropoff: 200 },
+  { id: 13, category: 'BOOM LIFTS', item: 'Boom Lift 60ft Straight', dayRate: 450, weekRate: 2500, monthRate: 8500, period: 'Week', qty: 0, pickup: 200, dropoff: 200 },
+  { id: 14, category: 'BOOM LIFTS', item: 'Boom Lift 80ft Straight', dayRate: 600, weekRate: 3300, monthRate: 11000, period: 'Week', qty: 0, pickup: 200, dropoff: 200 },
+  { id: 15, category: 'BOOM LIFTS', item: 'Boom Lift 100ft Straight', dayRate: 850, weekRate: 4500, monthRate: 15000, period: 'Week', qty: 0, pickup: 200, dropoff: 200 },
+  { id: 16, category: 'BOOM LIFTS', item: 'Boom Lift 120ft Straight', dayRate: 1100, weekRate: 6000, monthRate: 20000, period: 'Week', qty: 0, pickup: 200, dropoff: 200 },
   // Scissor Lifts
-  { id: 17, category: 'SCISSOR LIFTS', item: 'Scissor Lift 19ft Electric', dayRate: 125, weekRate: 650, monthRate: 2100, period: 'Month', qty: 0, pickup: 0, dropoff: 0 },
-  { id: 18, category: 'SCISSOR LIFTS', item: 'Scissor Lift 26ft RT Diesel', dayRate: 250, weekRate: 1300, monthRate: 4200, period: 'Month', qty: 0, pickup: 0, dropoff: 0 },
-  { id: 19, category: 'SCISSOR LIFTS', item: 'Scissor Lift 32ft RT Diesel', dayRate: 300, weekRate: 1600, monthRate: 5200, period: 'Month', qty: 0, pickup: 0, dropoff: 0 },
-  { id: 20, category: 'SCISSOR LIFTS', item: 'Scissor Lift 40ft RT Diesel', dayRate: 400, weekRate: 2100, monthRate: 7000, period: 'Month', qty: 0, pickup: 0, dropoff: 0 },
+  { id: 17, category: 'SCISSOR LIFTS', item: 'Scissor Lift 19ft Electric', dayRate: 125, weekRate: 650, monthRate: 2100, period: 'Month', qty: 0, pickup: 200, dropoff: 200 },
+  { id: 18, category: 'SCISSOR LIFTS', item: 'Scissor Lift 26ft RT Diesel', dayRate: 250, weekRate: 1300, monthRate: 4200, period: 'Month', qty: 0, pickup: 200, dropoff: 200 },
+  { id: 19, category: 'SCISSOR LIFTS', item: 'Scissor Lift 32ft RT Diesel', dayRate: 300, weekRate: 1600, monthRate: 5200, period: 'Month', qty: 0, pickup: 200, dropoff: 200 },
+  { id: 20, category: 'SCISSOR LIFTS', item: 'Scissor Lift 40ft RT Diesel', dayRate: 400, weekRate: 2100, monthRate: 7000, period: 'Month', qty: 0, pickup: 200, dropoff: 200 },
   // Forklifts
-  { id: 21, category: 'FORKLIFTS', item: 'Forklift 5000lb (shop/yard)', dayRate: 200, weekRate: 1100, monthRate: 3500, period: 'Month', qty: 0, pickup: 0, dropoff: 0 },
-  { id: 22, category: 'FORKLIFTS', item: 'Forklift 8000lb RT', dayRate: 300, weekRate: 1600, monthRate: 5500, period: 'Month', qty: 0, pickup: 0, dropoff: 0 },
-  { id: 23, category: 'FORKLIFTS', item: 'Forklift 15000lb RT', dayRate: 450, weekRate: 2400, monthRate: 8000, period: 'Month', qty: 0, pickup: 0, dropoff: 0 },
+  { id: 21, category: 'FORKLIFTS', item: 'Forklift 5000lb (shop/yard)', dayRate: 200, weekRate: 1100, monthRate: 3500, period: 'Month', qty: 0, pickup: 200, dropoff: 200 },
+  { id: 22, category: 'FORKLIFTS', item: 'Forklift 8000lb RT', dayRate: 300, weekRate: 1600, monthRate: 5500, period: 'Month', qty: 0, pickup: 200, dropoff: 200 },
+  { id: 23, category: 'FORKLIFTS', item: 'Forklift 15000lb RT', dayRate: 450, weekRate: 2400, monthRate: 8000, period: 'Month', qty: 0, pickup: 200, dropoff: 200 },
   // Welding & Power
-  { id: 24, category: 'WELDING & POWER', item: 'Welder/Generator 300A', dayRate: 150, weekRate: 750, monthRate: 2500, period: 'Week', qty: 0, pickup: 0, dropoff: 0 },
-  { id: 25, category: 'WELDING & POWER', item: 'Welder/Generator 500A', dayRate: 200, weekRate: 1000, monthRate: 3500, period: 'Week', qty: 0, pickup: 0, dropoff: 0 },
-  { id: 26, category: 'WELDING & POWER', item: 'Air Compressor 185CFM', dayRate: 175, weekRate: 900, monthRate: 3000, period: 'Week', qty: 0, pickup: 0, dropoff: 0 },
-  { id: 27, category: 'WELDING & POWER', item: 'Generator 25kW', dayRate: 150, weekRate: 750, monthRate: 2500, period: 'Week', qty: 0, pickup: 0, dropoff: 0 },
-  { id: 28, category: 'WELDING & POWER', item: 'Generator 56kW', dayRate: 250, weekRate: 1250, monthRate: 4200, period: 'Week', qty: 0, pickup: 0, dropoff: 0 },
+  { id: 24, category: 'WELDING & POWER', item: 'Welder/Generator 300A', dayRate: 150, weekRate: 750, monthRate: 2500, period: 'Week', qty: 0, pickup: 200, dropoff: 200 },
+  { id: 25, category: 'WELDING & POWER', item: 'Welder/Generator 500A', dayRate: 200, weekRate: 1000, monthRate: 3500, period: 'Week', qty: 0, pickup: 200, dropoff: 200 },
+  { id: 26, category: 'WELDING & POWER', item: 'Air Compressor 185CFM', dayRate: 175, weekRate: 900, monthRate: 3000, period: 'Week', qty: 0, pickup: 200, dropoff: 200 },
+  { id: 27, category: 'WELDING & POWER', item: 'Generator 25kW', dayRate: 150, weekRate: 750, monthRate: 2500, period: 'Week', qty: 0, pickup: 200, dropoff: 200 },
+  { id: 28, category: 'WELDING & POWER', item: 'Generator 56kW', dayRate: 250, weekRate: 1250, monthRate: 4200, period: 'Week', qty: 0, pickup: 200, dropoff: 200 },
   // Trucks & Trailers
-  { id: 29, category: 'TRUCKS & TRAILERS', item: 'Flatbed Truck + Trailer', dayRate: 350, weekRate: 1800, monthRate: 6000, period: 'Week', qty: 0, pickup: 0, dropoff: 0 },
-  { id: 30, category: 'TRUCKS & TRAILERS', item: 'Service Truck (crew)', dayRate: 150, weekRate: 750, monthRate: 2500, period: 'Week', qty: 0, pickup: 0, dropoff: 0 },
-  { id: 31, category: 'TRUCKS & TRAILERS', item: 'Lowboy Trailer (equip hauling)', dayRate: 300, weekRate: 1500, monthRate: 5000, period: 'Week', qty: 0, pickup: 0, dropoff: 0 },
+  { id: 29, category: 'TRUCKS & TRAILERS', item: 'Flatbed Truck + Trailer', dayRate: 350, weekRate: 1800, monthRate: 6000, period: 'Week', qty: 0, pickup: 200, dropoff: 200 },
+  { id: 30, category: 'TRUCKS & TRAILERS', item: 'Service Truck (crew)', dayRate: 150, weekRate: 750, monthRate: 2500, period: 'Week', qty: 0, pickup: 200, dropoff: 200 },
+  { id: 31, category: 'TRUCKS & TRAILERS', item: 'Lowboy Trailer (equip hauling)', dayRate: 300, weekRate: 1500, monthRate: 5000, period: 'Week', qty: 0, pickup: 200, dropoff: 200 },
   // Rigging & Misc
-  { id: 32, category: 'RIGGING & MISC', item: 'Spreader Bar Rental', dayRate: 100, weekRate: 500, monthRate: 1500, period: 'Week', qty: 0, pickup: 0, dropoff: 0 },
-  { id: 33, category: 'RIGGING & MISC', item: 'Rigging Package (chokers/shackles)', dayRate: 50, weekRate: 250, monthRate: 800, period: 'Month', qty: 0, pickup: 0, dropoff: 0 },
-  { id: 34, category: 'RIGGING & MISC', item: 'Temporary Guardrail System', dayRate: 75, weekRate: 375, monthRate: 1200, period: 'Month', qty: 0, pickup: 0, dropoff: 0 },
-  { id: 35, category: 'RIGGING & MISC', item: 'Fall Arrest System (complete)', dayRate: 40, weekRate: 200, monthRate: 650, period: 'Month', qty: 0, pickup: 0, dropoff: 0 },
+  { id: 32, category: 'RIGGING & MISC', item: 'Spreader Bar Rental', dayRate: 100, weekRate: 500, monthRate: 1500, period: 'Week', qty: 0, pickup: 200, dropoff: 200 },
+  { id: 33, category: 'RIGGING & MISC', item: 'Rigging Package (chokers/shackles)', dayRate: 50, weekRate: 250, monthRate: 800, period: 'Month', qty: 0, pickup: 200, dropoff: 200 },
+  { id: 34, category: 'RIGGING & MISC', item: 'Temporary Guardrail System', dayRate: 75, weekRate: 375, monthRate: 1200, period: 'Month', qty: 0, pickup: 200, dropoff: 200 },
+  { id: 35, category: 'RIGGING & MISC', item: 'Fall Arrest System (complete)', dayRate: 40, weekRate: 200, monthRate: 650, period: 'Month', qty: 0, pickup: 200, dropoff: 200 },
 ]
 
 /* Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂ Misc Metals Rates Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂ */
@@ -420,6 +420,15 @@ function projectReducer(state, action) {
       return { ...state, rates: { ...state.rates, materialRates: [...state.rates.materialRates, ...missing] } };
     }
 
+    case 'ENSURE_EQUIPMENT_DEFAULTS': {
+      const equipment = state.rates.equipment.map(e => ({
+        ...e,
+        pickup: (e.pickup === 0 || e.pickup == null) ? (action.payload?.pickup ?? 200) : e.pickup,
+        dropoff: (e.dropoff === 0 || e.dropoff == null) ? (action.payload?.dropoff ?? 200) : e.dropoff,
+      }));
+      return { ...state, rates: { ...state.rates, equipment } };
+    }
+
     case 'RESET_TO_DEFAULTS':
       return { ...JSON.parse(JSON.stringify(defaultState)), projectInfo: { ...defaultProjectInfo, quoteNumber: generateQuoteNumber() } }
 
@@ -452,6 +461,7 @@ export function ProjectProvider({ children }) {
       { item: 'Stainless Steel 316', rate: 5.50, unit: '$/lb' },
       { item: 'Powder Coat', rate: 1.50, unit: '$/lb' },
     ]})
+    dispatch({ type: 'ENSURE_EQUIPMENT_DEFAULTS', payload: { pickup: 200, dropoff: 200 } })
   }, [])
   return (
     <ProjectContext.Provider value={{ state, dispatch }}>
