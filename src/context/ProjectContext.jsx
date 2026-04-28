@@ -212,6 +212,8 @@ const defaultState = {
   ladderComputed: { totalLbs: 0, materialCost: 0, labourTotal: 0, grandTotal: 0, fabHrs: 0, instHrs: 0 },
   fabStandardOverrides: {},
   installStandardOverrides: {},
+  fabStandardCustom: [],
+  installStandardCustom: [],
   miscMetalsStandard: {
     bollards: [], cornerGuardsSS: [], cornerGuardsMS: [], embedPlates: [],
     lintels: [], edgeAngles: [], bumperRails: [], wheelStops: [],
@@ -546,7 +548,19 @@ function projectReducer(state, action) {
       return { ...state, installStandardOverrides: next }
     }
     case 'RESET_ALL_STANDARDS':
-      return { ...state, fabStandardOverrides: {}, installStandardOverrides: {} }
+      return { ...state, fabStandardOverrides: {}, installStandardOverrides: {}, fabStandardCustom: [], installStandardCustom: [] }
+    case 'ADD_FAB_CUSTOM':
+      return { ...state, fabStandardCustom: [...(state.fabStandardCustom || []), action.payload] }
+    case 'UPDATE_FAB_CUSTOM':
+      return { ...state, fabStandardCustom: (state.fabStandardCustom || []).map((r) => r.id === action.payload.id ? { ...r, ...action.payload.changes } : r) }
+    case 'DELETE_FAB_CUSTOM':
+      return { ...state, fabStandardCustom: (state.fabStandardCustom || []).filter((r) => r.id !== action.payload.id) }
+    case 'ADD_INSTALL_CUSTOM':
+      return { ...state, installStandardCustom: [...(state.installStandardCustom || []), action.payload] }
+    case 'UPDATE_INSTALL_CUSTOM':
+      return { ...state, installStandardCustom: (state.installStandardCustom || []).map((r) => r.id === action.payload.id ? { ...r, ...action.payload.changes } : r) }
+    case 'DELETE_INSTALL_CUSTOM':
+      return { ...state, installStandardCustom: (state.installStandardCustom || []).filter((r) => r.id !== action.payload.id) }
     default:
       return state
   }
