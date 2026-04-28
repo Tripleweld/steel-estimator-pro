@@ -157,9 +157,12 @@ export default function Summary() {
     const equipmentWithMarkup = equipmentTotal * (1 + equipMarkupPct / 100);
 
     /* --- Soft Costs --- */
-    const softCostFlat = softCosts.reduce((s, r) => r.type === 'flat' ? s + toNum(r.amount) : s, 0);
+    /* Data model: { id, item, qty, unit, rate, notes }
+       unit = 'hrs'|'ls' → flat cost = qty × rate
+       unit = '%'        → percent of base subtotal = rate% of base */
+    const softCostFlat = softCosts.reduce((s, r) => r.unit !== '%' ? s + toNum(r.qty) * toNum(r.rate) : s, 0);
     const baseForPercent = totalMaterialCost + totalLabourCost + purchasedTotal + equipmentWithMarkup;
-    const softCostPercent = softCosts.reduce((s, r) => r.type === 'percent' ? s + (baseForPercent * toNum(r.percent)) / 100 : s, 0);
+    const softCostPercent = softCosts.reduce((s, r) => r.unit === '%' ? s + (baseForPercent * toNum(r.rate)) / 100 : s, 0);
     const softCostTotal = softCostFlat + softCostPercent;
 
     /* --- Totals & Markup --- */
