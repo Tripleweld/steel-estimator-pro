@@ -14,6 +14,7 @@ import SoftCosts from './pages/SoftCosts'
 import Summary from './pages/Summary'
 import Quote from './pages/Quote'
 import UserManual from './pages/UserManual'
+import FabInstallStandards from './pages/FabInstallStandards'
 
 export default function App() {
   return (
@@ -21,6 +22,7 @@ export default function App() {
       <Routes>
         <Route path="/" element={<Dashboard />} />
         <Route path="/rates" element={<RatesConfig />} />
+        <Route path="/fab-install-standards" element={<FabInstallStandards />} />
         <Route path="/structural" element={<StructuralTakeoff />} />
         <Route path="/misc-metals" element={<MiscMetals />} />
         <Route path="/stairs" element={<Stairs />} />
