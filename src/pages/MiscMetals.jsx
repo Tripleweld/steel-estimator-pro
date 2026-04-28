@@ -396,7 +396,7 @@ function AggregationSection({ state }) {
   const stairsC = state.stairsComputed || {}
   const ladderC = state.ladderComputed || {}
   const railings = state.railings || []
-  const joistReinf = state.joistReinf || []
+  // Note: joistReinf is included in Structural Takeoff, not summed here
 
   const stairs = {
     label: 'Stairs',
@@ -428,24 +428,15 @@ function AggregationSection({ state }) {
     instHrs: railings.reduce((s, r) => s + Number(r.instHrs || 0), 0),
     link: '/railings',
   }
-  const jr = {
-    label: 'Joist Reinforcement',
-    qty: joistReinf.length > 0 ? `${joistReinf.length} marks` : '—',
-    lbs: joistReinf.reduce((s, r) => s + Number(r.weightLbs || 0), 0),
-    matCost: 0,
-    grandTotal: 0,
-    fabHrs: joistReinf.reduce((s, r) => s + Number(r.fabHrs || 0), 0),
-    instHrs: joistReinf.reduce((s, r) => s + Number(r.instHrs || 0), 0),
-    link: '/joist-reinf',
-  }
-  const rows = [stairs, ladder, rl, jr]
+  // Joist Reinforcement excluded — accounted for in Structural Takeoff
+  const rows = [stairs, ladder, rl]
   const totalLbs = rows.reduce((s, r) => s + r.lbs, 0)
   const totalGrand = rows.reduce((s, r) => s + r.grandTotal, 0)
   const totalFab = rows.reduce((s, r) => s + r.fabHrs, 0)
   const totalInst = rows.reduce((s, r) => s + r.instHrs, 0)
 
   return (
-    <SectionCard icon={Calculator} title="Aggregation from calculators" subtitle="Auto-pulled from Stairs, Ladder, Railings, Joist Reinf — read-only" color="text-blue-400">
+    <SectionCard icon={Calculator} title="Aggregation from calculators" subtitle="Auto-pulled from Stairs, Ladder, Railings — read-only (Joist Reinf is part of Structural Takeoff)" color="text-blue-400">
       <div className="overflow-x-auto">
         <table className="w-full text-xs">
           <thead>
@@ -506,8 +497,7 @@ export default function MiscMetals() {
   const calcsTotal =
     (stairsC.grandTotal || 0) +
     (ladderC.grandTotal || 0) +
-    (railings.reduce((s, r) => s + Number(r.weightLbs || 0), 0) * 1.20) + // crude estimate
-    (joistReinf.reduce((s, r) => s + Number(r.weightLbs || 0), 0) * 1.20)
+    (railings.reduce((s, r) => s + Number(r.weightLbs || 0), 0) * 1.20) // crude estimate
 
   // Compute Tier-1 standard totals
   const findRate = (item) => {
