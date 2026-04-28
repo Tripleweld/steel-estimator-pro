@@ -168,7 +168,7 @@ function Select({ value, onChange, options, className = '' }) {
 
 function FieldLabel({ children }) {
   return (
-    <label className="mb-1 block text-xs font-semibold text-steel-600">{children}</label>
+    <label className="mb-1 block text-xs font-semibold text-steel-400">{children}</label>
   )
 }
 
@@ -331,7 +331,7 @@ function LadderSketch({ type, config, cageRequired }) {
       <svg viewBox={`0 0 ${SW} ${SH}`} className="w-full max-w-[220px]" preserveAspectRatio="xMidYMid meet">
         {body}
       </svg>
-      <p className="mt-2 text-center text-xs font-semibold text-steel-700">
+      <p className="mt-2 text-center text-xs font-semibold text-steel-300">
         {type}
         {config !== 'Standard' && <span className="text-steel-400"> · {config}</span>}
         {cageRequired && <span className="text-fire-400"> · caged</span>}
@@ -565,8 +565,8 @@ export default function Ladder() {
             <Calculator className="h-5 w-5" />
           </div>
           <div>
-            <h1 className="page-title">Ladder Calculator</h1>
-            <p className="page-subtitle">
+            <h1 className="page-title text-white">Ladder Calculator</h1>
+            <p className="page-subtitle text-steel-400">
               Parametric OHSA-compliant fixed ladder takeoff with auto BOM, cage, platform &amp; labour
             </p>
           </div>
@@ -697,7 +697,7 @@ export default function Ladder() {
                     </div>
                   </div>
                   <div className="flex items-center gap-3">
-                    <span className="font-mono text-sm text-steel-700">{c.value}</span>
+                    <span className="font-mono text-sm text-steel-300">{c.value}</span>
                     <span className={`rounded-full px-2.5 py-0.5 text-xs font-bold ${badgeCls}`}>
                       {c.altLabel || (ok ? 'OK' : 'FAIL')}
                     </span>
@@ -727,16 +727,16 @@ export default function Ladder() {
               </thead>
               <tbody className="divide-y divide-silver-100">
                 {bom.map((b) => (
-                  <tr key={b.key} className={`even:bg-steel-50 ${b.qty === 0 ? 'opacity-50' : ''}`}>
-                    <td className="px-3 py-2 font-medium text-steel-700">{b.label}</td>
-                    <td className="px-3 py-2 font-mono text-steel-600">{b.section}</td>
-                    <td className="px-3 py-2 text-right font-mono text-steel-600">{fmtNum(b.qty)}</td>
-                    <td className="px-3 py-2 text-right font-mono text-steel-600">{fmtNum(b.lenEa, 2)}</td>
-                    <td className="px-3 py-2 text-right font-mono text-steel-600">{fmtNum(b.totalLnft, 2)}</td>
-                    <td className="px-3 py-2 text-right font-mono text-steel-600">{fmtNum(b.lbPerFt, 2)}</td>
-                    <td className="px-3 py-2 text-right font-mono text-steel-600">{fmtNum(b.totalLbs, 1)}</td>
-                    <td className="px-3 py-2 text-right font-mono text-steel-600">{fmtNum(b.holes)}</td>
-                    <td className="px-3 py-2 text-right font-mono text-steel-700">{fmt(b.totalLbs * appliedRate)}</td>
+                  <tr key={b.key} className={`even:bg-steel-900/30 ${b.qty === 0 ? 'opacity-50' : ''}`}>
+                    <td className="px-3 py-2 font-medium text-steel-300">{b.label}</td>
+                    <td className="px-3 py-2 font-mono text-steel-400">{b.section}</td>
+                    <td className="px-3 py-2 text-right font-mono text-steel-400">{fmtNum(b.qty)}</td>
+                    <td className="px-3 py-2 text-right font-mono text-steel-400">{fmtNum(b.lenEa, 2)}</td>
+                    <td className="px-3 py-2 text-right font-mono text-steel-400">{fmtNum(b.totalLnft, 2)}</td>
+                    <td className="px-3 py-2 text-right font-mono text-steel-400">{fmtNum(b.lbPerFt, 2)}</td>
+                    <td className="px-3 py-2 text-right font-mono text-steel-400">{fmtNum(b.totalLbs, 1)}</td>
+                    <td className="px-3 py-2 text-right font-mono text-steel-400">{fmtNum(b.holes)}</td>
+                    <td className="px-3 py-2 text-right font-mono text-steel-300">{fmt(b.totalLbs * appliedRate)}</td>
                   </tr>
                 ))}
               </tbody>
@@ -787,22 +787,22 @@ export default function Ladder() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-silver-100">
-                <tr className="even:bg-steel-50">
-                  <td className="px-4 py-2.5 font-medium text-steel-700">Shop fabrication (crew {fabCrew} ×{fabComplexity.toFixed(2)})</td>
-                  <td className="px-4 py-2.5 text-right font-mono text-steel-600">
+                <tr className="even:bg-steel-900/30">
+                  <td className="px-4 py-2.5 font-medium text-steel-300">Shop fabrication (crew {fabCrew} ×{fabComplexity.toFixed(2)})</td>
+                  <td className="px-4 py-2.5 text-right font-mono text-steel-400">
                     {fmtNum(s.method === 'Detailed' ? fabHrsDetailed : fabHrsSimple, 1)}
                   </td>
-                  <td className="px-4 py-2.5 text-right font-mono text-steel-600">{fmtNum(fabHrsFinal, 1)}</td>
-                  <td className="px-4 py-2.5 text-right font-mono text-steel-600">{fmt(fabRate)}/hr</td>
+                  <td className="px-4 py-2.5 text-right font-mono text-steel-400">{fmtNum(fabHrsFinal, 1)}</td>
+                  <td className="px-4 py-2.5 text-right font-mono text-steel-400">{fmt(fabRate)}/hr</td>
                   <td className="px-4 py-2.5 text-right font-mono font-semibold text-white">{fmt(fabLabourCost)}</td>
                 </tr>
-                <tr className="even:bg-steel-50">
-                  <td className="px-4 py-2.5 font-medium text-steel-700">Field install (crew {instCrew} ×{instComplexity.toFixed(2)})</td>
-                  <td className="px-4 py-2.5 text-right font-mono text-steel-600">
+                <tr className="even:bg-steel-900/30">
+                  <td className="px-4 py-2.5 font-medium text-steel-300">Field install (crew {instCrew} ×{instComplexity.toFixed(2)})</td>
+                  <td className="px-4 py-2.5 text-right font-mono text-steel-400">
                     {fmtNum(s.method === 'Detailed' ? instHrsDetailed : instHrsSimple, 1)}
                   </td>
-                  <td className="px-4 py-2.5 text-right font-mono text-steel-600">{fmtNum(instHrsFinal, 1)}</td>
-                  <td className="px-4 py-2.5 text-right font-mono text-steel-600">{fmt(installRate)}/hr</td>
+                  <td className="px-4 py-2.5 text-right font-mono text-steel-400">{fmtNum(instHrsFinal, 1)}</td>
+                  <td className="px-4 py-2.5 text-right font-mono text-steel-400">{fmt(installRate)}/hr</td>
                   <td className="px-4 py-2.5 text-right font-mono font-semibold text-white">{fmt(instLabourCost)}</td>
                 </tr>
               </tbody>
@@ -823,16 +823,16 @@ export default function Ladder() {
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <tbody className="divide-y divide-silver-100">
-                <tr className="even:bg-steel-50">
-                  <td className="px-4 py-2.5 font-medium text-steel-700">Material + Waste</td>
+                <tr className="even:bg-steel-900/30">
+                  <td className="px-4 py-2.5 font-medium text-steel-300">Material + Waste</td>
                   <td className="px-4 py-2.5 text-right font-mono text-white">{fmt(totalMaterialCost)}</td>
                 </tr>
-                <tr className="even:bg-steel-50">
-                  <td className="px-4 py-2.5 font-medium text-steel-700">Galvanizing {s.finish === 'Galvanized' ? '' : '(n/a)'}</td>
+                <tr className="even:bg-steel-900/30">
+                  <td className="px-4 py-2.5 font-medium text-steel-300">Galvanizing {s.finish === 'Galvanized' ? '' : '(n/a)'}</td>
                   <td className="px-4 py-2.5 text-right font-mono text-white">{fmt(galvCost)}</td>
                 </tr>
-                <tr className="even:bg-steel-50">
-                  <td className="px-4 py-2.5 font-medium text-steel-700">Labour</td>
+                <tr className="even:bg-steel-900/30">
+                  <td className="px-4 py-2.5 font-medium text-steel-300">Labour</td>
                   <td className="px-4 py-2.5 text-right font-mono text-white">{fmt(labourTotal)}</td>
                 </tr>
               </tbody>
@@ -869,7 +869,7 @@ export default function Ladder() {
                       : 'border-red-200 bg-red-50'
                   }`}
                 >
-                  <p className="text-xs font-semibold uppercase tracking-wide text-steel-600">{b.label}</p>
+                  <p className="text-xs font-semibold uppercase tracking-wide text-steel-400">{b.label}</p>
                   <p className="mt-1 text-2xl font-bold font-mono text-white">{fmt(b.value)}</p>
                   <p className="mt-1 text-xs text-steel-400">Range: {fmt(b.lo)} – {fmt(b.hi)}</p>
                   <span
@@ -906,9 +906,9 @@ export default function Ladder() {
                 </thead>
                 <tbody className="divide-y divide-silver-100">
                   {fabComponents.map((c) => (
-                    <tr key={c.key} className={`even:bg-steel-50 ${c.qty === 0 ? 'opacity-50' : ''}`}>
-                      <td className="px-2 py-1 font-medium text-steel-700">{c.label}</td>
-                      <td className="px-2 py-1 text-right font-mono text-steel-600">{fmtNum(c.qty)}</td>
+                    <tr key={c.key} className={`even:bg-steel-900/30 ${c.qty === 0 ? 'opacity-50' : ''}`}>
+                      <td className="px-2 py-1 font-medium text-steel-300">{c.label}</td>
+                      <td className="px-2 py-1 text-right font-mono text-steel-400">{fmtNum(c.qty)}</td>
                       {FAB_SUBSTEPS.map((sk) => (
                         <td key={sk} className="px-1 py-1">
                           <NumInput
@@ -918,7 +918,7 @@ export default function Ladder() {
                           />
                         </td>
                       ))}
-                      <td className="px-2 py-1 text-right font-mono text-steel-700">{fmtNum(c.hrsPerPc, 2)}</td>
+                      <td className="px-2 py-1 text-right font-mono text-steel-300">{fmtNum(c.hrsPerPc, 2)}</td>
                       <td className="px-2 py-1 text-right font-mono font-semibold text-white">{fmtNum(c.totalHrs, 2)}</td>
                     </tr>
                   ))}
@@ -959,9 +959,9 @@ export default function Ladder() {
                 </thead>
                 <tbody className="divide-y divide-silver-100">
                   {instComponents.map((c) => (
-                    <tr key={c.key} className={`even:bg-steel-50 ${c.qty === 0 ? 'opacity-50' : ''}`}>
-                      <td className="px-2 py-1 font-medium text-steel-700">{c.label}</td>
-                      <td className="px-2 py-1 text-right font-mono text-steel-600">{fmtNum(c.qty)}</td>
+                    <tr key={c.key} className={`even:bg-steel-900/30 ${c.qty === 0 ? 'opacity-50' : ''}`}>
+                      <td className="px-2 py-1 font-medium text-steel-300">{c.label}</td>
+                      <td className="px-2 py-1 text-right font-mono text-steel-400">{fmtNum(c.qty)}</td>
                       {INST_SUBSTEPS.map((sk) => (
                         <td key={sk} className="px-1 py-1">
                           <NumInput
@@ -971,7 +971,7 @@ export default function Ladder() {
                           />
                         </td>
                       ))}
-                      <td className="px-2 py-1 text-right font-mono text-steel-700">{fmtNum(c.hrsPerPc, 2)}</td>
+                      <td className="px-2 py-1 text-right font-mono text-steel-300">{fmtNum(c.hrsPerPc, 2)}</td>
                       <td className="px-2 py-1 text-right font-mono font-semibold text-white">{fmtNum(c.totalHrs, 2)}</td>
                     </tr>
                   ))}
