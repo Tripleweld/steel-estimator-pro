@@ -2,7 +2,7 @@ import { useState, useMemo, useEffect } from 'react';
 import { Grid3X3, Plus, Trash2, Copy, ChevronDown, ChevronUp, Info, Wrench } from 'lucide-react';
 import { useProject } from '../context/ProjectContext';
 
-/* ââ Scrollbar + dark theme CSS injection ââ */
+/* ── Scrollbar + dark theme CSS injection ── */
 const SCROLLBAR_CSS = `
   .jr-scroll::-webkit-scrollbar { width: 8px; height: 8px; }
   .jr-scroll::-webkit-scrollbar-track { background: #1e293b; border-radius: 4px; }
@@ -11,55 +11,55 @@ const SCROLLBAR_CSS = `
   select option { background: #1e293b; color: #e2e8f0; }
 `;
 
-/* ââ Formatting helpers ââ */
+/* ── Formatting helpers ── */
 const fmt = (v) => '$' + Number(v || 0).toLocaleString('en-CA', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
 const fmtDec = (v, d = 2) => Number(v || 0).toLocaleString('en-CA', { minimumFractionDigits: d, maximumFractionDigits: d });
 const fmtNum = (v, d = 0) => Number(v || 0).toLocaleString('en-CA', { minimumFractionDigits: d, maximumFractionDigits: d });
 
-/* ââ Bar weight lookup (lbs/ft) ââ */
+/* ── Bar weight lookup (lbs/ft) ── */
 const BAR_WEIGHTS = {
   '1/2': 0.67, '5/8': 1.04, '3/4': 1.50, '7/8': 2.05,
   '1': 2.67, '1-1/8': 3.38, '1-1/4': 4.18,
 };
 const BAR_SIZES = Object.keys(BAR_WEIGHTS);
 
-/* ââ Common plate sizes (widthÃthickness â lbs/ft) ââ */
+/* ── Common plate sizes (width×thickness → lbs/ft) ── */
 const PLATE_SIZES = [
-  { label: 'PL 3Ã1/4', w: 3, t: 0.25 },
-  { label: 'PL 3Ã3/8', w: 3, t: 0.375 },
-  { label: 'PL 4Ã1/4', w: 4, t: 0.25 },
-  { label: 'PL 4Ã3/8', w: 4, t: 0.375 },
-  { label: 'PL 4Ã1/2', w: 4, t: 0.5 },
-  { label: 'PL 6Ã1/4', w: 6, t: 0.25 },
-  { label: 'PL 6Ã3/8', w: 6, t: 0.375 },
-  { label: 'PL 6Ã1/2', w: 6, t: 0.5 },
-  { label: 'PL 8Ã3/8', w: 8, t: 0.375 },
-  { label: 'PL 8Ã1/2', w: 8, t: 0.5 },
-  { label: 'PL 10Ã3/8', w: 10, t: 0.375 },
-  { label: 'PL 10Ã1/2', w: 10, t: 0.5 },
+  { label: 'PL 3×1/4', w: 3, t: 0.25 },
+  { label: 'PL 3×3/8', w: 3, t: 0.375 },
+  { label: 'PL 4×1/4', w: 4, t: 0.25 },
+  { label: 'PL 4×3/8', w: 4, t: 0.375 },
+  { label: 'PL 4×1/2', w: 4, t: 0.5 },
+  { label: 'PL 6×1/4', w: 6, t: 0.25 },
+  { label: 'PL 6×3/8', w: 6, t: 0.375 },
+  { label: 'PL 6×1/2', w: 6, t: 0.5 },
+  { label: 'PL 8×3/8', w: 8, t: 0.375 },
+  { label: 'PL 8×1/2', w: 8, t: 0.5 },
+  { label: 'PL 10×3/8', w: 10, t: 0.375 },
+  { label: 'PL 10×1/2', w: 10, t: 0.5 },
   { label: 'Custom', w: 0, t: 0 },
 ];
 const plateLbsPerFt = (w, t) => w * t * 3.4032;
 
-/* ââ Angle sizes for web reinforcement (lbs/ft) ââ */
+/* ── Angle sizes for web reinforcement (lbs/ft) ── */
 const ANGLE_SIZES = [
-  { label: 'L1Ã1Ã1/8', lbsPerFt: 0.80 },
-  { label: 'L1Ã1Ã3/16', lbsPerFt: 1.16 },
-  { label: 'L1-1/4Ã1-1/4Ã1/8', lbsPerFt: 1.01 },
-  { label: 'L1-1/2Ã1-1/2Ã1/8', lbsPerFt: 1.23 },
-  { label: 'L1-1/2Ã1-1/2Ã3/16', lbsPerFt: 1.80 },
-  { label: 'L2Ã2Ã1/8', lbsPerFt: 1.65 },
-  { label: 'L2Ã2Ã3/16', lbsPerFt: 2.44 },
-  { label: 'L2Ã2Ã1/4', lbsPerFt: 3.19 },
-  { label: 'L2-1/2Ã2-1/2Ã1/8', lbsPerFt: 2.08 },
-  { label: 'L2-1/2Ã2-1/2Ã3/16', lbsPerFt: 3.07 },
-  { label: 'L2-1/2Ã2-1/2Ã1/4', lbsPerFt: 4.10 },
-  { label: 'L3Ã3Ã3/16', lbsPerFt: 3.71 },
-  { label: 'L3Ã3Ã1/4', lbsPerFt: 4.90 },
+  { label: 'L1×1×1/8', lbsPerFt: 0.80 },
+  { label: 'L1×1×3/16', lbsPerFt: 1.16 },
+  { label: 'L1-1/4×1-1/4×1/8', lbsPerFt: 1.01 },
+  { label: 'L1-1/2×1-1/2×1/8', lbsPerFt: 1.23 },
+  { label: 'L1-1/2×1-1/2×3/16', lbsPerFt: 1.80 },
+  { label: 'L2×2×1/8', lbsPerFt: 1.65 },
+  { label: 'L2×2×3/16', lbsPerFt: 2.44 },
+  { label: 'L2×2×1/4', lbsPerFt: 3.19 },
+  { label: 'L2-1/2×2-1/2×1/8', lbsPerFt: 2.08 },
+  { label: 'L2-1/2×2-1/2×3/16', lbsPerFt: 3.07 },
+  { label: 'L2-1/2×2-1/2×1/4', lbsPerFt: 4.10 },
+  { label: 'L3×3×3/16', lbsPerFt: 3.71 },
+  { label: 'L3×3×1/4', lbsPerFt: 4.90 },
   { label: 'Custom', lbsPerFt: 0 },
 ];
 
-/* ââ SJI Joist Types ââ */
+/* ── SJI Joist Types ── */
 const K_SERIES = [
   '8K1','10K1','12K1','12K3','12K5',
   '14K1','14K3','14K4','14K6',
@@ -92,7 +92,7 @@ const DLH_SERIES = [
   '72DLH14','72DLH15','72DLH16','72DLH17','72DLH18','72DLH19',
 ];
 
-/* ââ Reinforcement Methods ââ */
+/* ── Reinforcement Methods ── */
 const REINF_METHODS = [
   '2 Bars Top + Plate Bottom',
   '2 Bars Top + 2 Bars Bottom',
@@ -105,12 +105,12 @@ const REINF_METHODS = [
   'Custom',
 ];
 
-/* ââ Install/Fab rates from Rates & Config ââ */
+/* ── Install/Fab rates from Rates & Config ── */
 // Material rate comes from Rates & Config (steelRate in rates param)
 const INSTALL_RATE = 110;
 const FAB_RATE = 95;
 
-/* ââ Default row factory ââ */
+/* ── Default row factory ── */
 const defaultRow = () => ({
   id: crypto.randomUUID(),
   mark: '',
@@ -127,7 +127,7 @@ const defaultRow = () => ({
   chord_botType: 'plate',
   chord_botBarsPerChord: 2,
   chord_botBarDia: '3/4',
-  chord_botPlateSize: 'PL 4Ã3/8',
+  chord_botPlateSize: 'PL 4×3/8',
   chord_botPlateW: 4,
   chord_botPlateT: 0.375,
   chord_botLbsPerFt: plateLbsPerFt(4, 0.375),
@@ -138,7 +138,7 @@ const defaultRow = () => ({
   chord_crewSize: 2,
   // Web
   web_qtyPerJoist: 0,
-  web_angleSize: 'L1-1/2Ã1-1/2Ã1/8',
+  web_angleSize: 'L1-1/2×1-1/2×1/8',
   web_angleLbsPerFt: 1.23,
   web_vertQty: 0,
   web_vertLength: 0,
@@ -150,7 +150,7 @@ const defaultRow = () => ({
   notes: '',
 });
 
-/* ââ Calculations for a single JR row ââ */
+/* ── Calculations for a single JR row ── */
 function calcRow(r, rates = {}) {
   const steelRate = rates.steelRate ?? 1.00;
   const installRate = rates.installRate ?? INSTALL_RATE;
@@ -171,9 +171,9 @@ function calcRow(r, rates = {}) {
   const isBotBar = r.chord_botType === 'bar';
   const botBars = isBotBar ? (Number(r.chord_botBarsPerChord) || 2) : 1;
 
-  // Top welds: ((topLen_ft Ã 12 / spacing) + 4 extra) Ã 2 sides Ã bars
+  // Top welds: ((topLen_ft × 12 / spacing) + 4 extra) × 2 sides × bars
   const topWelds = topLen > 0 ? Math.ceil(((topLen * 12) / spacing + 4) * 2 * bars) : 0;
-  // Bottom welds: if bars â same formula as top (per bar, 2 sides); if plate â 2 continuous sides
+  // Bottom welds: if bars → same formula as top (per bar, 2 sides); if plate → 2 continuous sides
   const botWelds = botLen > 0
     ? (isBotBar
         ? Math.ceil(((botLen * 12) / spacing + 4) * 2 * botBars)
@@ -182,9 +182,9 @@ function calcRow(r, rates = {}) {
   const chordTotalWelds = topWelds + botWelds;
   const chordWeldInches = chordTotalWelds * weldSize;
   const chordHrs = (chordTotalWelds * chordMinPerWeld) / 60;
-  // Material: (topLbs Ã topLen Ã topBars + botLbs Ã botLen ï¿½ï¿½ botBars) Ã qty Ã markup
+  // Material: (topLbs × topLen × topBars + botLbs × botLen �� botBars) × qty × markup
   const chordMaterial = (topLbs * topLen * bars + botLbs * botLen * botBars) * qty * steelRate;
-  // Install: qty Ã hours Ã crewSize Ã rate + material
+  // Install: qty × hours × crewSize × rate + material
   const chordInstall = qty * chordHrs * crewSize * installRate + chordMaterial;
 
   // WEB calculations
@@ -192,17 +192,17 @@ function calcRow(r, rates = {}) {
   const webLbs = Number(r.web_angleLbsPerFt) || 0;
   const joistDepthIn = parseInt(r.joistType) || 24;
   const vertQ = Number(r.web_vertQty) || 0;
-  // Auto-calc vertical length from joist depth (in â ft) if auto mode, else manual
+  // Auto-calc vertical length from joist depth (in → ft) if auto mode, else manual
   const vertL = r.web_vertLengthAuto ? (joistDepthIn / 12) : (Number(r.web_vertLength) || 0);
   const diagQ = Number(r.web_diagQty) || 0;
   // Auto-calc diagonal length: hypotenuse based on depth and typical panel width (~depth)
   const diagL = r.web_diagLengthAuto ? (Math.sqrt(2) * joistDepthIn / 12) : (Number(r.web_diagLength) || 0);
   const webMinPerWeld = Number(r.web_minPerWeld) || 5;
 
-  // Web welds: each member has 2 ends Ã 2 sides = 4 welds
+  // Web welds: each member has 2 ends × 2 sides = 4 welds
   const webWelds = (vertQ * 4 + diagQ * 4);
   const webHrs = webQty > 0 ? (webQty * 0.5 + webQty * 4 * (webMinPerWeld / 60)) : 0;
-  // Web material: (vertQÃvertL + diagQÃdiagL) Ã webLbs Ã 2sides Ã markup + clip angles
+  // Web material: (vertQ×vertL + diagQ×diagL) × webLbs × 2sides × markup + clip angles
   const webMaterial = (qty * webLbs * vertQ * vertL + qty * webLbs * diagQ * diagL) * 2 * steelRate
     + qty * webQty * 1.7 * 4; // clip angle allowance
   const webInstall = qty * webHrs * 2 * installRate + webMaterial;
@@ -225,7 +225,7 @@ function calcRow(r, rates = {}) {
   };
 }
 
-/* ââ Reactive Cross-Section Diagram â Engineering Drawing Style ââ */
+/* ── Reactive Cross-Section Diagram — Engineering Drawing Style ── */
 function JoistCrossSection({ row }) {
   const isBotBar = row.chord_botType === 'bar';
   const topBarCount = Math.min(Number(row.chord_barsPerChord) || 2, 4);
@@ -412,15 +412,15 @@ function JoistCrossSection({ row }) {
         <line x1={cX} y1={25} x2={cX} y2={H - 40} stroke={dimC} strokeWidth="0.4" strokeDasharray="8,3,2,3" />
         <text x={cX + 3} y={30} fill={dimC} fontSize="6" fontFamily="monospace">CL</text>
 
-        {/* === TOP CHORD â double angle back-to-back with hatching === */}
+        {/* === TOP CHORD — double angle back-to-back with hatching === */}
         <AngleL x={tcLx} y={topCY} leg={aLeg} t={aT} flipH={true} flipV={true} color={ink} hatch={true} />
         <AngleL x={tcRx} y={topCY} leg={aLeg} t={aT} flipH={false} flipV={true} color={ink} hatch={true} />
 
-        {/* === BOTTOM CHORD â double angle back-to-back with hatching === */}
+        {/* === BOTTOM CHORD — double angle back-to-back with hatching === */}
         <AngleL x={tcLx} y={botCY} leg={aLeg} t={aT} flipH={true} flipV={false} color={ink} hatch={true} />
         <AngleL x={tcRx} y={botCY} leg={aLeg} t={aT} flipH={false} flipV={false} color={ink} hatch={true} />
 
-        {/* === WEB MEMBER â single angle between chords === */}
+        {/* === WEB MEMBER — single angle between chords === */}
         {hasWeb && (
           <g>
             <AngleL x={cX - webT / 2} y={(topCY + botCY) / 2 - webLeg / 2} leg={webLeg} t={webT} flipH={false} flipV={false} color={green} hatch={true} opacity={0.7} />
@@ -449,7 +449,7 @@ function JoistCrossSection({ row }) {
         <text x={annoX} y={botCY + aLeg / 2 - 2} fill={ink} fontSize="7.5" fontFamily="monospace" fontWeight="bold">BOT CHORD</text>
         <text x={annoX} y={botCY + aLeg / 2 + 8} fill={dimC} fontSize="6.5" fontFamily="monospace">2L back-to-back</text>
 
-        {/* === TOP REINFORCEMENT â method-reactive === */}
+        {/* === TOP REINFORCEMENT — method-reactive === */}
         {topType === 'bar' && (
           <g>
             {topBars.map((b, i) => (
@@ -471,7 +471,7 @@ function JoistCrossSection({ row }) {
                 <line x1={topBars[topBars.length - 1].cx + barR + 2} y1={topBars[0].cy} x2={annoX - 4} y2={topBars[0].cy} stroke={thin} strokeWidth="0.5" strokeDasharray="2,2" />
                 <text x={annoX} y={topBars[0].cy - 3} fill={fire} fontSize="7.5" fontFamily="monospace" fontWeight="bold">TOP REINF.</text>
                 <text x={annoX} y={topBars[0].cy + 7} fill={dimC} fontSize="6.5" fontFamily="monospace">{topBarCount}x {row.chord_topBarDia}" RD. BAR</text>
-                <text x={annoX} y={topBars[0].cy + 16} fill={dimC} fontSize="6" fontFamily="monospace">L = {row.chord_topLength || 'â'} ft</text>
+                <text x={annoX} y={topBars[0].cy + 16} fill={dimC} fontSize="6" fontFamily="monospace">L = {row.chord_topLength || '—'} ft</text>
               </g>
             )}
           </g>
@@ -536,7 +536,7 @@ function JoistCrossSection({ row }) {
           </g>
         )}
 
-        {/* === BOTTOM REINFORCEMENT â method-reactive === */}
+        {/* === BOTTOM REINFORCEMENT — method-reactive === */}
         {botType === 'bar' && (
           <g>
             {botBars.map((b, i) => (
@@ -554,7 +554,7 @@ function JoistCrossSection({ row }) {
                 <line x1={botBars[botBars.length - 1].cx + barR + 2} y1={botBars[0].cy} x2={annoX - 4} y2={botBars[0].cy} stroke={thin} strokeWidth="0.5" strokeDasharray="2,2" />
                 <text x={annoX} y={botBars[0].cy - 3} fill={blue} fontSize="7.5" fontFamily="monospace" fontWeight="bold">BOT REINF.</text>
                 <text x={annoX} y={botBars[0].cy + 7} fill={dimC} fontSize="6.5" fontFamily="monospace">{botBarCount}x {row.chord_botBarDia}" RD. BAR</text>
-                <text x={annoX} y={botBars[0].cy + 16} fill={dimC} fontSize="6" fontFamily="monospace">L = {row.chord_botLength || 'â'} ft</text>
+                <text x={annoX} y={botBars[0].cy + 16} fill={dimC} fontSize="6" fontFamily="monospace">L = {row.chord_botLength || '—'} ft</text>
               </g>
             )}
           </g>
@@ -578,7 +578,7 @@ function JoistCrossSection({ row }) {
             <line x1={cX + botPlateW / 2 + 2} y1={botCY + aT + 3 + botPlateT / 2} x2={annoX - 4} y2={botCY + aT + 3 + botPlateT / 2} stroke={thin} strokeWidth="0.5" strokeDasharray="2,2" />
             <text x={annoX} y={botCY + aT - 1} fill={blue} fontSize="7.5" fontFamily="monospace" fontWeight="bold">BOT REINF. PLATE</text>
             <text x={annoX} y={botCY + aT + 9} fill={dimC} fontSize="6.5" fontFamily="monospace">{row.chord_botPlateSize}</text>
-            <text x={annoX} y={botCY + aT + 18} fill={dimC} fontSize="6" fontFamily="monospace">L = {row.chord_botLength || 'â'} ft</text>
+            <text x={annoX} y={botCY + aT + 18} fill={dimC} fontSize="6" fontFamily="monospace">L = {row.chord_botLength || '—'} ft</text>
           </g>
         )}
         {botType === 'channel' && (
@@ -622,10 +622,10 @@ function JoistCrossSection({ row }) {
         <rect x="8" y={H - 36} width={W - 16} height="28" rx="0" fill="#f8fafc" stroke={ink} strokeWidth="0.8" />
         <line x1={W / 2} y1={H - 36} x2={W / 2} y2={H - 8} stroke={thin} strokeWidth="0.3" />
         <text x="16" y={H - 22} fill={ink} fontSize="9" fontFamily="monospace" fontWeight="bold">
-          SECTION A-A: {row.joistType} â {series === 'K' ? 'STANDARD' : series === 'LH' ? 'LONG SPAN' : 'DEEP LONG SPAN'}
+          SECTION A-A: {row.joistType} — {series === 'K' ? 'STANDARD' : series === 'LH' ? 'LONG SPAN' : 'DEEP LONG SPAN'}
         </text>
         <text x="16" y={H - 12} fill={dimC} fontSize="7" fontFamily="monospace">
-          REINF: {method.toUpperCase()} | SCALE: NTS | REV: â
+          REINF: {method.toUpperCase()} | SCALE: NTS | REV: —
         </text>
         <text x={W / 2 + 8} y={H - 22} fill={ink} fontSize="7" fontFamily="monospace" fontWeight="bold">TRIPLE WELD INC.</text>
         <text x={W / 2 + 8} y={H - 12} fill={dimC} fontSize="6.5" fontFamily="monospace">CWB W47.1 / W59 | CSA S16-19</text>
@@ -657,7 +657,7 @@ function JoistCrossSection({ row }) {
   );
 }
 
-/* ââ Info Legend (collapsible) ââ */
+/* ── Info Legend (collapsible) ── */
 function JoistInfoLegend() {
   const [open, setOpen] = useState(false);
   return (
@@ -700,7 +700,7 @@ function JoistInfoLegend() {
   );
 }
 
-/* ââ Expandable JR Block Row ââ */
+/* ── Expandable JR Block Row ── */
 function JRBlock({ row, index, onUpdate, onDelete, onDuplicate }) {
   const { state } = useProject();
   const [expanded, setExpanded] = useState(false);
@@ -754,7 +754,7 @@ function JRBlock({ row, index, onUpdate, onDelete, onDuplicate }) {
 
   return (
     <div className="border border-steel-700 rounded-lg mb-3 bg-steel-800 shadow-sm overflow-hidden">
-      {/* ââ Main Row (always visible) ââ */}
+      {/* ── Main Row (always visible) ── */}
       <div className={`flex items-center gap-2 px-3 py-2 cursor-pointer transition-colors ${expanded ? 'bg-steel-900 text-white' : 'text-silver-200 hover:bg-steel-700'}`}
         onClick={() => setExpanded(!expanded)}>
         <span className="w-8 text-center text-xs font-mono font-bold opacity-60">{index + 1}</span>
@@ -793,7 +793,7 @@ function JRBlock({ row, index, onUpdate, onDelete, onDuplicate }) {
         </div>
       </div>
 
-      {/* ââ Expanded Detail ââ */}
+      {/* ── Expanded Detail ── */}
       {expanded && (
         <div className="px-4 py-4 bg-steel-900 border-t border-steel-700 space-y-4">
           {/* CHORD REINFORCEMENT */}
@@ -1009,7 +1009,7 @@ function JRBlock({ row, index, onUpdate, onDelete, onDuplicate }) {
   );
 }
 
-/* ââ Main Page Component ââ */
+/* ── Main Page Component ── */
 export default function JoistReinf() {
   const { state, dispatch } = useProject();
   const rows = state.joistReinf || [];
@@ -1046,7 +1046,7 @@ export default function JoistReinf() {
       const c = calcRow(r, { ...(state.rates?.labourRates || {}), steelRate: (state.rates?.materialRates || []).find(m => m.item === 'Structural steel')?.rate ?? 1.00 });
       const q = Number(r.qty) || 1;
       const weightLbs = Math.round(c.totalWeight);
-      // Multiply by crew so ST sees true man-hours (JR formula: hours × crew × rate)
+      // Multiply by crew so ST sees true man-hours (JR formula: hours � crew � rate)
       const chordCrew = Number(r.chord_crewSize) || 2;
       const webCrew = 2; // JR formula uses fixed crew=2 for web work
       const fabHrs = 0; // JR is installation only — no shop fabrication
@@ -1091,7 +1091,7 @@ export default function JoistReinf() {
             Joist Reinforcement
           </div>
           <p className="page-subtitle mt-1 text-sm text-silver-400">
-            Parametric calculator â bar, plate &amp; channel methods with automatic weld &amp; labor calculations
+            Parametric calculator — bar, plate &amp; channel methods with automatic weld &amp; labor calculations
           </p>
         </div>
 
@@ -1157,7 +1157,7 @@ export default function JoistReinf() {
         {/* Grand Total */}
         {rows.length > 0 && (
           <div className="mt-6 rounded-xl border border-steel-700 bg-steel-800 p-5 shadow-sm">
-            <h3 className="mb-4 text-sm font-bold uppercase tracking-wide text-silver-200">Grand Total â All JR Blocks</h3>
+            <h3 className="mb-4 text-sm font-bold uppercase tracking-wide text-silver-200">Grand Total — All JR Blocks</h3>
             <div className="grid grid-cols-2 gap-4 sm:grid-cols-4 lg:grid-cols-5">
               <div>
                 <p className="text-xs text-silver-400">Total Weight</p>
