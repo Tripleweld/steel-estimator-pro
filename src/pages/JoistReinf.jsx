@@ -106,7 +106,7 @@ const REINF_METHODS = [
 ];
 
 /* ââ Install/Fab rates from Rates & Config ââ */
-const MATERIAL_MARKUP = 1.5;
+// Material rate comes from Rates & Config (steelRate in rates param)
 const INSTALL_RATE = 110;
 const FAB_RATE = 95;
 
@@ -152,6 +152,7 @@ const defaultRow = () => ({
 
 /* ââ Calculations for a single JR row ââ */
 function calcRow(r, rates = {}) {
+  const steelRate = rates.steelRate ?? 1.00;
   const installRate = rates.installRate ?? INSTALL_RATE;
   const fabRate = rates.fabRate ?? FAB_RATE;
   const qty = Number(r.qty) || 1;
@@ -182,7 +183,7 @@ function calcRow(r, rates = {}) {
   const chordWeldInches = chordTotalWelds * weldSize;
   const chordHrs = (chordTotalWelds * chordMinPerWeld) / 60;
   // Material: (topLbs Ã topLen Ã topBars + botLbs Ã botLen ï¿½ï¿½ botBars) Ã qty Ã markup
-  const chordMaterial = (topLbs * topLen * bars + botLbs * botLen * botBars) * qty * MATERIAL_MARKUP;
+  const chordMaterial = (topLbs * topLen * bars + botLbs * botLen * botBars) * qty * steelRate;
   // Install: qty Ã hours Ã crewSize Ã rate + material
   const chordInstall = qty * chordHrs * crewSize * installRate + chordMaterial;
 
@@ -202,7 +203,7 @@ function calcRow(r, rates = {}) {
   const webWelds = (vertQ * 4 + diagQ * 4);
   const webHrs = webQty > 0 ? (webQty * 0.5 + webQty * 4 * (webMinPerWeld / 60)) : 0;
   // Web material: (vertQÃvertL + diagQÃdiagL) Ã webLbs Ã 2sides Ã markup + clip angles
-  const webMaterial = (qty * webLbs * vertQ * vertL + qty * webLbs * diagQ * diagL) * 2 * MATERIAL_MARKUP
+  const webMaterial = (qty * webLbs * vertQ * vertL + qty * webLbs * diagQ * diagL) * 2 * steelRate
     + qty * webQty * 1.7 * 4; // clip angle allowance
   const webInstall = qty * webHrs * 2 * installRate + webMaterial;
 
@@ -704,7 +705,9 @@ function JRBlock({ row, index, onUpdate, onDelete, onDuplicate }) {
   const { state } = useProject();
   const [expanded, setExpanded] = useState(false);
   const labourRates = state.rates?.labourRates || {};
-  const calc = useMemo(() => calcRow(row, labourRates), [row, labourRates]);
+  const steelRate = (state.rates?.materialRates || []).find(m => m.item === 'Structural steel')?.rate ?? 1.00;
+  const ratesForCalc = { ...labourRates, steelRate };
+  const calc = useMemo(() => calcRow(row, ratesForCalc), [row, ratesForCalc]);
 
   const set = (field, value) => onUpdate(row.id, field, value);
   const setNum = (field, val) => set(field, parseFloat(val) || 0);
@@ -1025,7 +1028,7 @@ export default function JoistReinf() {
   const summary = useMemo(() => {
     let totalWeight = 0, totalHrs = 0, totalMaterial = 0, totalInstall = 0, totalLabor = 0, totalQty = 0;
     rows.forEach(r => {
-      const c = calcRow(r, state.rates?.labourRates || {});
+      const c = calcRow(r, { ...(state.rates?.labourRates || {}), steelRate: (state.rates?.materialRates || []).find(m => m.item === 'Structural steel')?.rate ?? 1.00 });
       const q = Number(r.qty) || 1;
       totalQty += q;
       totalWeight += c.totalWeight;
@@ -1040,7 +1043,7 @@ export default function JoistReinf() {
   // Sync computed values (weight, hours, cost) back to context so StructuralTakeoff can read them
   useEffect(() => {
     rows.forEach(r => {
-      const c = calcRow(r, state.rates?.labourRates || {});
+      const c = calcRow(r, { ...(state.rates?.labourRates || {}), steelRate: (state.rates?.materialRates || []).find(m => m.item === 'Structural steel')?.rate ?? 1.00 });
       const q = Number(r.qty) || 1;
       const weightLbs = Math.round(c.totalWeight);
       // Multiply by crew so ST sees true man-hours (JR formula: hours × crew × rate)
@@ -1169,7 +1172,7 @@ export default function JoistReinf() {
               <div>
                 <p className="text-xs text-silver-400">Material Cost</p>
                 <p className="mt-0.5 text-lg font-bold text-white">{fmt(summary.totalMaterial)}</p>
-                <p className="text-[10px] text-silver-500">incl. {MATERIAL_MARKUP}x markup</p>
+                <p className="text-[10px] text-silver-500">incl. at steel rate</p>
               </div>
               <div>
                 <p className="text-xs text-silver-400">Total</p>
