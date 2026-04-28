@@ -631,6 +631,7 @@ export default function Ladder() {
           </div>
         )}
 
+        {(state.ladder?.length || 0) > 0 && (<>
         {/* ─── 1. SETUP ─── */}
         <SectionCard icon={Settings2} title="Setup" subtitle="Type, finish, side rail & mark — sketch on the right shows the selected configuration">
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
@@ -1049,6 +1050,7 @@ export default function Ladder() {
             </div>
           </details>
         </SectionCard>
+        </>)}
 
         {/* Footer */}
         <div className="mt-10 border-t border-steel-700 pt-6 text-center">
