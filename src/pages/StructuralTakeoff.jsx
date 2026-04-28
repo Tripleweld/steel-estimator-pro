@@ -189,7 +189,7 @@ function OverridableCell({ calcValue, override, onOverride, colorClass }) {
    Type to filter, click or Enter to select.
    Auto-fills Wt/ft when a profile is selected. */
 function ProfileSearch({ value, onSelect, profiles }) {
-  const SHAPES = profiles || SHAPES;
+  const SHAPES = profiles || AISC_SHAPES;
   const [query, setQuery] = useState(value || '');
   const [open, setOpen] = useState(false);
   const [hlIdx, setHlIdx] = useState(0);
