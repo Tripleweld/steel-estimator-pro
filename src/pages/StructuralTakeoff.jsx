@@ -327,7 +327,7 @@ function MomentConnectionRow({ row, index, fabRate, installRate, steelRate, onUp
   const totalTon = totalLbs / 2000;
   const calcFabPerPc = (toNum(row.setup) + toNum(row.cut) + toNum(row.drill) + toNum(row.feed) + toNum(row.weld) + toNum(row.grind) + toNum(row.paint)) / 60;
   const fabPerPc = row.fabPerPcOverride != null ? toNum(row.fabPerPcOverride) : calcFabPerPc;
-  const totFab = fabPerPc * (toNum(row.fabCrew) || 1);
+  const totFab = row.section === 'steelDeck' ? 0 : fabPerPc * (toNum(row.fabCrew) || 1);
   const calcInstPerPc = (toNum(row.unload) + toNum(row.rig) + toNum(row.fit) + toNum(row.bolt) + toNum(row.touchUp)) / 60;
   const instPerPc = row.instPerPcOverride != null ? toNum(row.instPerPcOverride) : calcInstPerPc;
   const totInst = instPerPc * (toNum(row.instCrew) || 1);
