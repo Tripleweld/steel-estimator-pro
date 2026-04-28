@@ -2,14 +2,14 @@ import React, { useState, useCallback, useMemo, useRef, useEffect, Component } f
 import { useProject } from '../context/ProjectContext';
 import AISC_SHAPES from '../data/aisc-shapes-data';
 
-/* Steel Deck profiles — wtPerFt holds lb/sqft (deck uses sqft as quantity) */
+/* Steel Deck profiles — [designation, type, wt/sqft] format matching AISC_SHAPES schema */
 const DECK_PROFILES = [
-  { designation: '1-1/2" × 22 GA Deck', wtPerFt: 1.66 },
-  { designation: '1-1/2" × 20 GA Deck', wtPerFt: 1.97 },
-  { designation: '1-1/2" × 18 GA Deck', wtPerFt: 2.66 },
-  { designation: '3" × 22 GA Deck',     wtPerFt: 2.31 },
-  { designation: '3" × 20 GA Deck',     wtPerFt: 2.74 },
-  { designation: '3" × 18 GA Deck',     wtPerFt: 3.65 },
+  ['1-1/2" × 22 GA Deck', 'Deck', 1.66],
+  ['1-1/2" × 20 GA Deck', 'Deck', 1.97],
+  ['1-1/2" × 18 GA Deck', 'Deck', 2.66],
+  ['3" × 22 GA Deck',     'Deck', 2.31],
+  ['3" × 20 GA Deck',     'Deck', 2.74],
+  ['3" × 18 GA Deck',     'Deck', 3.65],
 ];
 
 /* ─── Error Boundary ─── */
