@@ -439,11 +439,21 @@ function AggregationSection({ state }) {
     })
   })
   railings.forEach((r, i) => {
-    const matRate = getMatRate(r.material)
-    const material = (Number(r.weightLbs) || 0) * matRate
-    const fab = (Number(r.fabHrs) || 0) * fabRate
-    const install = (Number(r.instHrs) || 0) * installRate
-    const total = material + fab + install
+    // Prefer totalsCommit (full Railings calc) — fall back to crude estimate from raw fields
+    const tc = r.totalsCommit
+    let material, fab, install, total
+    if (tc && (tc.total || tc.material || tc.fab || tc.install)) {
+      material = Number(tc.material) || 0
+      fab = Number(tc.fab) || 0
+      install = Number(tc.install) || 0
+      total = Number(tc.total) || (material + fab + install)
+    } else {
+      const matRate = getMatRate(r.material)
+      material = (Number(r.weightLbs) || 0) * matRate
+      fab = (Number(r.fabHrs) || 0) * fabRate
+      install = (Number(r.instHrs) || 0) * installRate
+      total = material + fab + install
+    }
     items.push({
       key: `rail-${r.id}`,
       label: `Railing ${i + 1}${r.location ? ` — ${r.location}` : (r.mark ? ` — ${r.mark}` : '')}`,
