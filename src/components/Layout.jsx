@@ -3,6 +3,7 @@ import { useProject } from '../context/ProjectContext'
 import {
   LayoutDashboard,
   Settings,
+  Hammer,
   Table2,
   Wrench,
   ArrowUpDown,
@@ -24,6 +25,7 @@ const navItems = [
   { path: '/', label: 'Dashboard', icon: LayoutDashboard },
   { divider: true, label: 'SETUP' },
   { path: '/rates', label: 'Rates & Config', icon: Settings },
+  { path: '/fab-install-standards', label: 'Fab & Install Standards', icon: Hammer },
   { divider: true, label: 'TAKEOFF' },
   { path: '/structural', label: 'Structural Takeoff', icon: Table2 },
   { path: '/misc-metals', label: 'Misc Metals', icon: Wrench },
