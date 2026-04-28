@@ -512,8 +512,30 @@ function projectReducer(state, action) {
   }
 }
 
+/* ─── localStorage Persistence ─── */
+const STORAGE_KEY = 'tw-estimator-state';
+
+function loadState() {
+  try {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      // Merge with defaults so new fields are picked up on updates
+      return {
+        ...defaultState,
+        ...parsed,
+        rates: { ...defaultState.rates, ...(parsed.rates || {}) },
+        projectInfo: { ...defaultState.projectInfo, ...(parsed.projectInfo || {}) },
+      };
+    }
+  } catch (e) {
+    console.warn('Failed to load saved state:', e);
+  }
+  return defaultState;
+}
+
 export function ProjectProvider({ children }) {
-  const [state, dispatch] = useReducer(projectReducer, defaultState)
+  const [state, dispatch] = useReducer(projectReducer, null, loadState)
   useEffect(() => {
     dispatch({ type: 'ENSURE_MATERIAL_RATES', payload: [
       { item: 'Stainless Steel 304', rate: 3.50, unit: '$/lb' },
@@ -522,6 +544,15 @@ export function ProjectProvider({ children }) {
     ]})
     dispatch({ type: 'ENSURE_EQUIPMENT_DEFAULTS', payload: { pickup: 200, dropoff: 200 } })
   }, [])
+
+  // Auto-save to localStorage on every state change
+  useEffect(() => {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    } catch (e) {
+      console.warn('Failed to save state:', e);
+    }
+  }, [state])
   return (
     <ProjectContext.Provider value={{ state, dispatch }}>
       {children}
