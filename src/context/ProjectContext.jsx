@@ -384,6 +384,9 @@ function projectReducer(state, action) {
       return { ...state, joistReinf: state.joistReinf.filter(r => r.id !== action.payload), isDirty: true }
 
     /* Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂ Purchased items Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂ */
+    case 'SET_PURCHASED':
+      return { ...state, purchased: action.payload, isDirty: true }
+
     case 'ADD_PURCHASED_ROW': {
       const newId = Date.now()
       return { ...state, purchased: [...state.purchased, { id: newId, item: '', supplier: '', qty: 1, unit: 'ea', unitCost: 0, total: 0, leadWeeks: 0, notes: '' }], isDirty: true }
