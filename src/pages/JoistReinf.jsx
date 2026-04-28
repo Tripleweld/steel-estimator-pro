@@ -1,6 +1,15 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { Grid3X3, Plus, Trash2, Copy, ChevronDown, ChevronUp, Info, Wrench } from 'lucide-react';
 import { useProject } from '../context/ProjectContext';
+
+/* ── Scrollbar + dark theme CSS injection ── */
+const SCROLLBAR_CSS = `
+  .jr-scroll::-webkit-scrollbar { width: 8px; height: 8px; }
+  .jr-scroll::-webkit-scrollbar-track { background: #1e293b; border-radius: 4px; }
+  .jr-scroll::-webkit-scrollbar-thumb { background: #475569; border-radius: 4px; border: 1px solid #334155; }
+  .jr-scroll::-webkit-scrollbar-thumb:hover { background: #64748b; }
+  select option { background: #1e293b; color: #e2e8f0; }
+`;
 
 /* ── Formatting helpers ── */
 const fmt = (v) => '$' + Number(v || 0).toLocaleString('en-CA', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
@@ -212,7 +221,7 @@ function calcRow(r) {
   };
 }
 
-/* ── Reactive Cross-Section Diagram ── */
+/* ── Reactive Cross-Section Diagram — Engineering Drawing Style ── */
 function JoistCrossSection({ row }) {
   const isBotBar = row.chord_botType === 'bar';
   const topBarCount = Math.min(Number(row.chord_barsPerChord) || 2, 4);
@@ -222,44 +231,39 @@ function JoistCrossSection({ row }) {
   const depth = parseInt(row.joistType) || 24;
   const series = row.joistType?.match(/[A-Z]+/)?.[0] || 'K';
 
-  // === TRUE CROSS-SECTION (perpendicular cut through joist) ===
-  const W = 360, H = 320, cX = W / 2;
-  // Scale: map joist depth (inches) to SVG pixels — use proportional scaling
-  const scale = Math.min(200 / depth, 8); // pixels per inch, capped
-  const jDepth = depth * scale; // total depth in px
-  const topCY = (H - jDepth) / 2 + 20; // top chord center Y
-  const botCY = topCY + jDepth; // bottom chord center Y
+  const W = 520, H = 420, cX = 210;
+  const scale = Math.min(220 / depth, 8);
+  const jDepth = depth * scale;
+  const topCY = (H - jDepth) / 2 + 30;
+  const botCY = topCY + jDepth;
 
-  // Colors
-  const steel = '#334155';
+  // Engineering drawing colors
+  const ink = '#1e293b';
+  const thin = '#475569';
+  const dimC = '#64748b';
   const fire = '#dc2626';
   const blue = '#2563eb';
-  const silver = '#94a3b8';
-  const orange = '#ea580c';
+  const weldC = '#059669';
   const green = '#16a34a';
 
-  // === TOP CHORD: double angle back-to-back (L-shapes mirrored) ===
-  // Angle leg sizes (visual, not to real scale — just representative)
-  const aLeg = Math.max(12, Math.min(20, depth * 0.5)); // angle leg length
-  const aT = Math.max(3, aLeg * 0.2); // angle thickness
-  const gap = 3; // gap between back-to-back angles
+  // Chord angle geometry
+  const aLeg = Math.max(14, Math.min(24, depth * 0.6));
+  const aT = Math.max(3.5, aLeg * 0.2);
+  const gap = 4;
+  const tcLx = cX - gap / 2;
+  const tcRx = cX + gap / 2;
 
-  // Left angle of top chord (L rotated: vertical leg up, horizontal leg to left)
-  const tcLx = cX - gap / 2; // right edge of left angle
-  const tcRx = cX + gap / 2; // left edge of right angle
+  // Web member geometry
+  const webLeg = Math.max(10, aLeg * 0.55);
+  const webT = Math.max(2.5, webLeg * 0.18);
 
-  // === BOTTOM CHORD: same double angle ===
-  // === WEB MEMBER: single angle shown as cross-section (small L) ===
-  const webLeg = Math.max(8, aLeg * 0.6);
-  const webT = Math.max(2, webLeg * 0.18);
-
-  // === DETERMINE REINF TYPE per method ===
+  // Determine reinforcement types per method
   const topType = method.includes('Bars Top') ? 'bar'
     : method.includes('Angle') ? 'angle'
     : method.includes('Channel') ? 'channel'
     : method.includes('HSS') ? 'hss'
     : method.includes('Splice') || method === 'Full Replacement' ? 'splice'
-    : 'bar'; // Custom defaults to bar
+    : 'bar';
 
   const botType = method.includes('Plate') ? 'plate'
     : method.includes('2 Bars Bot') || method.includes('Bars Bottom') ? 'bar'
@@ -268,198 +272,291 @@ function JoistCrossSection({ row }) {
     : method.includes('Splice') || method === 'Full Replacement' ? 'splice'
     : isBotBar ? 'bar' : 'plate';
 
-  // === REINFORCEMENT BAR positions ===
-  const barR = Math.max(4, Math.min(7, depth * 0.2));
-  const barSpacing = barR * 3;
+  // Reinforcement bar positions
+  const barR = Math.max(5, Math.min(8, depth * 0.22));
+  const barSpacing = barR * 3.2;
 
-  // Top reinf bars — only when topType === 'bar'
   const topBars = [];
   if (topType === 'bar') {
     for (let i = 0; i < topBarCount; i++) {
       const startX = cX - ((topBarCount - 1) * barSpacing) / 2;
-      topBars.push({ cx: startX + i * barSpacing, cy: topCY - aLeg - barR - 3 });
+      topBars.push({ cx: startX + i * barSpacing, cy: topCY - aLeg - barR - 4 });
     }
   }
 
-  // Bottom reinf bars — only when botType === 'bar'
   const botBars = [];
   if (botType === 'bar') {
     for (let i = 0; i < botBarCount; i++) {
       const startX = cX - ((botBarCount - 1) * barSpacing) / 2;
-      botBars.push({ cx: startX + i * barSpacing, cy: botCY + aLeg + barR + 3 });
+      botBars.push({ cx: startX + i * barSpacing, cy: botCY + aLeg + barR + 4 });
     }
   }
 
-  // Bottom plate dims — only when botType === 'plate'
-  const botPlateW = botType === 'plate' ? Math.max(20, (Number(row.chord_botPlateW) || 4) * 4) : 0;
-  const botPlateT = botType === 'plate' ? Math.max(3, (Number(row.chord_botPlateT) || 0.25) * 10) : 0;
+  const botPlateW = botType === 'plate' ? Math.max(24, (Number(row.chord_botPlateW) || 4) * 5) : 0;
+  const botPlateT = botType === 'plate' ? Math.max(4, (Number(row.chord_botPlateT) || 0.25) * 12) : 0;
 
-  // Reinforcement angle (for "Angle + Plate" top)
-  const reinfALeg = Math.max(10, aLeg * 0.75);
-  const reinfAT = Math.max(2.5, reinfALeg * 0.18);
+  const reinfALeg = Math.max(12, aLeg * 0.75);
+  const reinfAT = Math.max(3, reinfALeg * 0.18);
 
-  // Channel dims (C-shape) for Channel Reinforcement
-  const chW = Math.max(10, aLeg * 0.6);
-  const chH = Math.max(18, aLeg * 1.2);
-  const chT = Math.max(2, chW * 0.2);
-  const chFl = Math.max(4, chW * 0.45); // flange depth
+  // Channel dims
+  const chW = Math.max(12, aLeg * 0.6);
+  const chH = Math.max(20, aLeg * 1.2);
+  const chT = Math.max(2.5, chW * 0.2);
+  const chFl = Math.max(5, chW * 0.45);
 
-  // HSS dims (rectangular tube) for HSS Strongback
-  const hssW = Math.max(12, aLeg * 0.7);
-  const hssH = Math.max(16, aLeg * 1.0);
-  const hssT = Math.max(2, hssW * 0.15);
+  // HSS dims
+  const hssW = Math.max(14, aLeg * 0.7);
+  const hssH = Math.max(18, aLeg * 1.0);
+  const hssT = Math.max(2.5, hssW * 0.15);
 
-  // Helper: draw one L-angle cross-section (origin at corner, facing direction)
-  const AngleL = ({ x, y, leg, t, flipH, flipV, color, opacity }) => {
+  // Helper: draw one L-angle cross-section with hatching
+  const AngleL = ({ x, y, leg, t, flipH, flipV, color, opacity, hatch }) => {
     const sX = flipH ? -1 : 1;
     const sY = flipV ? -1 : 1;
-    // L-shape: vertical leg + horizontal leg
+    const id = `h${x}${y}${flipH}${flipV}`.replace(/[^a-zA-Z0-9]/g, '');
     return (
-      <path
-        d={`M ${x},${y}
-            l ${sX * t},0
-            l 0,${sY * (leg - t)}
-            l ${sX * (leg - t)},0
-            l 0,${sY * t}
-            l ${sX * -(leg)},0
-            Z`}
-        fill={color} opacity={opacity || 0.85} stroke={color} strokeWidth="0.5"
-      />
+      <g>
+        {hatch && (
+          <defs>
+            <pattern id={id} width="4" height="4" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+              <line x1="0" y1="0" x2="0" y2="4" stroke={color} strokeWidth="0.4" opacity="0.4" />
+            </pattern>
+          </defs>
+        )}
+        <path
+          d={`M ${x},${y} l ${sX * t},0 l 0,${sY * (leg - t)} l ${sX * (leg - t)},0 l 0,${sY * t} l ${sX * -(leg)},0 Z`}
+          fill={hatch ? `url(#${id})` : color} opacity={opacity || 0.85} stroke={color} strokeWidth="1"
+        />
+      </g>
     );
   };
 
+  // Helper: AWS fillet weld symbol
+  const WeldSymbol = ({ x, y, toX, toY, label, side = 'arrow' }) => {
+    const refLen = 50;
+    return (
+      <g>
+        {/* Arrow line from joint to reference line */}
+        <line x1={x} y1={y} x2={toX} y2={toY} stroke={weldC} strokeWidth="0.8" />
+        {/* Arrowhead */}
+        <circle cx={x} cy={y} r="1.5" fill={weldC} />
+        {/* Reference line */}
+        <line x1={toX} y1={toY} x2={toX + refLen} y2={toY} stroke={weldC} strokeWidth="0.8" />
+        {/* Fillet weld triangle (below ref line = arrow side, above = other side) */}
+        {side === 'arrow' ? (
+          <polygon points={`${toX + 4},${toY} ${toX + 12},${toY} ${toX + 4},${toY + 8}`} fill="none" stroke={weldC} strokeWidth="0.8" />
+        ) : (
+          <polygon points={`${toX + 4},${toY} ${toX + 12},${toY} ${toX + 12},${toY - 8}`} fill="none" stroke={weldC} strokeWidth="0.8" />
+        )}
+        {/* Label text */}
+        {label && <text x={toX + 16} y={side === 'arrow' ? toY - 3 : toY + 10} fill={weldC} fontSize="7" fontFamily="monospace" fontWeight="bold">{label}</text>}
+      </g>
+    );
+  };
+
+  // Helper: dimension line
+  const DimLine = ({ x1: dx1, y1: dy1, x2: dx2, y2: dy2, label, offset = 0 }) => {
+    const isVert = Math.abs(dx1 - dx2) < 2;
+    const tickL = 4;
+    const mx = (dx1 + dx2) / 2 + offset;
+    const my = (dy1 + dy2) / 2;
+    return (
+      <g>
+        <line x1={dx1} y1={dy1} x2={dx2} y2={dy2} stroke={dimC} strokeWidth="0.6" />
+        {isVert ? (
+          <>
+            <line x1={dx1 - tickL} y1={dy1} x2={dx1 + tickL} y2={dy1} stroke={dimC} strokeWidth="0.6" />
+            <line x1={dx2 - tickL} y1={dy2} x2={dx2 + tickL} y2={dy2} stroke={dimC} strokeWidth="0.6" />
+            <text x={mx - 2} y={my + 3} textAnchor="middle" fill={dimC} fontSize="8" fontFamily="monospace"
+              transform={`rotate(-90, ${mx - 2}, ${my})`}>{label}</text>
+          </>
+        ) : (
+          <>
+            <line x1={dx1} y1={dy1 - tickL} x2={dx1} y2={dy1 + tickL} stroke={dimC} strokeWidth="0.6" />
+            <line x1={dx2} y1={dy2 - tickL} x2={dx2} y2={dy2 + tickL} stroke={dimC} strokeWidth="0.6" />
+            <text x={mx} y={my - 4} textAnchor="middle" fill={dimC} fontSize="8" fontFamily="monospace">{label}</text>
+          </>
+        )}
+      </g>
+    );
+  };
+
+  // Right-side annotation panel X start
+  const annoX = cX + aLeg + 50;
+
   return (
-    <div className="rounded-lg border border-silver-200 bg-white p-4">
-      <div className="flex items-center gap-2 mb-2">
-        <svg className="h-4 w-4 text-fire-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="18" height="18" rx="2" /><line x1="3" y1="12" x2="21" y2="12" /><line x1="12" y1="3" x2="12" y2="21" /></svg>
-        <h4 className="text-sm font-bold text-steel-700">Cross Section (perpendicular cut)</h4>
-        <span className="ml-auto text-xs text-silver-400">{row.joistType} — {method}</span>
+    <div className="rounded-lg border-2 border-steel-700 bg-white p-3 shadow-lg">
+      {/* Drawing header bar */}
+      <div className="flex items-center justify-between mb-1 pb-1 border-b border-steel-200">
+        <div className="flex items-center gap-2">
+          <span className="text-[10px] font-bold uppercase tracking-widest text-steel-500">SECTION A-A</span>
+          <span className="text-[10px] text-steel-400">|</span>
+          <span className="text-[10px] font-mono text-steel-500">{row.joistType}</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="text-[10px] text-fire-500 font-semibold">{method}</span>
+          <span className="text-[10px] text-steel-400 font-mono">NTS</span>
+        </div>
       </div>
-      <svg viewBox={`0 0 ${W} ${H}`} className="w-full max-w-[360px] mx-auto" style={{ height: 'auto' }}>
 
-        {/* CENTER LINE (dashed) Leg + 12} y={topCY - aLeg / 2 + 13} fill={silver} fontSize="7" fontFamily="monospace">2L back-to-back</text>
+      <svg viewBox={`0 0 ${W} ${H}`} className="w-full mx-auto" style={{ height: 'auto', maxWidth: '520px' }}>
+        {/* Drawing border */}
+        <rect x="2" y="2" width={W - 4} height={H - 4} fill="none" stroke={ink} strokeWidth="1.5" />
+        <rect x="5" y="5" width={W - 10} height={H - 10} fill="none" stroke={thin} strokeWidth="0.3" />
 
-        {/* === BOTTOM CHORD — double angle back-to-back === */}
-        {/* Left angle: vertical leg goes DOWN, horizontal leg goes LEFT */}
-        <AngleL x={tcLx} y={botCY} leg={aLeg} t={aT} flipH={true} flipV={false} color={steel} />
-        {/* Right angle: vertical leg goes DOWN, horizontal leg goes RIGHT */}
-        <AngleL x={tcRx} y={botCY} leg={aLeg} t={aT} flipH={false} flipV={false} color={steel} />
-        <text x={cX + aLeg + 12} y={botCY + aLeg / 2 + 3} fill={steel} fontSize="8" fontFamily="monospace" fontWeight="bold">BOT CHORD</text>
-        <text x={cX + aLeg + 12} y={botCY + aLeg / 2 + 13} fill={silver} fontSize="7" fontFamily="monospace">2L back-to-back</text>
+        {/* CENTER LINE (chain-dash) */}
+        <line x1={cX} y1={25} x2={cX} y2={H - 40} stroke={dimC} strokeWidth="0.4" strokeDasharray="8,3,2,3" />
+        <text x={cX + 3} y={30} fill={dimC} fontSize="6" fontFamily="monospace">CL</text>
 
-        {/* === WEB MEMBER — single angle (between chords) === */}
+        {/* === TOP CHORD — double angle back-to-back with hatching === */}
+        <AngleL x={tcLx} y={topCY} leg={aLeg} t={aT} flipH={true} flipV={true} color={ink} hatch={true} />
+        <AngleL x={tcRx} y={topCY} leg={aLeg} t={aT} flipH={false} flipV={true} color={ink} hatch={true} />
+
+        {/* === BOTTOM CHORD — double angle back-to-back with hatching === */}
+        <AngleL x={tcLx} y={botCY} leg={aLeg} t={aT} flipH={true} flipV={false} color={ink} hatch={true} />
+        <AngleL x={tcRx} y={botCY} leg={aLeg} t={aT} flipH={false} flipV={false} color={ink} hatch={true} />
+
+        {/* === WEB MEMBER — single angle between chords === */}
         {hasWeb && (
           <g>
-            <AngleL x={cX - webT / 2} y={(topCY + botCY) / 2 - webLeg / 2} leg={webLeg} t={webT} flipH={false} flipV={false} color={green} opacity={0.7} />
-            <text x={cX + webLeg + 8} y={(topCY + botCY) / 2 + 3} fill={green} fontSize="7" fontFamily="monospace" fontWeight="bold">WEB: {row.web_angleSize}</text>
+            <AngleL x={cX - webT / 2} y={(topCY + botCY) / 2 - webLeg / 2} leg={webLeg} t={webT} flipH={false} flipV={false} color={green} hatch={true} opacity={0.7} />
+            {/* Leader to web */}
+            <line x1={cX + webLeg + 4} y1={(topCY + botCY) / 2} x2={annoX - 4} y2={(topCY + botCY) / 2} stroke={thin} strokeWidth="0.5" strokeDasharray="2,2" />
+            <text x={annoX} y={(topCY + botCY) / 2 - 2} fill={green} fontSize="7.5" fontFamily="monospace" fontWeight="bold">WEB MEMBER</text>
+            <text x={annoX} y={(topCY + botCY) / 2 + 8} fill={dimC} fontSize="6.5" fontFamily="monospace">{row.web_angleSize}</text>
           </g>
         )}
 
         {/* === DEPTH DIMENSION LINE (left side) === */}
-        <line x1={cX - aLeg - 30} y1={topCY} x2={cX - aLeg - 30} y2={botCY} stroke={silver} strokeWidth="0.8" />
-        <line x1={cX - aLeg - 35} y1={topCY} x2={cX - aLeg - 25} y2={topCY} stroke={silver} strokeWidth="0.8" />
-        <line x1={cX - aLeg - 35} y1={botCY} x2={cX - aLeg - 25} y2={botCY} stroke={silver} strokeWidth="0.8" />
-        <text x={cX - aLeg - 32} y={(topCY + botCY) / 2 + 4} textAnchor="middle" fill={silver} fontSize="9" fontFamily="monospace" transform={`rotate(-90, ${cX - aLeg - 32}, ${(topCY + botCY) / 2})`}>{depth}"</text>
+        <DimLine x1={cX - aLeg - 36} y1={topCY} x2={cX - aLeg - 36} y2={botCY} label={`${depth}"`} />
+        {/* Extension lines */}
+        <line x1={cX - aLeg - 2} y1={topCY} x2={cX - aLeg - 40} y2={topCY} stroke={dimC} strokeWidth="0.3" />
+        <line x1={cX - aLeg - 2} y1={botCY} x2={cX - aLeg - 40} y2={botCY} stroke={dimC} strokeWidth="0.3" />
+
+        {/* === LEADER: TOP CHORD LABEL === */}
+        <line x1={cX + aLeg + 4} y1={topCY - aLeg / 2} x2={annoX - 4} y2={topCY - aLeg / 2} stroke={thin} strokeWidth="0.5" />
+        <circle cx={cX + aLeg + 4} cy={topCY - aLeg / 2} r="1" fill={ink} />
+        <text x={annoX} y={topCY - aLeg / 2 - 2} fill={ink} fontSize="7.5" fontFamily="monospace" fontWeight="bold">TOP CHORD</text>
+        <text x={annoX} y={topCY - aLeg / 2 + 8} fill={dimC} fontSize="6.5" fontFamily="monospace">2L back-to-back</text>
+
+        {/* === LEADER: BOTTOM CHORD LABEL === */}
+        <line x1={cX + aLeg + 4} y1={botCY + aLeg / 2} x2={annoX - 4} y2={botCY + aLeg / 2} stroke={thin} strokeWidth="0.5" />
+        <circle cx={cX + aLeg + 4} cy={botCY + aLeg / 2} r="1" fill={ink} />
+        <text x={annoX} y={botCY + aLeg / 2 - 2} fill={ink} fontSize="7.5" fontFamily="monospace" fontWeight="bold">BOT CHORD</text>
+        <text x={annoX} y={botCY + aLeg / 2 + 8} fill={dimC} fontSize="6.5" fontFamily="monospace">2L back-to-back</text>
 
         {/* === TOP REINFORCEMENT — method-reactive === */}
         {topType === 'bar' && (
           <g>
             {topBars.map((b, i) => (
               <g key={`tb${i}`}>
-                <circle cx={b.cx} cy={b.cy} r={barR} fill="none" stroke={fire} strokeWidth="2" />
-                <line x1={b.cx - barR * 0.5} y1={b.cy - barR * 0.5} x2={b.cx + barR * 0.5} y2={b.cy + barR * 0.5} stroke={fire} strokeWidth="1" />
-                <line x1={b.cx + barR * 0.5} y1={b.cy - barR * 0.5} x2={b.cx - barR * 0.5} y2={b.cy + barR * 0.5} stroke={fire} strokeWidth="1" />
+                <circle cx={b.cx} cy={b.cy} r={barR} fill="none" stroke={fire} strokeWidth="1.8" />
+                <line x1={b.cx - barR * 0.6} y1={b.cy - barR * 0.6} x2={b.cx + barR * 0.6} y2={b.cy + barR * 0.6} stroke={fire} strokeWidth="0.8" />
+                <line x1={b.cx + barR * 0.6} y1={b.cy - barR * 0.6} x2={b.cx - barR * 0.6} y2={b.cy + barR * 0.6} stroke={fire} strokeWidth="0.8" />
               </g>
             ))}
+            {/* Weld callouts for top bars */}
             {topBars.length > 0 && (
-              <text x={topBars[topBars.length - 1].cx + barR + 6} y={topBars[0].cy + 3} fill={fire} fontSize="8" fontFamily="monospace" fontWeight="bold">
-                {topBarCount}x {row.chord_topBarDia}" bar
-              </text>
+              <WeldSymbol x={topBars[0].cx} y={topBars[0].cy + barR + 2}
+                toX={cX - aLeg - 50} toY={topBars[0].cy + barR + 16}
+                label={`WELD E/S @ ${row.chord_weldSpacing || 12}" O.C.`} side="arrow" />
             )}
-            {/* Weld symbols: top bars to top chord */}
-            {topBars.map((b, i) => (
-              <g key={`tw${i}`}>
-                <line x1={b.cx - 4} y1={b.cy + barR + 2} x2={b.cx + 4} y2={b.cy + barR + 2} stroke={orange} strokeWidth="1.5" />
-                <polygon points={`${b.cx - 3},${b.cy + barR + 2} ${b.cx},${b.cy + barR + 5} ${b.cx + 3},${b.cy + barR + 2}`} fill={orange} />
+            {/* Leader to annotation panel */}
+            {topBars.length > 0 && (
+              <g>
+                <line x1={topBars[topBars.length - 1].cx + barR + 2} y1={topBars[0].cy} x2={annoX - 4} y2={topBars[0].cy} stroke={thin} strokeWidth="0.5" strokeDasharray="2,2" />
+                <text x={annoX} y={topBars[0].cy - 3} fill={fire} fontSize="7.5" fontFamily="monospace" fontWeight="bold">TOP REINF.</text>
+                <text x={annoX} y={topBars[0].cy + 7} fill={dimC} fontSize="6.5" fontFamily="monospace">{topBarCount}x {row.chord_topBarDia}" RD. BAR</text>
+                <text x={annoX} y={topBars[0].cy + 16} fill={dimC} fontSize="6" fontFamily="monospace">L = {row.chord_topLength || '—'} ft</text>
               </g>
-            ))}
+            )}
           </g>
         )}
         {topType === 'angle' && (
           <g>
-            {/* Reinforcement angles welded to top of top chord — L shapes flanking */}
-            <AngleL x={cX - gap / 2 - reinfALeg - 2} y={topCY - aLeg} leg={reinfALeg} t={reinfAT} flipH={false} flipV={true} color={fire} opacity={0.75} />
-            <AngleL x={cX + gap / 2 + reinfALeg + 2} y={topCY - aLeg} leg={reinfALeg} t={reinfAT} flipH={true} flipV={true} color={fire} opacity={0.75} />
-            <text x={cX + gap / 2 + reinfALeg + reinfALeg + 8} y={topCY - aLeg + reinfALeg / 2} fill={fire} fontSize="7" fontFamily="monospace" fontWeight="bold">
-              Reinf. angles
-            </text>
-            {/* Weld symbols */}
-            <polygon points={`${cX - gap / 2 - 2},${topCY - aLeg} ${cX - gap / 2 - 5},${topCY - aLeg + 4} ${cX - gap / 2 + 1},${topCY - aLeg + 4}`} fill={orange} />
-            <polygon points={`${cX + gap / 2 + 2},${topCY - aLeg} ${cX + gap / 2 + 5},${topCY - aLeg + 4} ${cX + gap / 2 - 1},${topCY - aLeg + 4}`} fill={orange} />
+            <AngleL x={cX - gap / 2 - reinfALeg - 2} y={topCY - aLeg} leg={reinfALeg} t={reinfAT} flipH={false} flipV={true} color={fire} hatch={true} opacity={0.75} />
+            <AngleL x={cX + gap / 2 + reinfALeg + 2} y={topCY - aLeg} leg={reinfALeg} t={reinfAT} flipH={true} flipV={true} color={fire} hatch={true} opacity={0.75} />
+            <WeldSymbol x={cX - gap / 2 - 1} y={topCY - aLeg} toX={annoX - 4} toY={topCY - aLeg - 12} label="WELD E/S" side="arrow" />
+            <text x={annoX} y={topCY - aLeg + 4} fill={fire} fontSize="7.5" fontFamily="monospace" fontWeight="bold">REINF. ANGLES</text>
           </g>
         )}
         {topType === 'channel' && (
           <g>
-            {/* C-channel sistered alongside top chord — left side */}
-            <path d={`M ${cX - aLeg - 6},${topCY - chH / 2} l ${chFl},0 l 0,${chT} l ${-(chFl - chT)},0 l 0,${chH - 2 * chT} l ${chFl - chT},0 l 0,${chT} l ${-chFl},0 Z`}
-              fill={fire} opacity={0.7} stroke={fire} strokeWidth="0.5" />
-            <text x={cX - aLeg - chFl - 14} y={topCY + 3} fill={fire} fontSize="7" fontFamily="monospace" fontWeight="bold" textAnchor="end">C-Channel</text>
-            {/* Weld symbols */}
-            <polygon points={`${cX - aLeg - 6 + chFl},${topCY - 3} ${cX - aLeg - 6 + chFl + 4},${topCY} ${cX - aLeg - 6 + chFl},${topCY + 3}`} fill={orange} />
+            <path d={`M ${cX - aLeg - 8},${topCY - chH / 2} l ${chFl},0 l 0,${chT} l ${-(chFl - chT)},0 l 0,${chH - 2 * chT} l ${chFl - chT},0 l 0,${chT} l ${-chFl},0 Z`}
+              fill="none" stroke={fire} strokeWidth="1.5" />
+            {/* Hatching inside channel */}
+            <line x1={cX - aLeg - 8 + chT} y1={topCY - chH / 2 + chT + 2} x2={cX - aLeg - 8 + chFl - 1} y2={topCY - chH / 2 + chT + 2} stroke={fire} strokeWidth="0.3" opacity="0.4" />
+            <WeldSymbol x={cX - aLeg - 8 + chFl} y={topCY} toX={cX - aLeg - 60} toY={topCY - 14} label="WELD E/S" />
+            <line x1={cX - aLeg - 8} y1={topCY} x2={cX - aLeg - 60} y2={topCY + 10} stroke={thin} strokeWidth="0.5" strokeDasharray="2,2" />
+            <text x={cX - aLeg - 110} y={topCY + 10} fill={fire} fontSize="7" fontFamily="monospace" fontWeight="bold" textAnchor="end">C-CHANNEL</text>
           </g>
         )}
         {topType === 'hss' && (
           <g>
-            {/* HSS tube alongside top chord — left side */}
-            <rect x={cX - aLeg - hssW - 6} y={topCY - hssH / 2} width={hssW} height={hssH} rx="2" fill="none" stroke={fire} strokeWidth="2.5" />
-            <rect x={cX - aLeg - hssW - 6 + hssT} y={topCY - hssH / 2 + hssT} width={hssW - 2 * hssT} height={hssH - 2 * hssT} rx="1" fill={fire} opacity="0.15" />
-            <text x={cX - aLeg - hssW - 12} y={topCY + 3} fill={fire} fontSize="7" fontFamily="monospace" fontWeight="bold" textAnchor="end">HSS Tube</text>
-            {/* Weld/bolt symbol */}
-            <polygon points={`${cX - aLeg - 6},${topCY - 3} ${cX - aLeg - 2},${topCY} ${cX - aLeg - 6},${topCY + 3}`} fill={orange} />
+            <rect x={cX - aLeg - hssW - 8} y={topCY - hssH / 2} width={hssW} height={hssH} rx="1" fill="none" stroke={fire} strokeWidth="2" />
+            <rect x={cX - aLeg - hssW - 8 + hssT} y={topCY - hssH / 2 + hssT} width={hssW - 2 * hssT} height={hssH - 2 * hssT} rx="0.5" fill="nx1={topBars[topBars.length - 1].cx + barR + 2} y1={topBars[0].cy} x2={annoX - 4} y2={topBars[0].cy} stroke={thin} strokeWidth="0.5" strokeDasharray="2,2" />
+                <text x={annoX} y={topBars[0].cy - 3} fill={fire} fontSize="7.5" fontFamily="monospace" fontWeight="bold">TOP REINF.</text>
+                <text x={annoX} y={topBars[0].cy + 7} fill={dimC} fontSize="6.5" fontFamily="monospace">{topBarCount}x {row.chord_topBarDia}" RD. BAR</text>
+                <text x={annoX} y={topBars[0].cy + 16} fill={dimC} fontSize="6" fontFamily="monospace">L = {row.chord_topLength || '—'} ft</text>
+              </g>
+            )}
+          </g>
+        )}
+        {topType === 'angle' && (
+          <g>
+            <AngleL x={cX - gap / 2 - reinfALeg - 2} y={topCY - aLeg} leg={reinfALeg} t={reinfAT} flipH={false} flipV={true} color={fire} hatch={true} opacity={0.75} />
+            <AngleL x={cX + gap / 2 + reinfALeg + 2} y={topCY - aLeg} leg={reinfALeg} t={reinfAT} flipH={true} flipV={true} color={fire} hatch={true} opacity={0.75} />
+            <WeldSymbol x={cX - gap / 2 - 1} y={topCY - aLeg} toX={annoX - 4} toY={topCY - aLeg - 12} label="WELD E/S" side="arrow" />
+            <text x={annoX} y={topCY - aLeg + 4} fill={fire} fontSize="7.5" fontFamily="monospace" fontWeight="bold">REINF. ANGLES</text>
+          </g>
+        )}
+        {topType === 'channel' && (
+          <g>
+            <path d={`M ${cX - aLeg - 8},${topCY - chH / 2} l ${chFl},0 l 0,${chT} l ${-(chFl - chT)},0 l 0,${chH - 2 * chT} l ${chFl - chT},0 l 0,${chT} l ${-chFl},0 Z`}
+              fill="none" stroke={fire} strokeWidth="1.5" />
+            {/* Hatching inside channel */}
+            <line x1={cX - aLeg - 8 + chT} y1={topCY - chH / 2 + chT + 2} x2={cX - aLeg - 8 + chFl - 1} y2={topCY - chH / 2 + chT + 2} stroke={fire} strokeWidth="0.3" opacity="0.4" />
+            <WeldSymbol x={cX - aLeg - 8 + chFl} y={topCY} toX={cX - aLeg - 60} toY={topCY - 14} label="WELD E/S" />
+            <line x1={cX - aLeg - 8} y1={topCY} x2={cX - aLeg - 60} y2={topCY + 10} stroke={thin} strokeWidth="0.5" strokeDasharray="2,2" />
+            <text x={cX - aLeg - 110} y={topCY + 10} fill={fire} fontSize="7" fontFamily="monospace" fontWeight="bold" textAnchor="end">C-CHANNEL</text>
+          </g>
+        )}
+        {topType === 'hss' && (
+          <g>
+            <rect x={cX - aLeg - hssW - 8} y={topCY - hssH / 2} width={hssW} height={hssH} rx="1" fill="none" stroke={fire} strokeWidth="2" />
+            <rect x={cX - aLeg - hssW - 8 + hssT} y={topCY - hssH / 2 + hssT} width={hssW - 2 * hssT} height={hssH - 2 * hssT} rx="0.5" fill="none" stroke={fire} strokeWidth="0.5" strokeDasharray="2,2" />
+            <WeldSymbol x={cX - aLeg - 8} y={topCY} toX={cX - aLeg - 60} toY={topCY - 14} label="WELD/BOLT" />
+            <text x={cX - aLeg - hssW / 2 - 8} y={topCY + 3} fill={fire} fontSize="6" fontFamily="monospace" fontWeight="bold" textAnchor="middle">HSS</text>
           </g>
         )}
         {topType === 'splice' && (
           <g>
-            {/* Splice plates on both sides of top chord */}
-            <rect x={cX - aLeg - 8} y={topCY - aLeg + 2} width={4} height={aLeg * 1.5} rx="0.5" fill={fire} opacity="0.8" />
-            <rect x={cX + aLeg + 4} y={topCY - aLeg + 2} width={4} height={aLeg * 1.5} rx="0.5" fill={fire} opacity="0.8" />
-            <text x={cX + aLeg + 14} y={topCY - aLeg / 2 + 3} fill={fire} fontSize="7" fontFamily="monospace" fontWeight="bold">
-              {method.includes('Bolted') ? 'Bolted' : method.includes('Welded') ? 'Welded' : 'Full'} Splice
+            <rect x={cX - aLeg - 10} y={topCY - aLeg + 2} width={5} height={aLeg * 1.5} rx="0.5" fill="none" stroke={fire} strokeWidth="1.5" />
+            <rect x={cX + aLeg + 5} y={topCY - aLeg + 2} width={5} height={aLeg * 1.5} rx="0.5" fill="none" stroke={fire} strokeWidth="1.5" />
+            {/* Hatching on splice plates */}
+            {[0, 3, 6, 9].map(dy => (
+              <g key={`sph${dy}`}>
+                <line x1={cX - aLeg - 10} y1={topCY - aLeg + 4 + dy} x2={cX - aLeg - 5} y2={topCY - aLeg + 4 + dy} stroke={fire} strokeWidth="0.3" opacity="0.5" />
+                <line x1={cX + aLeg + 5} y1={topCY - aLeg + 4 + dy} x2={cX + aLeg + 10} y2={topCY - aLeg + 4 + dy} stroke={fire} strokeWidth="0.3" opacity="0.5" />
+              </g>
+            ))}
+            <text x={annoX} y={topCY - aLeg / 2 - 14} fill={fire} fontSize="7.5" fontFamily="monospace" fontWeight="bold">
+              {method.includes('Bolted') ? 'BOLTED' : method.includes('Welded') ? 'WELDED' : 'FULL'} SPLICE
             </text>
-            {/* Bolt dots or weld marks */}
             {method.includes('Bolted') ? (
               <>
-                <circle cx={cX - aLeg - 6} cy={topCY - aLeg / 2} r="2" fill={orange} />
-                <circle cx={cX - aLeg - 6} cy={topCY} r="2" fill={orange} />
-                <circle cx={cX + aLeg + 6} cy={topCY - aLeg / 2} r="2" fill={orange} />
-                <circle cx={cX + aLeg + 6} cy={topCY} r="2" fill={orange} />
+                {[topCY - aLeg / 2, topCY + 2].map((cy, i) => (
+                  <g key={`bolt${i}`}>
+                    <circle cx={cX - aLeg - 7.5} cy={cy} r="2.5" fill="none" stroke={fire} strokeWidth="0.8" />
+                    <line x1={cX - aLeg - 9} y1={cy - 1.5} x2={cX - aLeg - 6} y2={cy + 1.5} stroke={fire} strokeWidth="0.5" />
+                    <circle cx={cX + aLeg + 7.5} cy={cy} r="2.5" fill="none" stroke={fire} strokeWidth="0.8" />
+                    <line x1={cX + aLeg + 6} y1={cy - 1.5} x2={cX + aLeg + 9} y2={cy + 1.5} stroke={fire} strokeWidth="0.5" />
+                  </g>
+                ))}
               </>
             ) : (
               <>
-                <polygon points={`${cX - aLeg - 4},${topCY - 4} ${cX - aLeg - 7},${topCY} ${cX - aLeg - 1},${topCY}`} fill={orange} />
-                <polygon points={`${cX + aLeg + 8},${topCY - 4} ${cX + aLeg + 5},${topCY} ${cX + aLeg + 11},${topCY}`} fill={orange} />
-              </>
-            )}
-          </g>
-        )}
-
-        {/* === BOTTOM Rre} opacity="0.8" />
-            <rect x={cX + aLeg + 4} y={topCY - aLeg + 2} width={4} height={aLeg * 1.5} rx="0.5" fill={fire} opacity="0.8" />
-            <text x={cX + aLeg + 14} y={topCY - aLeg / 2 + 3} fill={fire} fontSize="7" fontFamily="monospace" fontWeight="bold">
-              {method.includes('Bolted') ? 'Bolted' : method.includes('Welded') ? 'Welded' : 'Full'} Splice
-            </text>
-            {/* Bolt dots or weld marks */}
-            {method.includes('Bolted') ? (
-              <>
-                <circle cx={cX - aLeg - 6} cy={topCY - aLeg / 2} r="2" fill={orange} />
-                <circle cx={cX - aLeg - 6} cy={topCY} r="2" fill={orange} />
-                <circle cx={cX + aLeg + 6} cy={topCY - aLeg / 2} r="2" fill={orange} />
-                <circle cx={cX + aLeg + 6} cy={topCY} r="2" fill={orange} />
-              </>
-            ) : (
-              <>
-                <polygon points={`${cX - aLeg - 4},${topCY - 4} ${cX - aLeg - 7},${topCY} ${cX - aLeg - 1},${topCY}`} fill={orange} />
-                <polygon points={`${cX + aLeg + 8},${topCY - 4} ${cX + aLeg + 5},${topCY} ${cX + aLeg + 11},${topCY}`} fill={orange} />
+                <WeldSymbol x={cX - aLeg - 5} y={topCY - 2} toX={annoX - 4} toY={topCY - aLeg / 2 - 4} label="WELD E/S" />
               </>
             )}
           </g>
@@ -470,103 +567,123 @@ function JoistCrossSection({ row }) {
           <g>
             {botBars.map((b, i) => (
               <g key={`bb${i}`}>
-                <circle cx={b.cx} cy={b.cy} r={barR} fill="none" stroke={blue} strokeWidth="2" />
-                <line x1={b.cx - barR * 0.5} y1={b.cy - barR * 0.5} x2={b.cx + barR * 0.5} y2={b.cy + barR * 0.5} stroke={blue} strokeWidth="1" />
-                <line x1={b.cx + barR * 0.5} y1={b.cy - barR * 0.5} x2={b.cx - barR * 0.5} y2={b.cy + barR * 0.5} stroke={blue} strokeWidth="1" />
+                <circle cx={b.cx} cy={b.cy} r={barR} fill="none" stroke={blue} strokeWidth="1.8" />
+                <line x1={b.cx - barR * 0.6} y1={b.cy - barR * 0.6} x2={b.cx + barR * 0.6} y2={b.cy + barR * 0.6} stroke={blue} strokeWidth="0.8" />
+                <line x1={b.cx + barR * 0.6} y1={b.cy - barR * 0.6} x2={b.cx - barR * 0.6} y2={b.cy + barR * 0.6} stroke={blue} strokeWidth="0.8" />
               </g>
             ))}
             {botBars.length > 0 && (
-              <text x={botBars[botBars.length - 1].cx + barR + 6} y={botBars[0].cy + 3} fill={blue} fontSize="8" fontFamily="monospace" fontWeight="bold">
-                {botBarCount}x {row.chord_botBarDia}" bar
-              </text>
-            )}
-            {botBars.map((b, i) => (
-              <g key={`bw${i}`}>
-                <line x1={b.cx - 4} y1={b.cy - barR - 2} x2={b.cx + 4} y2={b.cy - barR - 2} stroke={orange} strokeWidth="1.5" />
-                <polygon points={`${b.cx - 3},${b.cy - barR - 2} ${b.cx},${b.cy - barR - 5} ${b.cx + 3},${b.cy - barR - 2}`} fill={orange} />
+              <g>
+                <WeldSymbol x={botBars[0].cx} y={botBars[0].cy - barR - 2}
+                  toX={cX - aLeg - 50} toY={botBars[0].cy - barR - 16}
+                  label={`WELD E/S @ ${row.chord_weldSpacing || 12}" O.C.`} side="arrow" />
+                <line x1={botBars[botBars.length - 1].cx + barR + 2} y1={botBars[0].cy} x2={annoX - 4} y2={botBars[0].cy} stroke={thin} strokeWidth="0.5" strokeDasharray="2,2" />
+                <text x={annoX} y={botBars[0].cy - 3} fill={blue} fontSize="7.5" fontFamily="monospace" fontWeight="bold">BOT REINF.</text>
+                <text x={annoX} y={botBars[0].cy + 7} fill={dimC} fontSize="6.5" fontFamily="monospace">{botBarCount}x {row.chord_botBarDia}" RD. BAR</text>
+                <text x={annoX} y={botBars[0].cy + 16} fill={dimC} fontSize="6" fontFamily="monospace">L = {row.chord_botLength || '—'} ft</text>
               </g>
-            ))}
+            )}
           </g>
         )}
         {botType === 'plate' && (
           <g>
-            <rect x={cX - botPlateW / 2} y={botCY + aT + 2} width={botPlateW} height={botPlateT} rx="1" fill={blue} opacity="0.8" />
-            <text x={cX + botPlateW / 2 + 6} y={botCY + aT + botPlateT / 2 + 4} fill={blue} fontSize="7" fontFamily="monospace" fontWeight="bold">
-              {row.chord_botPlateSize}
-            </text>
-            <line x1={cX - botPlateW / 2 + 1} y1={botCY + aT + 1} x2={cX - botPlateW / 2 + 7} y2={botCY + aT + 1} stroke={orange} strokeWidth="1.5" />
-            <line x1={cX + botPlateW / 2 - 7} y1={botCY + aT + 1} x2={cX + botPlateW / 2 - 1} y2={botCY + aT + 1} stroke={orange} strokeWidth="1.5" />
+            <rect x={cX - botPlateW / 2} y={botCY + aT + 3} width={botPlateW} height={botPlateT} rx="0.5" fill="none" stroke={blue} strokeWidth="1.5" />
+            {/* Hatching inside plate */}
+            {Array.from({ length: Math.floor(botPlateW / 3) }, (_, i) => (
+              <line key={`ph${i}`} x1={cX - botPlateW / 2 + 2 + i * 3} y1={botCY + aT + 3} x2={cX - botPlateW / 2 + 2 + i * 3} y2={botCY + aT + 3 + botPlateT} stroke={blue} strokeWidth="0.3" opacity="0.4" />
+            ))}
+            {/* Weld symbols at each side of plate */}
+            <WeldSymbol x={cX - botPlateW / 2} y={botCY + aT + 2}
+              toX={cX - aLeg - 50} toY={botCY + aT + 20}
+              label="WELD ALONG E/S" side="arrow" />
+            {/* Plate dimension */}
+            <DimLine x1={cX - botPlateW / 2} y1={botCY + aT + 3 + botPlateT + 12}
+              x2={cX + botPlateW / 2} y2={botCY + aT + 3 + botPlateT + 12}
+              label={row.chord_botPlateSize} />
+            {/* Leader to annotation */}
+            <line x1={cX + botPlateW / 2 + 2} y1={botCY + aT + 3 + botPlateT / 2} x2={annoX - 4} y2={botCY + aT + 3 + botPlateT / 2} stroke={thin} strokeWidth="0.5" strokeDasharray="2,2" />
+            <text x={annoX} y={botCY + aT - 1} fill={blue} fontSize="7.5" fontFamily="monospace" fontWeight="bold">BOT REINF. PLATE</text>
+            <text x={annoX} y={botCY + aT + 9} fill={dimC} fontSize="6.5" fontFamily="monospace">{row.chord_botPlateSize}</text>
+            <text x={annoX} y={botCY + aT + 18} fill={dimC} fontSize="6" fontFamily="monospace">L = {row.chord_botLength || '—'} ft</text>
           </g>
         )}
         {botType === 'channel' && (
           <g>
-            {/* C-channel sistered alongside bottom chord — right side */}
-            <path d={`M ${cX + aLeg + 6 + chFl},${botCY - chH / 2} l ${-chFl},0 l 0,${chT} l ${chFl - chT},0 l 0,${chH - 2 * chT} l ${-(chFl - chT)},0 l 0,${chT} l ${chFl},0 Z`}
-              fill={blue} opacity={0.7} stroke={blue} strokeWidth="0.5" />
-            <text x={cX + aLeg + chFl + 12} y={botCY + 3} fill={blue} fontSize="7" fontFamily="monospace" fontWeight="bold">C-Channel</text>
-            <polygon points={`${cX + aLeg + 6},${botCY - 3} ${cX + aLeg + 2},${botCY} ${cX + aLeg + 6},${botCY + 3}`} fill={orange} />
+            <path d={`M ${cX + aLeg + 8 + chFl},${botCY - chH / 2} l ${-chFl},0 l 0,${chT} l ${chFl - chT},0 l 0,${chH - 2 * chT} l ${-(chFl - chT)},0 l 0,${chT} l ${chFl},0 Z`}
+              fill="none" stroke={blue} strokeWidth="1.5" />
+            <WeldSymbol x={cX + aLeg + 8} y={botCY} toX={annoX} toY={botCY + 16} label="WELD E/S" />
+            <text x={annoX} y={botCY - 4} fill={blue} fontSize="7.5" fontFamily="monospace" fontWeight="bold">C-CHANNEL</text>
           </g>
         )}
         {botType === 'hss' && (
           <g>
-            {/* HSS tube alongside bottom chord — right side */}
-            <rect x={cX + aLeg + 6} y={botCY - hssH / 2} width={hssW} height={hssH} rx="2" fill="none" stroke={blue} strokeWidth="2.5" />
-            <rect x={cX + aLeg + 6 + hssT} y={botCY - hssH / 2 + hssT} width={hssW - 2 * hssT} height={hssH - 2 * hssT} rx="1" fill={blue} opacity="0.15" />
-            <text x={cX + aLeg + hssW + 12} y={botCY + 3} fill={blue} fontSize="7" fontFamily="monospace" fontWeight="bold">HSS Tube</text>
-            <polygon points={`${cX + aLeg + 6},${botCY - 3} ${cX + aLeg + 2},${botCY} ${cX + aLeg + 6},${botCY + 3}`} fill={orange} />
+            <rect x={cX + aLeg + 8} y={botCY - hssH / 2} width={hssW} height={hssH} rx="1" fill="none" stroke={blue} strokeWidth="2" />
+            <rect x={cX + aLeg + 8 + hssT} y={botCY - hssH / 2 + hssT} width={hssW - 2 * hssT} height={hssH - 2 * hssT} rx="0.5" fill="none" stroke={blue} strokeWidth="0.5" strokeDasharray="2,2" />
+            <WeldSymbol x={cX + aLeg + 8} y={botCY} toX={annoX} toY={botCY + 16} label="WELD/BOLT" />
+            <text x={cX + aLeg + 8 + hssW / 2} y={botCY + 3} fill={blue} fontSize="6" fontFamily="monospace" fontWeight="bold" textAnchor="middle">HSS</text>
           </g>
         )}
         {botType === 'splice' && (
           <g>
-            {/* Splice plates on both sides of bottom chord */}
-            <rect x={cX - aLeg - 8} y={botCY - aLeg * 0.25} width={4} height={aLeg * 1.5} rx="0.5" fill={blue} opacity="0.8" />
-            <rect x={cX + aLeg + 4} y={botCY - aLeg * 0.25} width={4} height={aLeg * 1.5} rx="0.5" fill={blue} opacity="0.8" />
+            <rect x={cX - aLeg - 10} y={botCY - aLeg * 0.25} width={5} height={aLeg * 1.5} rx="0.5" fill="none" stroke={blue} strokeWidth="1.5" />
+            <rect x={cX + aLeg + 5} y={botCY - aLeg * 0.25} width={5} height={aLeg * 1.5} rx="0.5" fill="none" stroke={blue} strokeWidth="1.5" />
             {method.includes('Bolted') ? (
               <>
-                <circle cx={cX - aLeg - 6} cy={botCY} r="2" fill={orange} />
-                <circle cx={cX - aLeg - 6} cy={botCY + aLeg / 2} r="2" fill={orange} />
-                <circle cx={cX + aLeg + 6} cy={botCY} r="2" fill={orange} />
-                <circle cx={cX + aLeg + 6} cy={botCY + aLeg / 2} r="2" fill={orange} />
+                {[botCY, botCY + aLeg / 2].map((cy, i) => (
+                  <g key={`bbolt${i}`}>
+                    <circle cx={cX - aLeg - 7.5} cy={cy} r="2.5" fill="none" stroke={blue} strokeWidth="0.8" />
+                    <line x1={cX - aLeg - 9} y1={cy - 1.5} x2={cX - aLeg - 6} y2={cy + 1.5} stroke={blue} strokeWidth="0.5" />
+                    <circle cx={cX + aLeg + 7.5} cy={cy} r="2.5" fill="none" stroke={blue} strokeWidth="0.8" />
+                    <line x1={cX + aLeg + 6} y1={cy - 1.5} x2={cX + aLeg + 9} y2={cy + 1.5} stroke={blue} strokeWidth="0.5" />
+                  </g>
+                ))}
               </>
             ) : (
-              <>
-                <polygon points={`${cX - aLeg - 4},${botCY - 2} ${cX - aLeg - 7},${botCY + 2} ${cX - aLeg - 1},${botCY + 2}`} fill={orange} />
-                <polygon points={`${cX + aLeg + 8},${botCY - 2} ${cX + aLeg + 5},${botCY + 2} ${cX + aLeg + 11},${botCY + 2}`} fill={orange} />
-              </>
+              <WeldSymbol x={cX - aLeg - 5} y={botCY} toX={cX - aLeg - 60} toY={botCY + 14} label="WELD E/S" />
             )}
           </g>
         )}
 
-        {/* === LEGEND — adapts to method === */}
-        <rect x="10" y={H - 22} width={W - 20} height="18" rx="3" fill="#f8fafc" stroke="#e2e8f0" strokeWidth="0.5" />
-        {topType === 'bar' ? (
-          <><circle cx="24" cy={H - 13} r="3.5" fill="none" stroke={fire} strokeWidth="1.5" /><text x="32" y={H - 10} fill={silver} fontSize="6.5" fontFamily="monospace">Top Bars</text></>
-        ) : (
-          <><rect x="20" y={H - 17} width="8" height="8" fill={fire} opacity="0.75" rx="1" /><text x="32" y={H - 10} fill={silver} fontSize="6.5" fontFamily="monospace">{topType === 'angle' ? 'Top Angles' : topType === 'channel' ? 'Top Ch.' : topType === 'hss' ? 'Top HSS' : 'Splice'}</text></>
-        )}
-        {botType === 'bar' ? (
-          <><circle cx="90" cy={H - 13} r="3.5" fill="none" stroke={blue} strokeWidth="1.5" /><text x="98" y={H - 10} fill={silver} fontSize="6.5" fontFamily="monospace">Bot Bars</text></>
-        ) : botType === 'plate' ? (
-          <><rect x="86" y={H - 15} width="10" height="4" fill={blue} opacity="0.8" rx="0.5" /><text x="100" y={H - 10} fill={silver} fontSize="6.5" fontFamily="monospace">Bot Plate</text></>
-        ) : (
-          <><rect x="86" y={H - 17} width="8" height="8" fill={blue} opacity="0.7" rx="1" /><text x="98" y={H - 10} fill={silver} fontSize="6.5" fontFamily="monospace">{botType === 'channel' ? 'Bot Ch.' : botType === 'hss' ? 'Bot HSS' : 'Splice'}</text></>
-        )}
-        <rect x="155" y={H - 17} width="8" height="8" fill={steel} opacity="0.85" rx="1" />
-        <text x="167" y={H - 10} fill={silver} fontSize="6.5" fontFamily="monospace">Chord 2L</text>
-        {hasWeb && (<><rect x="215" y={H - 17} width="8" height="8" fill={green} opacity="0.7" rx="1" /><text x="227" y={H - 10} fill={silver} fontSize="6.5" fontFamily="monospace">Web</text></>)}
-        <line x1="260" y1={H - 15} x2="268" y2={H - 10} stroke={orange} strokeWidth="1.5" />
-        <text x="273" y={H - 10} fill={silver} fontSize="6.5" fontFamily="monospace">Welds</text>
-
-        {/* Title */}
-        <text x={cX} y={14} textAnchor="middle" fill={steel} fontSize="10" fontFamily="monospace" fontWeight="bold">
-          {row.joistType} — {series === 'K' ? 'Standard' : series === 'LH' ? 'Long Span' : 'Deep Long Span'} — Section Cut
+        {/* === TITLE BLOCK (bottom) === */}
+        <rect x="8" y={H - 36} width={W - 16} height="28" rx="0" fill="#f8fafc" stroke={ink} strokeWidth="0.8" />
+        <line x1={W / 2} y1={H - 36} x2={W / 2} y2={H - 8} stroke={thin} strokeWidth="0.3" />
+        <text x="16" y={H - 22} fill={ink} fontSize="9" fontFamily="monospace" fontWeight="bold">
+          SECTION A-A: {row.joistType} — {series === 'K' ? 'STANDARD' : series === 'LH' ? 'LONG SPAN' : 'DEEP LONG SPAN'}
         </text>
+        <text x="16" y={H - 12} fill={dimC} fontSize="7" fontFamily="monospace">
+          REINF: {method.toUpperCase()} | SCALE: NTS | REV: —
+        </text>
+        <text x={W / 2 + 8} y={H - 22} fill={ink} fontSize="7" fontFamily="monospace" fontWeight="bold">TRIPLE WELD INC.</text>
+        <text x={W / 2 + 8} y={H - 12} fill={dimC} fontSize="6.5" fontFamily="monospace">CWB W47.1 / W59 | CSA S16-19</text>
+
+        {/* Legend strip */}
+        <g transform={`translate(8, ${H - 56})`}>
+          <rect x="0" y="0" width={W - 16} height="16" rx="0" fill="#f8fafc" stroke={thin} strokeWidth="0.3" />
+          <circle cx="12" cy="8" r="3.5" fill="none" stroke={fire} strokeWidth="1.2" />
+          <line x1="10" y1="6" x2="14" y2="10" stroke={fire} strokeWidth="0.6" />
+          <text x="20" y="11" fill={dimC} fontSize="6" fontFamily="monospace">Top Reinf.</text>
+          {botType === 'plate' ? (
+            <><rect x="72" y="5" width="10" height="4" fill="none" stroke={blue} strokeWidth="1" /><text x="86" y="11" fill={dimC} fontSize="6" fontFamily="monospace">Bot Plate</text></>
+          ) : (
+            <><circle cx="78" cy="8" r="3.5" fill="none" stroke={blue} strokeWidth="1.2" /><text x="86" y="11" fill={dimC} fontSize="6" fontFamily="monospace">Bot Reinf.</text></>
+          )}
+          <rect x="136" y="4" width="6" height="8" fill="none" stroke={ink} strokeWidth="1" />
+          <text x="146" y="11" fill={dimC} fontSize="6" fontFamily="monospace">Chord 2L</text>
+          {hasWeb && (<><rect x="194" y="4" width="6" height="8" fill="none" stroke={green} strokeWidth="1" /><text x="204" y="11" fill={dimC} fontSize="6" fontFamily="monospace">Web</text></>)}
+          <line x1="235" y1="5" x2="242" y2="11" stroke={weldC} strokeWidth="1" />
+          <polygon points="235,5 237,8 233,8" fill={weldC} />
+          <text x="248" y="11" fill={dimC} fontSize="6" fontFamily="monospace">Weld Symbol</text>
+          <line x1="310" y1="8" x2="330" y2="8" stroke={dimC} strokeWidth="0.5" />
+          <line x1="310" y1="5" x2="310" y2="11" stroke={dimC} strokeWidth="0.5" />
+          <line x1="330" y1="5" x2="330" y2="11" stroke={dimC} strokeWidth="0.5" />
+          <text x="336" y="11" fill={dimC} fontSize="6" fontFamily="monospace">Dimension</text>
+        </g>
       </svg>
     </div>
   );
 }
 
-/* ─┈ Info Legend (collapsible) ─┈ */
+/* ── Info Legend (collapsible) ─┈ */
 function JoistInfoLegend() {
   const [open, setOpen] = useState(false);
   return (
@@ -609,7 +726,7 @@ function JoistInfoLegend() {
   );
 }
 
-/* ─┈ Expandable JR Block Row ─┈ */
+/* ── Expandable JR Block Row ── */
 function JRBlock({ row, index, onUpdate, onDelete, onDuplicate }) {
   const [expanded, setExpanded] = useState(false);
   const calc = useMemo(() => calcRow(row), [row]);
@@ -651,14 +768,15 @@ function JRBlock({ row, index, onUpdate, onDelete, onDuplicate }) {
   };
 
   const isBotBar = row.chord_botType === 'bar';
-  const inCls = 'w-full bg-transparent px-1.5 py-1 text-xs font-mono text-right focus:outline-none focus:ring-1 focus:ring-fire-500 rounded';
-  const inTxtCls = 'w-full bg-transparent px-1.5 py-1 text-xs font-mono text-left focus:outline-none focus:ring-1 focus:ring-fire-500 rounded';
-  const selCls = 'w-full bg-transparent px-1.5 py-1 text-xs font-mono text-left focus:outline-none focus:ring-1 focus:ring-fire-500 rounded cursor-pointer';
-  const labelCls = 'text-[10px] font-semibold uppercase tracking-wide text-silver-500';
+  // Dark-themed input classes for expanded detail section
+  const inCls = 'w-full bg-steel-700 border border-steel-600 px-2 py-1.5 text-xs font-mono text-right text-white placeholder:text-silver-500 focus:outline-none focus:ring-1 focus:ring-fire-500 focus:border-fire-500 rounded';
+  const inTxtCls = 'w-full bg-steel-700 border border-steel-600 px-2 py-1.5 text-xs font-mono text-left text-white placeholder:text-silver-500 focus:outline-none focus:ring-1 focus:ring-fire-500 focus:border-fire-500 rounded';
+  const selCls = 'w-full bg-steel-700 border border-steel-600 px-2 py-1.5 text-xs font-mono text-left text-white focus:outline-none focus:ring-1 focus:ring-fire-500 focus:border-fire-500 rounded cursor-pointer';
+  const labelCls = 'text-[10px] font-semibold uppercase tracking-wide text-silver-300';
 
   return (
     <div className="border border-silver-200 rounded-lg mb-3 bg-white shadow-sm overflow-hidden">
-      {/* ── Main Row (always visible) ── */}
+      {/* ─┈ Main Row (always visible) ─┈ */}
       <div className={`flex items-center gap-2 px-3 py-2 cursor-pointer transition-colors ${expanded ? 'bg-steel-800 text-white' : 'hover:bg-steel-50'}`}
         onClick={() => setExpanded(!expanded)}>
         <span className="w-8 text-center text-xs font-mono font-bold opacity-60">{index + 1}</span>
@@ -697,20 +815,20 @@ function JRBlock({ row, index, onUpdate, onDelete, onDuplicate }) {
         </div>
       </div>
 
-      {/* ── Expanded Detail ── */}
+      {/* ─┈ Expanded Detail ── */}
       {expanded && (
-        <div className="px-4 py-4 bg-steel-50 border-t border-silver-200 space-y-4">
+        <div className="px-4 py-4 bg-steel-900 border-t border-steel-700 space-y-4">
           {/* CHORD REINFORCEMENT */}
-          <div className="rounded-lg border border-silver-200 bg-white p-4">
+          <div className="rounded-lg border border-steel-700 bg-steel-800 p-4">
             <div className="flex items-center gap-2 mb-3">
               <Wrench className="h-4 w-4 text-fire-500" />
-              <h4 className="text-sm font-bold text-steel-700">Chord Reinforcement</h4>
+              <h4 className="text-sm font-bold text-silver-100">Chord Reinforcement</h4>
               <span className="ml-auto text-xs text-silver-400">Top & Bottom chord reinforcing</span>
             </div>
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-x-4 gap-y-3">
               {/* Top Chord Section */}
               <div className="col-span-2 lg:col-span-4">
-                <p className="text-[11px] font-bold text-fire-600 mb-1 uppercase tracking-wide">Top Chord</p>
+                <p className="text-[11px] font-bold text-fire-400 mb-1 uppercase tracking-wide">Top Chord</p>
               </div>
               <div>
                 <label className={labelCls}>Bars / Chord</label>
@@ -724,7 +842,7 @@ function JRBlock({ row, index, onUpdate, onDelete, onDuplicate }) {
               </div>
               <div>
                 <label className={labelCls}>Weight (lbs/ft)</label>
-                <input type="number" min="0" step="0.01" value={row.chord_topLbsPerFt || ''} onChange={e => setNum('chord_topLbsPerFt', e.target.value)} className={`${inCls} text-blue-600`} />
+                <input type="number" min="0" step="0.01" value={row.chord_topLbsPerFt || ''} onChange={e => setNum('chord_topLbsPerFt', e.target.value)} className={`${inCls} !text-blue-400`} />
               </div>
               <div>
                 <label className={labelCls}>Reinf. Length (ft)</label>
@@ -733,7 +851,7 @@ function JRBlock({ row, index, onUpdate, onDelete, onDuplicate }) {
 
               {/* Bottom Chord Section */}
               <div className="col-span-2 lg:col-span-4 mt-2">
-                <p className="text-[11px] font-bold text-fire-600 mb-1 uppercase tracking-wide">Bottom Chord</p>
+                <p className="text-[11px] font-bold text-fire-400 mb-1 uppercase tracking-wide">Bottom Chord</p>
               </div>
               <div>
                 <label className={labelCls}>Material Type</label>
@@ -756,7 +874,7 @@ function JRBlock({ row, index, onUpdate, onDelete, onDuplicate }) {
                   </div>
                   <div>
                     <label className={labelCls}>Weight (lbs/ft)</label>
-                    <input type="number" min="0" step="0.01" value={row.chord_botLbsPerFt || ''} onChange={e => setNum('chord_botLbsPerFt', e.target.value)} className={`${inCls} text-blue-600`} />
+                    <input type="number" min="0" step="0.01" value={row.chord_botLbsPerFt || ''} onChange={e => setNum('chord_botLbsPerFt', e.target.value)} className={`${inCls} !text-blue-400`} />
                   </div>
                 </>
               ) : (
@@ -769,7 +887,7 @@ function JRBlock({ row, index, onUpdate, onDelete, onDuplicate }) {
                   </div>
                   <div>
                     <label className={labelCls}>Weight (lbs/ft)</label>
-                    <input type="number" min="0" step="0.01" value={row.chord_botLbsPerFt || ''} onChange={e => setNum('chord_botLbsPerFt', e.target.value)} className={`${inCls} text-blue-600`} />
+                    <input type="number" min="0" step="0.01" value={row.chord_botLbsPerFt || ''} onChange={e => setNum('chord_botLbsPerFt', e.target.value)} className={`${inCls} !text-blue-400`} />
                   </div>
                 </>
               )}
@@ -780,7 +898,7 @@ function JRBlock({ row, index, onUpdate, onDelete, onDuplicate }) {
 
               {/* Weld Parameters */}
               <div className="col-span-2 lg:col-span-4 mt-2">
-                <p className="text-[11px] font-bold text-steel-600 mb-1 uppercase tracking-wide">Weld Parameters</p>
+                <p className="text-[11px] font-bold text-silver-200 mb-1 uppercase tracking-wide">Weld Parameters</p>
               </div>
               <div>
                 <label className={labelCls}>Weld Size (in)</label>
@@ -801,21 +919,21 @@ function JRBlock({ row, index, onUpdate, onDelete, onDuplicate }) {
             </div>
 
             {/* Chord Calculated Results */}
-            <div className="mt-3 pt-3 border-t border-silver-100 grid grid-cols-3 lg:grid-cols-6 gap-3">
-              <div><p className="text-[10px] text-silver-400">Top Welds</p><p className="text-sm font-bold text-steel-700">{fmtNum(calc.topWelds)}</p></div>
-              <div><p className="text-[10px] text-silver-400">Bot Welds</p><p className="text-sm font-bold text-steel-700">{fmtNum(calc.botWelds)}</p></div>
-              <div><p className="text-[10px] text-silver-400">Total Welds</p><p className="text-sm font-bold text-steel-700">{fmtNum(calc.chordTotalWelds)}</p></div>
-              <div><p className="text-[10px] text-silver-400">Weld Inches</p><p className="text-sm font-bold text-steel-700">{fmtNum(calc.chordWeldInches)}</p></div>
-              <div><p className="text-[10px] text-silver-400">Hours</p><p className="text-sm font-bold text-fire-600">{fmtDec(calc.chordHrs, 1)}</p></div>
-              <div><p className="text-[10px] text-silver-400">Install Cost</p><p className="text-sm font-bold text-fire-600">{fmt(calc.chordInstall)}</p></div>
+            <div className="mt-3 pt-3 border-t border-steel-700 grid grid-cols-3 lg:grid-cols-6 gap-3">
+              <div><p className="text-[10px] text-silver-400">Top Welds</p><p className="text-sm font-bold text-silver-100">{fmtNum(calc.topWelds)}</p></div>
+              <div><p className="text-[10px] text-silver-400">Bot Welds</p><p className="text-sm font-bold text-silver-100">{fmtNum(calc.botWelds)}</p></div>
+              <div><p className="text-[10px] text-silver-400">Total Welds</p><p className="text-sm font-bold text-silver-100">{fmtNum(calc.chordTotalWelds)}</p></div>
+              <div><p className="text-[10px] text-silver-400">Weld Inches</p><p className="text-sm font-bold text-silver-100">{fmtNum(calc.chordWeldInches)}</p></div>
+              <div><p className="text-[10px] text-silver-400">Hours</p><p className="text-sm font-bold text-fire-400">{fmtDec(calc.chordHrs, 1)}</p></div>
+              <div><p className="text-[10px] text-silver-400">Install Cost</p><p className="text-sm font-bold text-fire-400">{fmt(calc.chordInstall)}</p></div>
             </div>
           </div>
 
           {/* WEB REINFORCEMENT */}
-          <div className="rounded-lg border border-silver-200 bg-white p-4">
+          <div className="rounded-lg border border-steel-700 bg-steel-800 p-4">
             <div className="flex items-center gap-2 mb-3">
-              <Wrench className="h-4 w-4 text-steel-500" />
-              <h4 className="text-sm font-bold text-steel-700">Web Reinforcement</h4>
+              <Wrench className="h-4 w-4 text-steel-400" />
+              <h4 className="text-sm font-bold text-silver-100">Web Reinforcement</h4>
               <span className="ml-auto text-xs text-silver-400">Vertical & diagonal web members</span>
             </div>
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-x-4 gap-y-3">
@@ -831,7 +949,7 @@ function JRBlock({ row, index, onUpdate, onDelete, onDuplicate }) {
               </div>
               <div>
                 <label className={labelCls}>Angle Weight (lbs/ft)</label>
-                <input type="number" min="0" step="0.01" value={row.web_angleLbsPerFt || ''} onChange={e => setNum('web_angleLbsPerFt', e.target.value)} className={`${inCls} text-blue-600`} />
+                <input type="number" min="0" step="0.01" value={row.web_angleLbsPerFt || ''} onChange={e => setNum('web_angleLbsPerFt', e.target.value)} className={`${inCls} !text-blue-400`} />
               </div>
               <div>
                 <label className={labelCls}>Min / Weld</label>
@@ -839,7 +957,7 @@ function JRBlock({ row, index, onUpdate, onDelete, onDuplicate }) {
               </div>
 
               <div className="col-span-2 lg:col-span-4 mt-1">
-                <p className="text-[11px] font-bold text-steel-600 mb-1 uppercase tracking-wide">Members</p>
+                <p className="text-[11px] font-bold text-silver-200 mb-1 uppercase tracking-wide">Members</p>
               </div>
               <div>
                 <label className={labelCls}>Vert. Angles Qty</label>
@@ -849,11 +967,11 @@ function JRBlock({ row, index, onUpdate, onDelete, onDuplicate }) {
                 <label className={labelCls}>Vert. Length (ft)</label>
                 <div className="flex items-center gap-1">
                   {row.web_vertLengthAuto ? (
-                    <span className="flex-1 px-1.5 py-1 text-xs font-mono text-right text-blue-600">{(parseInt(row.joistType) || 24) / 12} (auto)</span>
+                    <span className="flex-1 px-1.5 py-1 text-xs font-mono text-right text-blue-400">{(parseInt(row.joistType) || 24) / 12} (auto)</span>
                   ) : (
                     <input type="number" min="0" step="0.5" value={row.web_vertLength || ''} onChange={e => setNum('web_vertLength', e.target.value)} className={`flex-1 ${inCls}`} />
                   )}
-                  <button onClick={() => set('web_vertLengthAuto', !row.web_vertLengthAuto)} className={`text-[9px] px-1.5 py-0.5 rounded ${row.web_vertLengthAuto ? 'bg-blue-100 text-blue-600' : 'bg-silver-100 text-silver-500'}`} title="Toggle auto-calc from joist depth">
+                  <button onClick={() => set('web_vertLengthAuto', !row.web_vertLengthAuto)} className={`text-[9px] px-1.5 py-0.5 rounded ${row.web_vertLengthAuto ? 'bg-blue-900/50 text-blue-400 border border-blue-700' : 'bg-steel-700 text-silver-400 border border-steel-600'}`} title="Toggle auto-calc from joist depth">
                     {row.web_vertLengthAuto ? 'AUTO' : 'MAN'}
                   </button>
                 </div>
@@ -866,11 +984,11 @@ function JRBlock({ row, index, onUpdate, onDelete, onDuplicate }) {
                 <label className={labelCls}>Diag. Length (ft)</label>
                 <div className="flex items-center gap-1">
                   {row.web_diagLengthAuto ? (
-                    <span className="flex-1 px-1.5 py-1 text-xs font-mono text-right text-blue-600">{(Math.sqrt(2) * (parseInt(row.joistType) || 24) / 12).toFixed(2)} (auto)</span>
+                    <span className="flex-1 px-1.5 py-1 text-xs font-mono text-right text-blue-400">{(Math.sqrt(2) * (parseInt(row.joistType) || 24) / 12).toFixed(2)} (auto)</span>
                   ) : (
                     <input type="number" min="0" step="0.5" value={row.web_diagLength || ''} onChange={e => setNum('web_diagLength', e.target.value)} className={`flex-1 ${inCls}`} />
                   )}
-                  <button onClick={() => set('web_diagLengthAuto', !row.web_diagLengthAuto)} className={`text-[9px] px-1.5 py-0.5 rounded ${row.web_diagLengthAuto ? 'bg-blue-100 text-blue-600' : 'bg-silver-100 text-silver-500'}`} title="Toggle auto-calc from joist depth">
+                  <button onClick={() => set('web_diagLengthAuto', !row.web_diagLengthAuto)} className={`text-[9px] px-1.5 py-0.5 rounded ${row.web_diagLengthAuto ? 'bg-blue-900/50 text-blue-400 border border-blue-700' : 'bg-steel-700 text-silver-400 border border-steel-600'}`} title="Toggle auto-calc from joist depth">
                     {row.web_diagLengthAuto ? 'AUTO' : 'MAN'}
                   </button>
                 </div>
@@ -878,11 +996,11 @@ function JRBlock({ row, index, onUpdate, onDelete, onDuplicate }) {
             </div>
 
             {/* Web Calculated Results */}
-            <div className="mt-3 pt-3 border-t border-silver-100 grid grid-cols-3 lg:grid-cols-6 gap-3">
-              <div><p className="text-[10px] text-silver-400">Web Welds</p><p className="text-sm font-bold text-steel-700">{fmtNum(calc.webWelds)}</p></div>
-              <div><p className="text-[10px] text-silver-400">Hours</p><p className="text-sm font-bold text-fire-600">{fmtDec(calc.webHrs, 1)}</p></div>
-              <div><p className="text-[10px] text-silver-400">Material</p><p className="text-sm font-bold text-steel-700">{fmt(calc.webMaterial)}</p></div>
-              <div><p className="text-[10px] text-silver-400">Install Cost</p><p className="text-sm font-bold text-fire-600">{fmt(calc.webInstall)}</p></div>
+            <div className="mt-3 pt-3 border-t border-steel-700 grid grid-cols-3 lg:grid-cols-6 gap-3">
+              <div><p className="text-[10px] text-silver-400">Web Welds</p><p className="text-sm font-bold text-silver-100">{fmtNum(calc.webWelds)}</p></div>
+              <div><p className="text-[10px] text-silver-400">Hours</p><p className="text-sm font-bold text-fire-400">{fmtDec(calc.webHrs, 1)}</p></div>
+              <div><p className="text-[10px] text-silver-400">Material</p><p className="text-sm font-bold text-silver-100">{fmt(calc.webMaterial)}</p></div>
+              <div><p className="text-[10px] text-silver-400">Install Cost</p><p className="text-sm font-bold text-fire-400">{fmt(calc.webInstall)}</p></div>
               <div></div><div></div>
             </div>
           </div>
@@ -903,9 +1021,9 @@ function JRBlock({ row, index, onUpdate, onDelete, onDuplicate }) {
 
           {/* Notes */}
           <div>
-            <label className="text-[10px] font-semibold uppercase tracking-wide text-silver-500">Notes</label>
+            <label className="text-[10px] font-semibold uppercase tracking-wide text-silver-300">Notes</label>
             <input type="text" value={row.notes} onChange={e => set('notes', e.target.value)} placeholder="Additional notes..."
-              className="w-full bg-white border border-silver-200 rounded px-2 py-1.5 text-xs font-mono focus:outline-none focus:ring-1 focus:ring-fire-500" />
+              className="w-full bg-steel-700 border border-steel-600 rounded px-2 py-1.5 text-xs font-mono text-white placeholder:text-silver-500 focus:outline-none focus:ring-1 focus:ring-fire-500" />
           </div>
         </div>
       )}
@@ -913,7 +1031,7 @@ function JRBlock({ row, index, onUpdate, onDelete, onDuplicate }) {
   );
 }
 
-/* ─┈ Main Page Component ─┈ */
+/* ── Main Page Component ── */
 export default function JoistReinf() {
   const { state, dispatch } = useProject();
   const rows = state.joistReinf || [];
@@ -943,8 +1061,19 @@ export default function JoistReinf() {
     return { totalItems: rows.length, totalQty, totalWeight, totalTons: totalWeight / 2000, totalHrs, totalMaterial, totalInstall };
   }, [rows]);
 
+  // Inject scrollbar CSS
+  useEffect(() => {
+    const id = 'jr-scrollbar-css';
+    if (!document.getElementById(id)) {
+      const style = document.createElement('style');
+      style.id = id;
+      style.textContent = SCROLLBAR_CSS;
+      document.head.appendChild(style);
+    }
+  }, []);
+
   return (
-    <div className="min-h-screen bg-steel-50">
+    <div className="min-h-screen bg-steel-50 jr-scroll">
       <div className="accent-stripe h-1.5 bg-gradient-to-r from-fire-500 via-fire-600 to-steel-800" />
       <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
         {/* Header */}
