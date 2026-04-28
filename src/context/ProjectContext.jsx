@@ -126,6 +126,34 @@ const defaultMiscMetalsRates = [
   { id: 7, item: 'Channel grating diamond (galv)', rate: 95, unit: '$/tread' },
   { id: 8, item: 'Channel grating round (galv)', rate: 110, unit: '$/tread' },
   { id: 9, item: 'Bar grating tread (galv)', rate: 85, unit: '$/tread' },
+  { id: 10, item: 'Bollard fixed 6" pipe (filled)', rate: 350, unit: '$/each' },
+  { id: 11, item: 'Bollard fixed 8" pipe (filled)', rate: 480, unit: '$/each' },
+  { id: 12, item: 'Bollard removable 6" sleeve', rate: 620, unit: '$/each' },
+  { id: 13, item: 'Corner guard SS 2x2x12GA', rate: 45, unit: '$/lnft' },
+  { id: 14, item: 'Corner guard SS 3x3x12GA', rate: 65, unit: '$/lnft' },
+  { id: 15, item: 'Corner guard mild steel L76x76x6', rate: 30, unit: '$/lnft' },
+  { id: 16, item: 'Corner guard mild steel L102x102x9.5', rate: 45, unit: '$/lnft' },
+  { id: 17, item: 'Embed plate 8x8x1/4 (4 anchors)', rate: 85, unit: '$/each' },
+  { id: 18, item: 'Embed plate 10x10x1/2 (4 anchors)', rate: 135, unit: '$/each' },
+  { id: 19, item: 'Embed plate 12x12x1/2 (4 anchors)', rate: 185, unit: '$/each' },
+  { id: 20, item: 'Lintel L102x102x9.5', rate: 35, unit: '$/lnft' },
+  { id: 21, item: 'Lintel L127x127x12.7', rate: 55, unit: '$/lnft' },
+  { id: 22, item: 'Edge angle L76x76x6', rate: 28, unit: '$/lnft' },
+  { id: 23, item: 'Edge angle L102x102x9.5', rate: 42, unit: '$/lnft' },
+  { id: 24, item: 'Bumper rail Pipe 42 Sch40', rate: 38, unit: '$/lnft' },
+  { id: 25, item: 'Bumper rail Pipe 48 Sch40', rate: 48, unit: '$/lnft' },
+  { id: 26, item: 'Wheel stop precast', rate: 95, unit: '$/each' },
+  { id: 27, item: 'Wheel stop steel fab', rate: 145, unit: '$/each' },
+  { id: 28, item: 'Floor plate (checker) per sqft', rate: 25, unit: '$/sqft' },
+  { id: 29, item: 'Sump cover (galv)', rate: 185, unit: '$/each' },
+  { id: 30, item: 'Roof hatch 30x36 std', rate: 1450, unit: '$/each' },
+  { id: 31, item: 'Pipe support stanchion', rate: 165, unit: '$/each' },
+  { id: 32, item: 'Anchor bolt J-bolt 3/4"', rate: 18, unit: '$/each' },
+  { id: 33, item: 'Anchor bolt L-bolt 3/4"', rate: 16, unit: '$/each' },
+  { id: 34, item: 'Anchor bolt threaded rod 3/4"', rate: 14, unit: '$/each' },
+  { id: 35, item: 'Equipment dunnage (per lb)', rate: 4.50, unit: '$/lb' },
+  { id: 36, item: 'Catwalk framing (per sqft)', rate: 95, unit: '$/sqft' },
+  { id: 37, item: 'Architectural / signage (lump)', rate: 0, unit: 'lump $' },
 ]
 
 /* Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂ Code Limits (OBC / OHSA) Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂ */
@@ -185,6 +213,13 @@ const defaultState = {
     flights: 1,
     landingDepth: 1200,
     material: 'Structural steel',
+  },
+  stairsComputed: { totalLbs: 0, materialCost: 0, treadsTotal: 0, railingsTotal: 0, labourTotal: 0, grandTotal: 0, fabHrs: 0, instHrs: 0 },
+  ladderComputed: { totalLbs: 0, materialCost: 0, labourTotal: 0, grandTotal: 0, fabHrs: 0, instHrs: 0 },
+  miscMetalsStandard: {
+    bollards: [], cornerGuardsSS: [], cornerGuardsMS: [], embedPlates: [],
+    lintels: [], edgeAngles: [], bumperRails: [], wheelStops: [],
+    floorPlates: [], pipeSupports: [], anchorBolts: [], equipDunnage: [], architectural: [],
   },
   railings: [],
   ladder: [],
@@ -452,7 +487,27 @@ function projectReducer(state, action) {
 
     case 'SET_STRUCTURAL_ROWS':
       return { ...state, structuralRows: action.payload, isDirty: true };
-        default:
+        case 'ADD_MM_STANDARD_ITEM': {
+      const { section, defaults } = action.payload
+      const arr = (state.miscMetalsStandard && state.miscMetalsStandard[section]) || []
+      const newId = Date.now() + Math.floor(Math.random() * 100)
+      return { ...state, miscMetalsStandard: { ...state.miscMetalsStandard, [section]: [...arr, { id: newId, qty: 1, rateOverride: null, notes: '', ...(defaults || {}) }] }, isDirty: true }
+    }
+    case 'UPDATE_MM_STANDARD_ITEM': {
+      const { section, id, ...updates } = action.payload
+      const arr = (state.miscMetalsStandard && state.miscMetalsStandard[section]) || []
+      return { ...state, miscMetalsStandard: { ...state.miscMetalsStandard, [section]: arr.map((r) => (r.id === id ? { ...r, ...updates } : r)) }, isDirty: true }
+    }
+    case 'DELETE_MM_STANDARD_ITEM': {
+      const { section, id } = action.payload
+      const arr = (state.miscMetalsStandard && state.miscMetalsStandard[section]) || []
+      return { ...state, miscMetalsStandard: { ...state.miscMetalsStandard, [section]: arr.filter((r) => r.id !== id) }, isDirty: true }
+    }
+    case 'SET_STAIRS_COMPUTED':
+      return { ...state, stairsComputed: { ...(state.stairsComputed || {}), ...action.payload } }
+    case 'SET_LADDER_COMPUTED':
+      return { ...state, ladderComputed: { ...(state.ladderComputed || {}), ...action.payload } }
+    default:
       return state
   }
 }
