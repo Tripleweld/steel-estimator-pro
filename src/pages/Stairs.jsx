@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useEffect, useMemo } from 'react'
 import {
   Calculator, ShieldCheck, Weight, Wrench, Hammer, BarChart3,
   CheckCircle, AlertTriangle, Settings2, ListTree, Layers
@@ -506,6 +506,11 @@ export default function Stairs() {
 
   // ── Grand Total ──
   const grandTotal = totalMaterialCost + customMatCost + treadsTotal + railingsTotal + galvCost + labourTotal
+
+  // Dispatch computed totals to state for Misc Metals aggregation
+  useEffect(() => {
+    dispatch({ type: 'SET_STAIRS_COMPUTED', payload: { totalLbs, materialCost: totalMaterialCost, treadsTotal, railingsTotal, labourTotal, grandTotal, fabHrs: fabHrsFinal, instHrs: instHrsFinal } })
+  }, [dispatch, totalLbs, totalMaterialCost, treadsTotal, railingsTotal, labourTotal, grandTotal, fabHrsFinal, instHrsFinal])
 
   // ── Benchmarks ──
   const dPerLb = totalLbs > 0 ? grandTotal / totalLbs : 0
