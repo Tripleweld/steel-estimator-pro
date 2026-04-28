@@ -578,7 +578,7 @@ function DataRow({ row, index, fabRate, installRate, onUpdate, onDelete }) {
         <ProfileSearch
           value={row.profile}
           onSelect={(designation, wtPerFt) => onUpdate(row.id, { profile: designation, wtPerFt })}
-          profiles={section.id === 'steelDeck' ? DECK_PROFILES : undefined}
+          profiles={row.section === 'steelDeck' ? DECK_PROFILES : undefined}
         />
       </td>
       {/* Qty */}
