@@ -19,6 +19,12 @@ const fmt = (v) => '$' + Number(v || 0).toLocaleString('en-CA', { minimumFractio
 const fmtNum = (v, d = 0) => Number(v || 0).toLocaleString('en-CA', { minimumFractionDigits: d, maximumFractionDigits: d });
 
 const UNITS = ['ea', 'lnft', 'sqft', 'lb', 'ton', 'ls', 'set', 'lot'];
+const CATEGORIES = [
+  { value: '', label: '—' },
+  { value: 'joists', label: 'Joists' },
+  { value: 'deck', label: 'Deck' },
+  { value: 'other', label: 'Other' },
+];
 
 export default function PurchasedItems() {
   const { state, dispatch } = useProject();
@@ -40,6 +46,7 @@ export default function PurchasedItems() {
       payload: {
         id: crypto.randomUUID(),
         item: '',
+        category: '',
         supplier: '',
         qty: 1,
         unit: 'ea',
@@ -59,7 +66,8 @@ export default function PurchasedItems() {
   };
 
   const addPresetItem = (preset) => {
-    const newRow = { id: crypto.randomUUID ? crypto.randomUUID() : Date.now(), item: preset.item, supplier: preset.supplier || '', qty: 1, unit: preset.unit || 'ea', unitCost: preset.unitCost || 0, total: preset.unitCost || 0, leadWeeks: preset.leadWeeks || 0, notes: '' };
+    const autoCategory = preset.item.toLowerCase().includes('joist') ? 'joists' : preset.item.toLowerCase().includes('deck') ? 'deck' : '';
+    const newRow = { id: crypto.randomUUID ? crypto.randomUUID() : Date.now(), item: preset.item, category: autoCategory, supplier: preset.supplier || '', qty: 1, unit: preset.unit || 'ea', unitCost: preset.unitCost || 0, total: preset.unitCost || 0, leadWeeks: preset.leadWeeks || 0, notes: '' };
     dispatch({ type: 'SET_PURCHASED', payload: [...(rows || []), newRow] });
   };
 
@@ -103,7 +111,7 @@ export default function PurchasedItems() {
           <div className="rounded-xl border border-steel-700 bg-steel-900/40 p-5 shadow-sm">
             <p className="text-xs font-medium uppercase tracking-wide text-steel-500">Longest Lead Time</p>
             <p className="mt-1 text-2xl font-bold text-white">
-              {summary.longestLead > 0 ? `${fmtNum(summary.longestLead)} wks` : '—'}
+              {summary.longestLead > 0 ? `${fmtNum(summary.longestLead)} wks` : 'â'}
             </p>
           </div>
           <div className="rounded-xl border border-steel-700 bg-steel-900/40 p-5 shadow-sm">
@@ -119,10 +127,10 @@ export default function PurchasedItems() {
             value=""
             className="bg-steel-900 border border-blue-500/30 rounded px-2 py-1.5 text-xs text-white focus:outline-none focus:ring-1 focus:ring-blue-500/50 max-w-[300px]"
           >
-            <option value="" style={{ backgroundColor: '#0c1222' }}>+ Add from catalog…</option>
+            <option value="" style={{ backgroundColor: '#0c1222' }}>+ Add from catalogâ¦</option>
             {CATALOG.map((p, i) => (
               <option key={i} value={i} style={{ backgroundColor: '#0c1222' }}>
-                {p.item} — ${p.unitCost}/{p.unit} ({p.supplier})
+                {p.item} â ${p.unitCost}/{p.unit} ({p.supplier})
               </option>
             ))}
           </select>
@@ -143,6 +151,7 @@ export default function PurchasedItems() {
                 <tr className="bg-steel-800 text-white">
                   <th className="rounded-tl-xl px-3 py-3 text-left font-semibold">#</th>
                   <th className="px-3 py-3 text-left font-semibold">Item Description</th>
+                  <th className="px-3 py-3 text-left font-semibold">Category</th>
                   <th className="px-3 py-3 text-left font-semibold">Supplier</th>
                   <th className="px-3 py-3 text-right font-semibold">Qty</th>
                   <th className="px-3 py-3 text-left font-semibold">Unit</th>
@@ -156,7 +165,7 @@ export default function PurchasedItems() {
               <tbody>
                 {rows.length === 0 ? (
                   <tr>
-                    <td colSpan={10} className="px-6 py-16 text-center">
+                    <td colSpan={11} className="px-6 py-16 text-center">
                       <ShoppingCart className="mx-auto mb-3 h-10 w-10 text-steel-300" />
                       <p className="text-sm text-steel-500">
                         No purchased items yet. Click{' '}
@@ -177,6 +186,11 @@ export default function PurchasedItems() {
                           placeholder="e.g. Open-web joists"
                           className="w-full min-w-[180px] rounded border border-steel-700 bg-transparent px-2 py-1 text-sm text-white placeholder:text-steel-300 focus:border-blue-500/50 focus:outline-none focus:ring-1 focus:ring-blue-500/50"
                         />
+                      </td>
+                      <td className="px-3 py-2">
+                        <select value={row.category || ''} onChange={(e) => handleUpdate(row.id, 'category', e.target.value)} className="rounded border border-steel-700 bg-transparent px-2 py-1 text-sm text-white focus:border-blue-500/50 focus:outline-none focus:ring-1 focus:ring-blue-500/50">
+                          {CATEGORIES.map((c) => (<option key={c.value} value={c.value} style={{ backgroundColor: '#0c1222' }}>{c.label}</option>))}
+                        </select>
                       </td>
                       <td className="px-3 py-2">
                         <input
