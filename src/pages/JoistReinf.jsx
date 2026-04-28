@@ -210,6 +210,7 @@ function calcRow(r) {
   const totalWeeks = totalDays / 5;
   const totalMaterial = chordMaterial + webMaterial;
   const totalInstall = chordInstall + webInstall;
+  const totalLabor = totalInstall - totalMaterial; // labor only (excl. material)
   const totalWeight = (topLbs * topLen * bars + botLbs * botLen * botBars
     + webLbs * (vertQ * vertL + diagQ * diagL) * 2) * qty;
   const perJoist = qty > 0 ? totalInstall / qty : 0;
@@ -217,7 +218,7 @@ function calcRow(r) {
   return {
     topWelds, botWelds, chordTotalWelds, chordWeldInches, chordHrs, chordMaterial, chordInstall,
     webWelds, webHrs, webMaterial, webInstall,
-    totalHrs, totalDays, totalWeeks, totalMaterial, totalInstall, totalWeight, perJoist,
+    totalHrs, totalDays, totalWeeks, totalMaterial, totalInstall, totalLabor, totalLabor, totalWeight, perJoist,
   };
 }
 
@@ -1018,7 +1019,7 @@ export default function JoistReinf() {
 
   // Global summary across all JR blocks
   const summary = useMemo(() => {
-    let totalWeight = 0, totalHrs = 0, totalMaterial = 0, totalInstall = 0, totalQty = 0;
+    let totalWeight = 0, totalHrs = 0, totalMaterial = 0, totalInstall = 0, totalLabor = 0, totalQty = 0;
     rows.forEach(r => {
       const c = calcRow(r);
       const q = Number(r.qty) || 1;
@@ -1027,6 +1028,7 @@ export default function JoistReinf() {
       totalHrs += c.totalHrs * q;
       totalMaterial += c.totalMaterial;
       totalInstall += c.totalInstall;
+      totalLabor += c.totalLabor;
     });
     return { totalItems: rows.length, totalQty, totalWeight, totalTons: totalWeight / 2000, totalHrs, totalMaterial, totalInstall };
   }, [rows]);
@@ -1098,7 +1100,7 @@ export default function JoistReinf() {
             { label: 'Weight (tons)', value: fmtDec(summary.totalTons, 2) },
             { label: 'Total Hours', value: fmtDec(summary.totalHrs, 1) },
             { label: 'Material', value: fmt(summary.totalMaterial) },
-            { label: 'Total', value: fmt(summary.totalInstall) },
+            { label: 'Install', value: fmt(summary.totalLabor) },
           ].map(c => (
             <div key={c.label} className="rounded-xl border border-steel-700 bg-steel-800 p-4 shadow-sm">
               <p className="text-[10px] font-medium uppercase tracking-wide text-silver-400">{c.label}</p>
