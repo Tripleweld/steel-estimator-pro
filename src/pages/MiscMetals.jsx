@@ -406,26 +406,36 @@ function AggregationSection({ state }) {
   const items = []
   stairs.forEach((s, i) => {
     const tc = s.totalsCommit || {}
+    const matRate = getMatRate(s.material) || 1
+    const fbMat = (Number(s.weightLbs) || 0) * matRate
+    const fbFab = (Number(s.fabHrs) || 0) * fabRate
+    const fbInst = (Number(s.instHrs) || 0) * installRate
+    const material = Number(tc.material ?? tc.materialCost) || fbMat
+    const fab = Number(tc.fab ?? tc.fabCost) || fbFab
+    const install = Number(tc.install ?? tc.instCost) || fbInst
+    const total = Number(tc.total) || (material + fab + install)
     items.push({
       key: `stair-${s.id}`,
       label: `Stair ${i + 1}${s.mark ? ` — ${s.mark}` : ''}`,
       kind: 'Stair',
-      material: Number(tc.material) || 0,
-      fab: Number(tc.fab) || 0,
-      install: Number(tc.install) || 0,
-      total: Number(tc.total) || 0,
+      material, fab, install, total,
     })
   })
   ladder.forEach((l, i) => {
     const tc = l.totalsCommit || {}
+    const matRate = getMatRate(l.material) || 1
+    const fbMat = (Number(l.weightLbs) || 0) * matRate
+    const fbFab = (Number(l.fabHrs) || 0) * fabRate
+    const fbInst = (Number(l.instHrs) || 0) * installRate
+    const material = Number(tc.material ?? tc.materialCost) || fbMat
+    const fab = Number(tc.fab ?? tc.fabCost) || fbFab
+    const install = Number(tc.install ?? tc.instCost) || fbInst
+    const total = Number(tc.total) || (material + fab + install)
     items.push({
       key: `ladder-${l.id}`,
       label: `Ladder ${i + 1}${l.location ? ` — ${l.location}` : (l.mark ? ` — ${l.mark}` : '')}`,
       kind: 'Ladder',
-      material: Number(tc.material) || 0,
-      fab: Number(tc.fab) || 0,
-      install: Number(tc.install) || 0,
-      total: Number(tc.total) || 0,
+      material, fab, install, total,
     })
   })
   railings.forEach((r, i) => {
