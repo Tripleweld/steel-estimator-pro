@@ -678,8 +678,8 @@ function calcSectionTotals(rows, fabRate, installRate, steelRate) {
     const fabPc = getEffectiveFabPerPc(r);
     const instPc = getEffectiveInstPerPc(r);
     totalLbs += lbs;
-    totFab += r.section === 'moment' ? fabPc * (toNum(r.fabCrew)||1) : fabPc * toNum(r.qty);
-    totInst += r.section === 'moment' ? instPc * (toNum(r.instCrew)||1) : instPc * toNum(r.qty);
+    totFab += fabPc * (toNum(r.fabCrew)||1) * (toNum(r.qty)||1);
+    totInst += instPc * (toNum(r.instCrew)||1) * (toNum(r.qty)||1);
   });
   const totalTons = totalLbs / 2000;
   const matCost = totalLbs * (steelRate || 1.15);
