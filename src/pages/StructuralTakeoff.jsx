@@ -285,6 +285,8 @@ function getEffectiveInstPerPc(row) {
 function JoistReinfSyncTable({ fabRate, installRate }) {
   const { state } = useProject();
   const jrRows = state.joistReinf || [];
+  // Get structural steel rate from Rates & Config (default $1.00/lb)
+  const steelRate = (state.rates?.materialRates || []).find(r => r.item === 'Structural steel')?.rate || 1.00;
   const [ovr, setOvr] = useState({});
   const gv = (id, f, cv) => { const k = id+'_'+f; return ovr[k] != null ? ovr[k] : cv; };
   const sv = (id, f, v) => setOvr(p => ({...p, [id+'_'+f]: v === '' ? null : Number(v) || 0}));
@@ -295,6 +297,7 @@ function JoistReinfSyncTable({ fabRate, installRate }) {
     </div>
   );
 
+  // weightLbs and instHrs from sync ALREADY include qty — do NOT multiply by q again
   let tW=0, tI=0, tMat=0, tIC=0;
   return (
     <div className="overflow-x-auto border border-steel-700 rounded-b-lg bg-steel-900/50">
@@ -314,32 +317,35 @@ function JoistReinfSyncTable({ fabRate, installRate }) {
         </tr></thead>
         <tbody>
         {jrRows.map((r,i) => {
-          const q=Number(r.qty)||0, w=Number(r.weightLbs)||0;
-          const iH=gv(r.id,'inst',Number(r.instHrs)||0);
-          const mat=w*q*1.15, ic=iH*q*installRate;
-          tW+=w*q; tI+=iH*q; tMat+=mat; tIC+=ic;
+          const q = Number(r.qty) || 0;
+          const w = Number(r.weightLbs) || 0;
+          const iH = gv(r.id, 'inst', Number(r.instHrs) || 0);
+          // weightLbs already includes qty, instHrs already includes qty+crew
+          const mat = w * steelRate;
+          const ic = iH * installRate;
+          tW += w; tI += iH; tMat += mat; tIC += ic;
           return (
             <tr key={r.id} className="border-b border-steel-800/50 hover:bg-steel-800/30 transition-colors">
               <td className="px-2 py-1 text-xs text-steel-500">{i+1}</td>
-              <td className="px-2 py-1 text-sm text-white font-medium">{r.mark||'\u2014'}</td>
-              <td className="px-2 py-1 text-sm text-steel-300">{r.location||'\u2014'}</td>
+              <td className="px-2 py-1 text-sm text-white font-medium">{r.mark || '\u2014'}</td>
+              <td className="px-2 py-1 text-sm text-steel-300">{r.location || '\u2014'}</td>
               <td className="px-2 py-1 text-sm text-steel-300">{r.joistType}</td>
               <td className="px-2 py-1 text-sm text-steel-300">{r.reinfMethod}</td>
               <td className="px-2 py-1 text-sm text-right text-white">{q}</td>
-              <td className="px-2 py-1 text-sm text-right text-steel-300">{fmtNum(w*q,0)}</td>
-              <td className="px-2 py-1 text-right"><input type="text" inputMode="decimal" value={iH} onChange={e=>sv(r.id,'inst',e.target.value)} className="w-16 text-right bg-amber-900/40 border border-amber-500/50 rounded px-1 py-0.5 text-sm text-white font-mono focus:outline-none focus:ring-1 focus:ring-amber-400"/></td>
+              <td className="px-2 py-1 text-sm text-right text-steel-300">{fmtNum(w, 0)}</td>
+              <td className="px-2 py-1 text-right"><input type="text" inputMode="decimal" value={iH} onChange={e => sv(r.id, 'inst', e.target.value)} className="w-16 text-right bg-amber-900/40 border border-amber-500/50 rounded px-1 py-0.5 text-sm text-white font-mono focus:outline-none focus:ring-1 focus:ring-amber-400"/></td>
               <td className="px-2 py-1 text-sm text-right text-steel-300">{fmtDollar(mat)}</td>
               <td className="px-2 py-1 text-sm text-right text-steel-300">{fmtDollar(ic)}</td>
-              <td className="px-2 py-1 text-sm text-right text-white font-bold">{fmtDollar(mat+ic)}</td>
+              <td className="px-2 py-1 text-sm text-right text-white font-bold">{fmtDollar(mat + ic)}</td>
             </tr>);
         })}
         <tr className="bg-steel-800/80 font-bold text-sm">
           <td colSpan={6} className="px-2 py-2 text-right text-steel-300 uppercase text-xs">Totals</td>
-          <td className="px-2 py-1 text-right text-white">{fmtNum(tW,0)}</td>
-          <td className="px-2 py-1 text-right text-white">{fmtNum(tI,1)}</td>
+          <td className="px-2 py-1 text-right text-white">{fmtNum(tW, 0)}</td>
+          <td className="px-2 py-1 text-right text-white">{fmtNum(tI, 1)}</td>
           <td className="px-2 py-1 text-right text-white">{fmtDollar(tMat)}</td>
           <td className="px-2 py-1 text-right text-white">{fmtDollar(tIC)}</td>
-          <td className="px-2 py-1 text-right text-yellow-400">{fmtDollar(tMat+tIC)}</td>
+          <td className="px-2 py-1 text-right text-yellow-400">{fmtDollar(tMat + tIC)}</td>
         </tr>
         </tbody>
       </table>
