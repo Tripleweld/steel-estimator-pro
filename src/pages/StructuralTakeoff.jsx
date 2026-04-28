@@ -381,10 +381,10 @@ function MomentConnectionTable({ sectionRows, fabRate, installRate, steelRate, o
   const mcColGroups = [
     { label: 'Identification', cols: 3, color: 'bg-purple-800/60', border: 'border-purple-500' },
     { label: 'Plate Selection & Weight', cols: 8, color: 'bg-orange-800/60', border: 'border-orange-500' },
-    { label: 'Connections', cols: 2, color: 'bg-red-800/60', border: 'border-red-500' },
+    { label: 'Connections', cols: 1, color: 'bg-red-800/60', border: 'border-red-500' },
     { label: 'Fabrication Hours', cols: 10, color: 'bg-amber-800/60', border: 'border-amber-500' },
     { label: 'Installation Hours', cols: 8, color: 'bg-cyan-800/60', border: 'border-cyan-500' },
-    { label: 'Cost Preview', cols: 4, color: 'bg-emerald-800/60', border: 'border-emerald-500' },
+    { label: 'Cost Preview', cols: 5, color: 'bg-emerald-800/60', border: 'border-emerald-500' },
   ];
   const mcSubHeaders = [
     'Mark','Dwg Ref','Location',
