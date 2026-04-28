@@ -2,6 +2,19 @@ import { useMemo } from 'react';
 import { ShoppingCart, Plus, Trash2, Copy } from 'lucide-react';
 import { useProject } from '../context/ProjectContext';
 
+const CATALOG = [
+  { item: 'Open Web Steel Joist (OWSJ)', unit: 'LF', unitCost: 12, leadWeeks: 8, supplier: 'Canam' },
+  { item: 'Steel Deck 1.5" 22 GA', unit: 'sqft', unitCost: 4.5, leadWeeks: 4, supplier: 'Canam' },
+  { item: 'Steel Deck 1.5" 20 GA', unit: 'sqft', unitCost: 5.0, leadWeeks: 4, supplier: 'Canam' },
+  { item: 'A325 3/4" Bolt + Nut + Washer', unit: 'ea', unitCost: 2.5, leadWeeks: 1, supplier: 'Brafasco' },
+  { item: 'A325 7/8" Bolt + Nut + Washer', unit: 'ea', unitCost: 4.0, leadWeeks: 1, supplier: 'Brafasco' },
+  { item: 'Anchor Bolt 3/4" x 12" galv.', unit: 'ea', unitCost: 8.0, leadWeeks: 2, supplier: 'Brafasco' },
+  { item: 'Headed Stud 3/4" x 4" (Nelson)', unit: 'ea', unitCost: 1.8, leadWeeks: 2, supplier: 'Nelson' },
+  { item: 'Non-Shrink Grout (Sika 212) bag', unit: 'bag', unitCost: 38, leadWeeks: 1, supplier: 'Sika' },
+  { item: 'Galvanizing Service', unit: 'lb', unitCost: 0.85, leadWeeks: 2, supplier: 'Silver City Galv.' },
+  { item: 'Hilti KH-EZ 1/2" x 4"', unit: 'ea', unitCost: 3.5, leadWeeks: 1, supplier: 'Hilti' },
+];
+
 const fmt = (v) => '$' + Number(v || 0).toLocaleString('en-CA', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
 const fmtNum = (v, d = 0) => Number(v || 0).toLocaleString('en-CA', { minimumFractionDigits: d, maximumFractionDigits: d });
 
@@ -43,6 +56,11 @@ export default function PurchasedItems() {
       type: 'ADD_PURCHASED_ROW',
       payload: { ...row, id: crypto.randomUUID() },
     });
+  };
+
+  const addPresetItem = (preset) => {
+    const newRow = { id: crypto.randomUUID ? crypto.randomUUID() : Date.now(), item: preset.item, supplier: preset.supplier || '', qty: 1, unit: preset.unit || 'ea', unitCost: preset.unitCost || 0, total: preset.unitCost || 0, leadWeeks: preset.leadWeeks || 0, notes: '' };
+    dispatch({ type: 'SET_PURCHASED', payload: [...(rows || []), newRow] });
   };
 
   const handleDelete = (id) => {
@@ -94,11 +112,23 @@ export default function PurchasedItems() {
           </div>
         </div>
 
-        {/* Add button */}
-        <div className="mb-4 flex justify-end">
+        {/* Add button + Catalog dropdown */}
+        <div className="mb-4 flex justify-end gap-2 items-center">
+          <select
+            onChange={(e) => { const i = parseInt(e.target.value, 10); if (!isNaN(i) && CATALOG[i]) addPresetItem(CATALOG[i]); e.target.value=''; }}
+            value=""
+            className="bg-steel-900 border border-blue-500/30 rounded px-2 py-1.5 text-xs text-white focus:outline-none focus:ring-1 focus:ring-blue-500/50 max-w-[300px]"
+          >
+            <option value="" style={{ backgroundColor: '#0c1222' }}>+ Add from catalog…</option>
+            {CATALOG.map((p, i) => (
+              <option key={i} value={i} style={{ backgroundColor: '#0c1222' }}>
+                {p.item} — ${p.unitCost}/{p.unit} ({p.supplier})
+              </option>
+            ))}
+          </select>
           <button
             onClick={handleAdd}
-            className="inline-flex items-center gap-2 rounded-lg bg-fire-950/400 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-fire-600 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:ring-offset-2"
+            className="inline-flex items-center gap-2 rounded-lg bg-fire-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-fire-600 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:ring-offset-2"
           >
             <Plus className="h-4 w-4" />
             Add Item
@@ -215,14 +245,14 @@ export default function PurchasedItems() {
                           <button
                             onClick={() => handleCopy(row)}
                             title="Duplicate row"
-                            className="rounded p-1 text-steel-400 transition hover:bg-steel-100 hover:text-steel-300"
+                            className="rounded p-1 text-steel-400 transition hover:bg-steel-700 hover:text-steel-300"
                           >
                             <Copy className="h-4 w-4" />
                           </button>
                           <button
                             onClick={() => handleDelete(row.id)}
                             title="Delete row"
-                            className="rounded p-1 text-steel-400 transition hover:bg-red-50 hover:text-red-600"
+                            className="rounded p-1 text-steel-400 transition hover:bg-red-900/40 hover:text-red-400"
                           >
                             <Trash2 className="h-4 w-4" />
                           </button>
@@ -234,7 +264,7 @@ export default function PurchasedItems() {
               </tbody>
               {rows.length > 0 && (
                 <tfoot>
-                  <tr className="border-t-2 border-steel-200 bg-steel-900/30">
+                  <tr className="border-t-2 border-steel-700 bg-steel-900/30">
                     <td colSpan={6} className="px-3 py-3 text-right text-sm font-bold text-steel-300">
                       Grand Total
                     </td>
