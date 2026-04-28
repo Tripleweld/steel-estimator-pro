@@ -895,7 +895,7 @@ function JRBlock({ row, index, onUpdate, onDelete, onDuplicate }) {
               <div><p className="text-[10px] text-silver-400">Total Welds</p><p className="text-sm font-bold text-silver-100">{fmtNum(calc.chordTotalWelds)}</p></div>
               <div><p className="text-[10px] text-silver-400">Weld Inches</p><p className="text-sm font-bold text-silver-100">{fmtNum(calc.chordWeldInches)}</p></div>
               <div><p className="text-[10px] text-silver-400">Hours</p><p className="text-sm font-bold text-fire-400">{fmtDec(calc.chordHrs, 1)}</p></div>
-              <div><p className="text-[10px] text-silver-400">Install Cost</p><p className="text-sm font-bold text-fire-400">{fmt(calc.chordInstall)}</p></div>
+              <div><p className="text-[10px] text-silver-400">Total</p><p className="text-sm font-bold text-fire-400">{fmt(calc.chordInstall)}</p></div>
             </div>
           </div>
 
@@ -970,7 +970,7 @@ function JRBlock({ row, index, onUpdate, onDelete, onDuplicate }) {
               <div><p className="text-[10px] text-silver-400">Web Welds</p><p className="text-sm font-bold text-silver-100">{fmtNum(calc.webWelds)}</p></div>
               <div><p className="text-[10px] text-silver-400">Hours</p><p className="text-sm font-bold text-fire-400">{fmtDec(calc.webHrs, 1)}</p></div>
               <div><p className="text-[10px] text-silver-400">Material</p><p className="text-sm font-bold text-silver-100">{fmt(calc.webMaterial)}</p></div>
-              <div><p className="text-[10px] text-silver-400">Install Cost</p><p className="text-sm font-bold text-fire-400">{fmt(calc.webInstall)}</p></div>
+              <div><p className="text-[10px] text-silver-400">Total</p><p className="text-sm font-bold text-fire-400">{fmt(calc.webInstall)}</p></div>
               <div></div><div></div>
             </div>
           </div>
@@ -1098,7 +1098,7 @@ export default function JoistReinf() {
             { label: 'Weight (tons)', value: fmtDec(summary.totalTons, 2) },
             { label: 'Total Hours', value: fmtDec(summary.totalHrs, 1) },
             { label: 'Material', value: fmt(summary.totalMaterial) },
-            { label: 'Install', value: fmt(summary.totalInstall) },
+            { label: 'Total', value: fmt(summary.totalInstall) },
           ].map(c => (
             <div key={c.label} className="rounded-xl border border-steel-700 bg-steel-800 p-4 shadow-sm">
               <p className="text-[10px] font-medium uppercase tracking-wide text-silver-400">{c.label}</p>
@@ -1166,9 +1166,9 @@ export default function JoistReinf() {
                 <p className="text-[10px] text-silver-500">incl. {MATERIAL_MARKUP}x markup</p>
               </div>
               <div>
-                <p className="text-xs text-silver-400">Install Cost</p>
+                <p className="text-xs text-silver-400">Total</p>
                 <p className="mt-0.5 text-lg font-bold text-white">{fmt(summary.totalInstall)}</p>
-                <p className="text-[10px] text-silver-500">material + labor</p>
+                <p className="text-[10px] text-silver-500">labor + material</p>
               </div>
               <div className="rounded-lg bg-steel-800 p-3">
                 <p className="text-xs text-silver-300">Grand Total</p>
