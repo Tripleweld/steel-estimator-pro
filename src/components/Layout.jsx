@@ -18,7 +18,8 @@ import {
   ChevronLeft,
   ChevronRight,
   Save,
-  BookOpen } from 'lucide-react'
+  BookOpen,
+  Brain } from 'lucide-react'
 import { useState } from 'react'
 
 const navItems = [
@@ -40,7 +41,10 @@ const navItems = [
   { divider: true, label: 'OUTPUT' },
   { path: '/summary', label: 'Summary', icon: FileSpreadsheet },
   { path: '/quote', label: 'Quote', icon: FileText },
-  { path: '/manual', label: 'User Manual', icon: BookOpen, section: 'HELP' },
+  { divider: true, label: 'AI' },
+  { path: '/ai-takeoff', label: 'AI Takeoff', icon: Brain },
+  { divider: true, label: 'HELP' },
+  { path: '/manual', label: 'User Manual', icon: BookOpen },
 ]
 
 export default function Layout({ children }) {
