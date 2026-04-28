@@ -459,6 +459,13 @@ function JoistReinfSyncTable({ fabRate, installRate }) {
   const jrRows = state.joistReinf || [];
   // Get structural steel rate from Rates & Config (default $1.00/lb)
   const steelRate = (state.rates?.materialRates || []).find(r => r.item === 'Structural steel')?.rate || 1.00;
+
+  const purchasedCosts = useMemo(() => {
+    const rows = state.purchased || [];
+    const joistCost = rows.filter(r => r.category === 'joists').reduce((s, r) => s + (Number(r.qty) || 0) * (Number(r.unitCost) || 0), 0);
+    const deckCost = rows.filter(r => r.category === 'deck').reduce((s, r) => s + (Number(r.qty) || 0) * (Number(r.unitCost) || 0), 0);
+    return { joists: joistCost, deck: deckCost };
+  }, [state.purchased]);
   const [ovr, setOvr] = useState({});
   const gv = (id, f, cv) => { const k = id+'_'+f; return ovr[k] != null ? ovr[k] : cv; };
   const sv = (id, f, v) => setOvr(p => ({...p, [id+'_'+f]: v === '' ? null : Number(v) || 0}));
@@ -632,7 +639,7 @@ function DataRow({ row, index, fabRate, installRate, onUpdate, onDelete }) {
 }
 
 /* ─── Section Totals Row ─── */
-function SectionTotalsRow({ rows, fabRate, installRate }) {
+function SectionTotalsRow({ rows, fabRate, installRate, purchasedMaterial = 0 }) {
   const t = calcSectionTotals(rows, fabRate, installRate);
   return (
     <tr className="bg-steel-800/40 border-t border-steel-600 font-semibold text-sm">
@@ -651,10 +658,10 @@ function SectionTotalsRow({ rows, fabRate, installRate }) {
       <td className="px-1 py-1.5 text-right text-cyan-300 font-mono">{fmtNum(t.avgInstPerPc, 1)}</td>
       <td className="px-1 py-1.5 text-right text-cyan-300 font-mono font-bold">{fmtNum(t.totInst, 1)}</td>
       <td></td>
-      <td className="px-1 py-1.5 text-right text-steel-300 font-mono">{fmtDollar(t.matCost)}</td>
+      <td className="px-1 py-1.5 text-right font-mono" style={purchasedMaterial > 0 ? {color:'#f59e0b'} : {color:'#cbd5e1'}}>{fmtDollar(t.matCost + purchasedMaterial)}{purchasedMaterial > 0 && <span className="text-[9px] text-amber-500/70 block">incl. purchased</span>}</td>
       <td className="px-1 py-1.5 text-right text-steel-300 font-mono">{fmtDollar(t.fabCost)}</td>
       <td className="px-1 py-1.5 text-right text-steel-300 font-mono">{fmtDollar(t.instCost)}</td>
-      <td className="px-1 py-1.5 text-right text-green-400 font-mono font-bold">{fmtDollar(t.rowTotal)}</td>
+      <td className="px-1 py-1.5 text-right text-green-400 font-mono font-bold">{fmtDollar(t.rowTotal + purchasedMaterial)}</td>
       <td colSpan={2}></td>
     </tr>
   );
@@ -888,7 +895,7 @@ function StructuralTakeoffInner() {
                               onDelete={deleteRow}
                             />
                           ))}
-                          <SectionTotalsRow rows={sectionRows} fabRate={fabRate} installRate={installRate} />
+                          <SectionTotalsRow rows={sectionRows} fabRate={fabRate} installRate={installRate} purchasedMaterial={sec.id === 'joists' ? purchasedCosts.joists : sec.id === 'steelDeck' ? purchasedCosts.deck : 0} />
                         </>
                       )}
                     </tbody>
