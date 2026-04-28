@@ -548,6 +548,11 @@ export default function Ladder() {
   // ── Grand Total ──
   const grandTotal = totalMaterialCost + galvCost + labourTotal
 
+  // Dispatch computed totals to state for Misc Metals aggregation
+  useEffect(() => {
+    dispatch({ type: 'SET_LADDER_COMPUTED', payload: { totalLbs, materialCost: totalMaterialCost, labourTotal, grandTotal, fabHrs: fabHrsFinal, instHrs: instHrsFinal } })
+  }, [dispatch, totalLbs, totalMaterialCost, labourTotal, grandTotal, fabHrsFinal, instHrsFinal])
+
   // ── Benchmarks ──
   const dPerLb = totalLbs > 0 ? grandTotal / totalLbs : 0
   const dPerFt = geom.heightFt > 0 ? grandTotal / geom.heightFt : 0
