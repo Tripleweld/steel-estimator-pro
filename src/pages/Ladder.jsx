@@ -384,6 +384,8 @@ export default function Ladder() {
     instCrew: ladder.instCrew ?? null,
     fabBreakdown: ladder.fabBreakdown || DEFAULT_FAB_BREAKDOWN,
     instBreakdown: ladder.instBreakdown || DEFAULT_INST_BREAKDOWN,
+    bomToggles: ladder.bomToggles || {},
+    bomCustom: ladder.bomCustom || [],
   }
 
   const set = (field, value) => {
@@ -861,7 +863,7 @@ export default function Ladder() {
                       {b.isCustom ? (
                         <span className="text-fire-400 text-xs font-bold">C</span>
                       ) : (
-                        <input type="checkbox" checked={b.incl} onChange={() => toggleBomLine(b.key)} className="w-4 h-4 accent-fire-500 cursor-pointer" />
+                        <input type="checkbox" checked={b.incl} onChange={(e) => set('bomToggles', { ...(s.bomToggles || {}), [b.key]: e.target.checked })} className="w-4 h-4 accent-blue-500 cursor-pointer" />
                       )}
                     </td>
                     <td className="px-3 py-2 font-medium text-steel-300">{b.label}</td>
