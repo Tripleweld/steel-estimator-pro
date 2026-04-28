@@ -436,7 +436,7 @@ function AggregationSection({ state }) {
   const totalInst = rows.reduce((s, r) => s + r.instHrs, 0)
 
   return (
-    <SectionCard icon={Calculator} title="Aggregation from calculators" subtitle="Auto-pulled from Stairs, Ladder, Railings — read-only (Joist Reinf is part of Structural Takeoff)" color="text-blue-400">
+    <SectionCard icon={Calculator} title="Aggregation from calculators" subtitle="Auto-pulled from Stairs, Ladder, Railings — read-only" color="text-blue-400">
       <div className="overflow-x-auto">
         <table className="w-full text-xs">
           <thead>
@@ -493,7 +493,7 @@ export default function MiscMetals() {
   const stairsC = state.stairsComputed || {}
   const ladderC = state.ladderComputed || {}
   const railings = state.railings || []
-  const joistReinf = state.joistReinf || []
+  // joistReinf intentionally not aggregated here — handled in Structural Takeoff
   const calcsTotal =
     (stairsC.grandTotal || 0) +
     (ladderC.grandTotal || 0) +
@@ -558,7 +558,7 @@ export default function MiscMetals() {
             <table className="w-full text-sm">
               <tbody className="divide-y divide-steel-700/30">
                 <tr>
-                  <td className="px-2 py-2 font-medium text-steel-200">From calculators (Stairs / Ladder / Railings / Joist Reinf)</td>
+                  <td className="px-2 py-2 font-medium text-steel-200">From calculators (Stairs / Ladder / Railings)</td>
                   <td className="px-2 py-2 text-right font-mono text-steel-100">{fmt(calcsTotal)}</td>
                 </tr>
                 <tr>
