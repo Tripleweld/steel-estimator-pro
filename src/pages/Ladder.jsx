@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import {
   Calculator, ShieldCheck, Weight, Wrench, Hammer, BarChart3,
   CheckCircle, AlertTriangle, Settings2, ListTree, Layers
@@ -344,16 +344,13 @@ function LadderSketch({ type, config, cageRequired }) {
 export default function Ladder() {
   const { state, dispatch } = useProject()
 
-  // Initialize ladder[0] if missing — single parametric instance stored in array slot 0
-  useEffect(() => {
-    if (!state.ladder || state.ladder.length === 0) {
-      dispatch({ type: 'ADD_LADDER_ROW' })
-    }
-  }, [state.ladder?.length, dispatch])
+  // Multi-ladder mode — no auto-add. User clicks "Add Ladder" to begin.
 
   // Use empty object as fallback so all hooks below run unconditionally (React rules-of-hooks)
-  const ladder = state.ladder?.[0] || {}
-  const ladderId = state.ladder?.[0]?.id
+  const [activeIdx, setActiveIdx] = useState(0)
+  const safeIdx = Math.min(Math.max(activeIdx, 0), Math.max((state.ladder?.length || 1) - 1, 0))
+  const ladder = state.ladder?.[safeIdx] || {}
+  const ladderId = state.ladder?.[safeIdx]?.id
 
   // Defaults overlay (legacy ladder rows had different fields)
   const s = {
@@ -576,6 +573,63 @@ export default function Ladder() {
             </p>
           </div>
         </div>
+
+        {/* Multi-ladder tab nav */}
+        <div className="mb-6 flex flex-wrap items-center gap-2">
+          {(state.ladder || []).map((l, i) => (
+            <button
+              key={l.id}
+              type="button"
+              onClick={() => setActiveIdx(i)}
+              className={`px-3 py-1.5 rounded-lg text-sm font-semibold transition ${
+                i === safeIdx
+                  ? 'bg-fire-600 text-white shadow-md'
+                  : 'bg-steel-700 text-steel-300 hover:bg-steel-600'
+              }`}
+            >
+              {`Ladder ${i + 1}${l.location ? ` — ${l.location}` : ''}${l.committedAt ? ' ✓' : ''}`}
+            </button>
+          ))}
+          <button
+            type="button"
+            onClick={() => {
+              const newIdx = state.ladder?.length || 0
+              dispatch({ type: 'ADD_LADDER_ROW' })
+              setActiveIdx(newIdx)
+            }}
+            className="px-3 py-1.5 rounded-lg text-sm font-semibold bg-blue-600 text-white hover:bg-blue-500"
+          >
+            + Add Ladder
+          </button>
+          {(state.ladder?.length || 0) > 0 && (
+            <button
+              type="button"
+              onClick={() => {
+                if (window.confirm(`Delete Ladder ${safeIdx + 1}?`)) {
+                  dispatch({ type: 'DELETE_LADDER_ROW', payload: ladderId })
+                  setActiveIdx(Math.max(safeIdx - 1, 0))
+                }
+              }}
+              className="ml-auto px-3 py-1.5 rounded-lg text-sm font-semibold bg-red-500/20 text-red-300 hover:bg-red-500/40"
+            >
+              Delete current
+            </button>
+          )}
+        </div>
+
+        {(state.ladder?.length || 0) === 0 && (
+          <div className="mb-6 rounded-xl border border-dashed border-steel-600 bg-steel-900/40 p-10 text-center">
+            <Calculator className="mx-auto mb-3 h-10 w-10 text-steel-500" />
+            <p className="text-steel-300 mb-4">No ladders yet — click "+ Add Ladder" above to start.</p>
+            <button
+              type="button"
+              onClick={() => { dispatch({ type: 'ADD_LADDER_ROW' }); setActiveIdx(0) }}
+              className="px-4 py-2 rounded-lg bg-fire-600 text-white font-semibold hover:bg-fire-500"
+            >
+              + Add your first ladder
+            </button>
+          </div>
+        )}
 
         {/* ─── 1. SETUP ─── */}
         <SectionCard icon={Settings2} title="Setup" subtitle="Type, finish, side rail & mark — sketch on the right shows the selected configuration">
