@@ -119,12 +119,21 @@ function computeBOM(s, g) {
     ['stepOverStile',   'Step-over stile',     'HSS 51x51x3.2',   isOverParapet ? 2 : 0,          3.5,                                  0,             'top transition'],
   ]
   return rows.map(([key, label, section, qty, lenEa, holes, notes]) => {
+    const incl = s.bomToggles?.[key] !== false
+    const effQty = incl ? qty : 0
     const lbPerFt = SECTION_WEIGHTS[section] || 0
-    const totalLnft = qty * lenEa
+    const totalLnft = effQty * lenEa
     let totalLbs = totalLnft * lbPerFt
-    if (key === 'counterbalance' && cb) totalLbs += 35 // counterbalance weight
-    return { key, label, section, qty, lenEa, totalLnft, lbPerFt, totalLbs, holes, notes }
-  })
+    if (key === 'counterbalance' && cb && incl) totalLbs += 35 // counterbalance weight
+    return { key, label, section, qty: effQty, lenEa, totalLnft, lbPerFt, totalLbs, holes: incl ? holes : 0, notes, incl, isCustom: false }
+  }).concat((s.bomCustom || []).map((c, idx) => {
+    const lbPerFt = SECTION_WEIGHTS[c.section] || Number(c.lbPerFt) || 0
+    const qty = Number(c.qty) || 0
+    const lenEa = Number(c.lenEa) || 0
+    const totalLnft = qty * lenEa
+    const totalLbs = totalLnft * lbPerFt
+    return { key: 'custom_' + (c.id || idx), label: c.label || 'Custom item', section: c.section || '', qty, lenEa, totalLnft, lbPerFt, totalLbs, holes: Number(c.holes) || 0, notes: c.notes || 'custom', incl: true, isCustom: true, customIdx: idx }
+  }))
 }
 
 // ─── Tiny presentational helpers ───
@@ -348,6 +357,7 @@ export default function Ladder() {
 
   // Use empty object as fallback so all hooks below run unconditionally (React rules-of-hooks)
   const [activeIdx, setActiveIdx] = useState(0)
+  const [customDraft, setCustomDraft] = useState({ section: 'FB 64x10', label: '', qty: 1, lenEa: 1, holes: 0 })
   const safeIdx = Math.min(Math.max(activeIdx, 0), Math.max((state.ladder?.length || 1) - 1, 0))
   const ladder = state.ladder?.[safeIdx] || {}
   const ladderId = state.ladder?.[safeIdx]?.id
@@ -379,6 +389,20 @@ export default function Ladder() {
   const set = (field, value) => {
     if (!ladderId) return // wait for init useEffect to add the row
     dispatch({ type: 'UPDATE_LADDER_ROW', payload: { id: ladderId, [field]: value } })
+  }
+
+  const toggleBomLine = (key) => {
+    const next = { ...(s.bomToggles || {}), [key]: !(s.bomToggles?.[key] !== false) }
+    set('bomToggles', next)
+  }
+  const addCustomBom = () => {
+    const c = { ...customDraft, id: Date.now().toString(36) }
+    set('bomCustom', [...(s.bomCustom || []), c])
+    setCustomDraft({ section: 'FB 64x10', label: '', qty: 1, lenEa: 1, holes: 0 })
+  }
+  const removeCustomBom = (idx) => {
+    const next = (s.bomCustom || []).filter((_, i) => i !== idx)
+    set('bomCustom', next)
   }
 
   const setFabSub = (compKey, subKey, value) => {
@@ -817,7 +841,8 @@ export default function Ladder() {
             <table className="w-full text-xs">
               <thead>
                 <tr className="bg-steel-800 text-white">
-                  <th className="rounded-tl-lg px-3 py-2 text-left font-bold uppercase tracking-wider">Item</th>
+                  <th className="rounded-tl-lg px-3 py-2 text-center font-bold uppercase tracking-wider w-12">Incl</th>
+                  <th className="px-3 py-2 text-left font-bold uppercase tracking-wider">Item</th>
                   <th className="px-3 py-2 text-left font-bold uppercase tracking-wider">Section</th>
                   <th className="px-3 py-2 text-right font-bold uppercase tracking-wider">Qty</th>
                   <th className="px-3 py-2 text-right font-bold uppercase tracking-wider">Length ea (ft)</th>
@@ -825,12 +850,20 @@ export default function Ladder() {
                   <th className="px-3 py-2 text-right font-bold uppercase tracking-wider">lb/ft</th>
                   <th className="px-3 py-2 text-right font-bold uppercase tracking-wider">Total lbs</th>
                   <th className="px-3 py-2 text-right font-bold uppercase tracking-wider">Holes</th>
-                  <th className="rounded-tr-lg px-3 py-2 text-right font-bold uppercase tracking-wider">Material $</th>
+                  <th className="px-3 py-2 text-right font-bold uppercase tracking-wider">Material $</th>
+                  <th className="rounded-tr-lg px-3 py-2 text-center font-bold uppercase tracking-wider w-10"></th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-silver-100">
                 {bom.map((b) => (
-                  <tr key={b.key} className={`even:bg-steel-900/30 ${b.qty === 0 ? 'opacity-50' : ''}`}>
+                  <tr key={b.key} className={`even:bg-steel-900/30 ${(!b.incl || b.qty === 0) ? 'opacity-50' : ''}`}>
+                    <td className="px-3 py-2 text-center">
+                      {b.isCustom ? (
+                        <span className="text-fire-400 text-xs font-bold">C</span>
+                      ) : (
+                        <input type="checkbox" checked={b.incl} onChange={() => toggleBomLine(b.key)} className="w-4 h-4 accent-fire-500 cursor-pointer" />
+                      )}
+                    </td>
                     <td className="px-3 py-2 font-medium text-steel-300">{b.label}</td>
                     <td className="px-3 py-2 font-mono text-steel-400">{b.section}</td>
                     <td className="px-3 py-2 text-right font-mono text-steel-400">{fmtNum(b.qty)}</td>
@@ -840,12 +873,17 @@ export default function Ladder() {
                     <td className="px-3 py-2 text-right font-mono text-steel-400">{fmtNum(b.totalLbs, 1)}</td>
                     <td className="px-3 py-2 text-right font-mono text-steel-400">{fmtNum(b.holes)}</td>
                     <td className="px-3 py-2 text-right font-mono text-steel-300">{fmt(b.totalLbs * appliedRate)}</td>
+                    <td className="px-3 py-2 text-center">
+                      {b.isCustom && (
+                        <button type="button" onClick={() => removeCustomBom(b.customIdx)} title="Remove custom item" className="text-steel-500 hover:text-red-400 transition px-1">✕</button>
+                      )}
+                    </td>
                   </tr>
                 ))}
               </tbody>
               <tfoot>
                 <tr className="border-t-2 border-steel-800">
-                  <td colSpan={5} className="px-3 py-3 text-right text-xs font-bold uppercase tracking-wider text-white">
+                  <td colSpan={6} className="px-3 py-3 text-right text-xs font-bold uppercase tracking-wider text-white">
                     Subtotal (incl. waste {fmtNum(wasteAllowance * 100, 0)}%)
                   </td>
                   <td className="px-3 py-3 text-right font-mono text-xs text-white"></td>
@@ -855,6 +893,37 @@ export default function Ladder() {
                   <td className="px-3 py-3 text-right font-mono text-sm text-white">{fmtNum(totalHoles)}</td>
                   <td className="px-3 py-3 text-right font-mono text-base font-bold text-fire-400">
                     {fmt(totalMaterialCost)}
+                  </td>
+                  <td className="px-3 py-3"></td>
+                </tr>
+                <tr className="border-t border-steel-700 bg-steel-900/40">
+                  <td colSpan={11} className="px-3 py-3">
+                    <div className="flex flex-wrap items-end gap-2">
+                      <span className="text-xs font-bold uppercase tracking-wider text-fire-400 mr-2">+ Add Custom Material</span>
+                      <div className="flex flex-col">
+                        <label className="text-[10px] uppercase text-steel-500 mb-0.5">Section</label>
+                        <select value={customDraft.section} onChange={(e) => setCustomDraft({ ...customDraft, section: e.target.value })} className="rounded border border-steel-700 bg-steel-950 text-white px-2 py-1 text-xs font-mono outline-none focus:border-fire-500/50">
+                          {Object.keys(SECTION_WEIGHTS).map((sec) => (<option key={sec} value={sec}>{sec}</option>))}
+                        </select>
+                      </div>
+                      <div className="flex flex-col">
+                        <label className="text-[10px] uppercase text-steel-500 mb-0.5">Label</label>
+                        <input type="text" value={customDraft.label} onChange={(e) => setCustomDraft({ ...customDraft, label: e.target.value })} placeholder="e.g. Extra bracket" className="rounded border border-steel-700 bg-steel-950 text-white px-2 py-1 text-xs outline-none focus:border-fire-500/50 w-40" />
+                      </div>
+                      <div className="flex flex-col">
+                        <label className="text-[10px] uppercase text-steel-500 mb-0.5">Qty</label>
+                        <input type="number" min="0" step="any" value={customDraft.qty} onChange={(e) => setCustomDraft({ ...customDraft, qty: e.target.value })} className="rounded border border-steel-700 bg-steel-950 text-white px-2 py-1 text-xs font-mono outline-none focus:border-fire-500/50 w-16 text-right" />
+                      </div>
+                      <div className="flex flex-col">
+                        <label className="text-[10px] uppercase text-steel-500 mb-0.5">Length ea (ft)</label>
+                        <input type="number" min="0" step="any" value={customDraft.lenEa} onChange={(e) => setCustomDraft({ ...customDraft, lenEa: e.target.value })} className="rounded border border-steel-700 bg-steel-950 text-white px-2 py-1 text-xs font-mono outline-none focus:border-fire-500/50 w-20 text-right" />
+                      </div>
+                      <div className="flex flex-col">
+                        <label className="text-[10px] uppercase text-steel-500 mb-0.5">Holes</label>
+                        <input type="number" min="0" step="1" value={customDraft.holes} onChange={(e) => setCustomDraft({ ...customDraft, holes: e.target.value })} className="rounded border border-steel-700 bg-steel-950 text-white px-2 py-1 text-xs font-mono outline-none focus:border-fire-500/50 w-16 text-right" />
+                      </div>
+                      <button type="button" onClick={addCustomBom} className="rounded bg-fire-500 hover:bg-fire-600 text-white px-3 py-1 text-xs font-bold uppercase tracking-wider transition">+ Add</button>
+                    </div>
                   </td>
                 </tr>
               </tfoot>
