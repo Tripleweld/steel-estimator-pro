@@ -2,6 +2,16 @@ import React, { useState, useCallback, useMemo, useRef, useEffect, Component } f
 import { useProject } from '../context/ProjectContext';
 import AISC_SHAPES from '../data/aisc-shapes-data';
 
+/* Steel Deck profiles — wtPerFt holds lb/sqft (deck uses sqft as quantity) */
+const DECK_PROFILES = [
+  { designation: '1-1/2" × 22 GA Deck', wtPerFt: 1.66 },
+  { designation: '1-1/2" × 20 GA Deck', wtPerFt: 1.97 },
+  { designation: '1-1/2" × 18 GA Deck', wtPerFt: 2.66 },
+  { designation: '3" × 22 GA Deck',     wtPerFt: 2.31 },
+  { designation: '3" × 20 GA Deck',     wtPerFt: 2.74 },
+  { designation: '3" × 18 GA Deck',     wtPerFt: 3.65 },
+];
+
 /* ─── Error Boundary ─── */
 class StructuralErrorBoundary extends Component {
   constructor(props) { super(props); this.state = { hasError: false, error: null }; }
@@ -178,7 +188,8 @@ function OverridableCell({ calcValue, override, onOverride, colorClass }) {
    Searchable dropdown populated with 1,606 AISC profiles.
    Type to filter, click or Enter to select.
    Auto-fills Wt/ft when a profile is selected. */
-function ProfileSearch({ value, onSelect }) {
+function ProfileSearch({ value, onSelect, profiles }) {
+  const SHAPES = profiles || SHAPES;
   const [query, setQuery] = useState(value || '');
   const [open, setOpen] = useState(false);
   const [hlIdx, setHlIdx] = useState(0);
@@ -188,11 +199,11 @@ function ProfileSearch({ value, onSelect }) {
   useEffect(() => { setQuery(value || ''); }, [value]);
 
   const filtered = useMemo(() => {
-    if (!query || query.length < 1) return AISC_SHAPES.slice(0, 50);
+    if (!query || query.length < 1) return SHAPES.slice(0, 50);
     const q = query.toUpperCase();
     const results = [];
-    for (let i = 0; i < AISC_SHAPES.length && results.length < 50; i++) {
-      if (AISC_SHAPES[i][0].toUpperCase().includes(q)) results.push(AISC_SHAPES[i]);
+    for (let i = 0; i < SHAPES.length && results.length < 50; i++) {
+      if (SHAPES[i][0].toUpperCase().includes(q)) results.push(SHAPES[i]);
     }
     return results;
   }, [query]);
@@ -567,6 +578,7 @@ function DataRow({ row, index, fabRate, installRate, onUpdate, onDelete }) {
         <ProfileSearch
           value={row.profile}
           onSelect={(designation, wtPerFt) => onUpdate(row.id, { profile: designation, wtPerFt })}
+          profiles={section.id === 'steelDeck' ? DECK_PROFILES : undefined}
         />
       </td>
       {/* Qty */}
