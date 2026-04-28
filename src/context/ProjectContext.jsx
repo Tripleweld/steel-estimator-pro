@@ -210,6 +210,8 @@ const defaultState = {
   stairs: [],
   stairsComputed: { totalLbs: 0, materialCost: 0, treadsTotal: 0, railingsTotal: 0, labourTotal: 0, grandTotal: 0, fabHrs: 0, instHrs: 0 },
   ladderComputed: { totalLbs: 0, materialCost: 0, labourTotal: 0, grandTotal: 0, fabHrs: 0, instHrs: 0 },
+  fabStandardOverrides: {},
+  installStandardOverrides: {},
   miscMetalsStandard: {
     bollards: [], cornerGuardsSS: [], cornerGuardsMS: [], embedPlates: [],
     lintels: [], edgeAngles: [], bumperRails: [], wheelStops: [],
@@ -529,6 +531,22 @@ function projectReducer(state, action) {
       return { ...state, stairsComputed: { ...(state.stairsComputed || {}), ...action.payload } }
     case 'SET_LADDER_COMPUTED':
       return { ...state, ladderComputed: { ...(state.ladderComputed || {}), ...action.payload } }
+    case 'UPDATE_FAB_STANDARD':
+      return { ...state, fabStandardOverrides: { ...(state.fabStandardOverrides || {}), [action.payload.id]: { ...((state.fabStandardOverrides || {})[action.payload.id] || {}), ...action.payload.changes } } }
+    case 'UPDATE_INSTALL_STANDARD':
+      return { ...state, installStandardOverrides: { ...(state.installStandardOverrides || {}), [action.payload.id]: { ...((state.installStandardOverrides || {})[action.payload.id] || {}), ...action.payload.changes } } }
+    case 'RESET_FAB_STANDARD': {
+      const next = { ...(state.fabStandardOverrides || {}) }
+      delete next[action.payload.id]
+      return { ...state, fabStandardOverrides: next }
+    }
+    case 'RESET_INSTALL_STANDARD': {
+      const next = { ...(state.installStandardOverrides || {}) }
+      delete next[action.payload.id]
+      return { ...state, installStandardOverrides: next }
+    }
+    case 'RESET_ALL_STANDARDS':
+      return { ...state, fabStandardOverrides: {}, installStandardOverrides: {} }
     default:
       return state
   }
