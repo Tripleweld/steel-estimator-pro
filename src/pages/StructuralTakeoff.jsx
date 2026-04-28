@@ -29,7 +29,7 @@ const SECTIONS = [
   { id: 'columns',        label: 'COLUMNS',                     prefix: 'C',     defaultRows: 5  },
   { id: 'beams',           label: 'BEAMS',                       prefix: 'B',     defaultRows: 5  },
   { id: 'moment',          label: 'MOMENT CONNECTIONS',           prefix: 'CONN.', defaultRows: 3  },
-  { id: 'roofFrames',      label: 'ROOF OPENING FRAMES',         prefix: 'RF',    defaultRows: 3  },
+  { id: 'roofFrames',      label: 'ROOF OPENING FRAMES',         prefix: 'RF',    defaultRows: 3, headerOverrides: { 'Base Pl (lb)': 'Angle Clip (lbs)' }  },
   { id: 'joists',          label: 'JOISTS (OWSJ)',               prefix: 'J',     defaultRows: 3  },
   { id: 'joistReinf',      label: 'JOIST REINFORCEMENT',         prefix: 'JR',    defaultRows: 3  },
   { id: 'bridging',        label: 'BRIDGING',                    prefix: 'BR',    defaultRows: 2  },
@@ -859,7 +859,7 @@ function StructuralTakeoffInner() {
                       </tr>
                       <tr className="bg-steel-800">
                         <th className="px-1 py-1.5 text-[10px] font-bold text-steel-400 uppercase">#</th>
-                        {subHeaders.map((h, i) => (
+                        {(sec.headerOverrides ? subHeaders.map(h => sec.headerOverrides[h] || h) : subHeaders).map((h, i) => (
                           <th key={i} className="px-1 py-1.5 text-[10px] font-bold text-steel-300 uppercase tracking-wider">{h}</th>
                         ))}
                         <th className="px-1 py-1.5 text-[10px] font-bold text-steel-400 uppercase">Del</th>
