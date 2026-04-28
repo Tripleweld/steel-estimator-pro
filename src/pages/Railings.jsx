@@ -469,7 +469,7 @@ function RailingCard({ row, idx, calc, fabRate, installRate, onUpdate, onDelete,
         <div className="flex items-center gap-3 text-xs font-mono whitespace-nowrap">
           <div className="text-right">
             <div className="text-steel-500 text-[10px] uppercase tracking-wider">Material</div>
-            <div className="text-steel-200">${Math.round(calc.matCost || 0).toLocaleString()}</div>
+            <div className="text-steel-200">${Math.round((calc.matSubtotal || 0) + (calc.galvSubtotal || 0)).toLocaleString()}</div>
           </div>
           <div className="text-right">
             <div className="text-steel-500 text-[10px] uppercase tracking-wider">Fab</div>
@@ -477,7 +477,7 @@ function RailingCard({ row, idx, calc, fabRate, installRate, onUpdate, onDelete,
           </div>
           <div className="text-right">
             <div className="text-steel-500 text-[10px] uppercase tracking-wider">Install</div>
-            <div className="text-steel-200">${Math.round((calc.grandTotal || 0) - (calc.matCost || 0) - (calc.fabCost || 0)).toLocaleString()}</div>
+            <div className="text-steel-200">${Math.round((calc.instCost || 0) + (calc.hardwareCost || 0) + (calc.installMethodCost || 0)).toLocaleString()}</div>
           </div>
         </div>
         <span className={`text-sm font-bold font-mono ${allOk ? 'text-green-400' : 'text-amber-400'}`}>
