@@ -177,7 +177,7 @@ export default function Quote() {
     const matRates = state.rates?.materialRates || [];
     const lookupMat = (item) => (matRates.find(m => m.item === item)?.rate) || 1;
 
-    // STRUCTURAL TAKEOFF — group by section
+    // STRUCTURAL TAKEOFF â group by section
     const SECT_LABELS = {
       columns: 'Columns', beams: 'Beams', momentConnections: 'Moment Connections',
       moment: 'Moment Connections', roofOpeningFrames: 'Roof Opening Frames',
@@ -208,18 +208,18 @@ export default function Quote() {
       structGroups[key] = (structGroups[key] || 0) + total;
     });
     Object.entries(structGroups).forEach(([k, v]) => {
-      if (v > 0) rows.push({ label: 'Structural Takeoff — ' + (SECT_LABELS[k] || k), total: v });
+      if (v > 0) rows.push({ label: 'Structural Takeoff â ' + (SECT_LABELS[k] || k), total: v });
     });
 
-    // MISC METALS — calculator items
+    // MISC METALS â calculator items
     const stairsTot = stairs.reduce((s, x) => s + Number(x.totalsCommit?.total || 0), 0);
-    if (stairsTot > 0) rows.push({ label: 'Misc Metals — Stairs', total: stairsTot });
+    if (stairsTot > 0) rows.push({ label: 'Misc Metals â Stairs', total: stairsTot });
     const ladderTot = ladder.reduce((s, x) => s + Number(x.totalsCommit?.total || 0), 0);
-    if (ladderTot > 0) rows.push({ label: 'Misc Metals — Ladders', total: ladderTot });
+    if (ladderTot > 0) rows.push({ label: 'Misc Metals â Ladders', total: ladderTot });
     const railingsTot = railings.reduce((s, x) => s + Number(x.totalsCommit?.total || 0), 0);
-    if (railingsTot > 0) rows.push({ label: 'Misc Metals — Railings', total: railingsTot });
+    if (railingsTot > 0) rows.push({ label: 'Misc Metals â Railings', total: railingsTot });
 
-    // MISC METALS — Standard items per section
+    // MISC METALS â Standard items per section
     const MM_LABELS = {
       bollards: 'Bollards', cornerGuardsSS: 'Corner Guards (SS)', cornerGuardsMS: 'Corner Guards (MS)',
       embedPlates: 'Embed Plates', lintels: 'Lintels', edgeAngles: 'Edge Angles',
@@ -235,13 +235,13 @@ export default function Quote() {
         const rate = (row.rateOverride != null && row.rateOverride !== '') ? Number(row.rateOverride) : findMiscRate(row.section || row.item || row.type);
         return s + (Number(row.qty) || 0) * rate;
       }, 0);
-      if (secTotal > 0) rows.push({ label: 'Misc Metals — ' + label, total: secTotal });
+      if (secTotal > 0) rows.push({ label: 'Misc Metals â ' + label, total: secTotal });
     });
 
     // EQUIPMENT (use already-computed equipmentTotal from summary)
     if (summary.equipmentTotal > 0) rows.push({ label: 'Equipment', total: summary.equipmentTotal });
 
-    // PURCHASED ITEMS — exclude joist/deck (already in Structural)
+    // PURCHASED ITEMS â exclude joist/deck (already in Structural)
     const purchased = state.purchased || [];
     const purchExcl = purchased.filter(p => {
       const cat = String(p.category || p.item || '').toLowerCase();
@@ -250,7 +250,7 @@ export default function Quote() {
     const purchTotal = purchExcl.reduce((s, p) => s + (Number(p.total) || (Number(p.qty || 0) * Number(p.unitCost || 0))), 0);
     if (purchTotal > 0) rows.push({ label: 'Purchased Items', total: purchTotal });
 
-    // SOFT COSTS — single row, description = comma list of non-zero items
+    // SOFT COSTS â single row, description = comma list of non-zero items
     const softCosts = state.softCosts || [];
     const softNonZero = softCosts.filter(c => {
       if (c.unit === '%') return Number(c.rate) > 0;
@@ -338,8 +338,15 @@ export default function Quote() {
         >
           {/* Letterhead */}
           <div className="mb-8 border-b-2 border-fire-500 pb-6">
+            <div className="flex items-center gap-4">
+              {info.companyLogo && (
+                <div className="flex h-20 w-48 flex-shrink-0 items-center">
+                  <img src={info.companyLogo} alt="Company Logo" className="max-h-20 max-w-full object-contain" />
+                </div>
+              )}
+              <div>
             <h2 className="text-3xl font-extrabold tracking-tight text-steel-900">
-              TRIPLE WELD INC.
+              {info.companyName || 'TRIPLE WELD INC.'}
             </h2>
             <p className="mt-1 text-sm font-semibold text-fire-600">
               CWB Certified Steel Fabrication &amp; Erection
@@ -348,6 +355,9 @@ export default function Quote() {
               123 Industrial Rd, Unit 4 &bull; Anytown, ON &bull; (555) 123-4567 &bull;
               info@tripleweld.com
             </p>
+
+              </div>
+            </div>
           </div>
 
           {/* Quote Details */}
@@ -376,14 +386,14 @@ export default function Quote() {
               <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-steel-400">
                 Project
               </p>
-              <p className="text-sm font-bold text-steel-900">{info.projectName || '—'}</p>
-              <p className="text-sm text-steel-600">{info.location || '—'}</p>
+              <p className="text-sm font-bold text-steel-900">{info.projectName || 'â'}</p>
+              <p className="text-sm text-steel-600">{info.location || 'â'}</p>
             </div>
             <div className="rounded-lg border border-silver-100 bg-silver-50/50 p-4">
               <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-steel-400">
                 Client / General Contractor
               </p>
-              <p className="text-sm font-bold text-steel-900">{info.gcClient || '—'}</p>
+              <p className="text-sm font-bold text-steel-900">{info.gcClient || 'â'}</p>
               {info.engineer && (
                 <p className="text-sm text-steel-600">Engineer: {info.engineer}</p>
               )}
