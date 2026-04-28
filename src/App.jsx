@@ -15,6 +15,7 @@ import Summary from './pages/Summary'
 import Quote from './pages/Quote'
 import UserManual from './pages/UserManual'
 import FabInstallStandards from './pages/FabInstallStandards'
+import AiTakeoff from './pages/AiTakeoff'
 
 export default function App() {
   return (
@@ -34,6 +35,7 @@ export default function App() {
         <Route path="/soft-costs" element={<SoftCosts />} />
         <Route path="/summary" element={<Summary />} />
         <Route path="/quote" element={<Quote />} />
+        <Route path="/ai-takeoff" element={<AiTakeoff />} />
             <Route path="/manual" element={<UserManual />} />
       </Routes>
     </Layout>
