@@ -95,6 +95,10 @@ const TREAD_TYPE_OPTIONS = ['Pan Tread (Galv)', 'Pan Tread (Mild)', 'Checker Pla
 const CG_DIAMOND_WIDTHS = ['4-3/4"', '7"', '9-1/2"', '11-3/4"']
 const CG_ROUND_WIDTHS = ['5"', '7"', '10"', '12"']
 const CG_HEIGHTS = ['1.5"', '2"']
+const BAR_GRATING_SPACINGS = ['19-4', '19-2']
+// Bearing bar size options (height x thickness). Source: Accurate Screen 19-4/19-2 spec.
+const BAR_GRATING_BAR_SIZES_19_4 = ['3/4x1/8','3/4x3/16','1x1/8','1x3/16','1-1/4x1/8','1-1/4x3/16','1-1/2x1/8','1-1/2x3/16','1-3/4x3/16','2x3/16','2-1/4x3/16','2-1/2x3/16']
+const BAR_GRATING_BAR_SIZES_19_2 = ['1x1/8','1x3/16','1-1/4x1/8','1-1/4x3/16','1-1/2x1/8','1-1/2x3/16','1-3/4x3/16','2x3/16','2-1/4x3/16','2-1/2x3/16']
 const METHOD_OPTIONS = ['Detailed', 'Simple']
 
 const COMPLEXITY_MAP = {
@@ -281,6 +285,8 @@ export default function Stairs() {
     treadType: legacy.treadType || 'Pan Tread (Galv)',
     gratingTreadWidth: legacy.gratingTreadWidth || '7"',
     gratingTreadHeight: legacy.gratingTreadHeight || '1.5"',
+    gratingSpacing: legacy.gratingSpacing || '19-4',
+    gratingBarSize: legacy.gratingBarSize || '1x1/8',
     stringerSection: legacy.stringerSection || 'C230x30',
     columnSection: legacy.columnSection || 'HSS 76x76x4.8',
     mark: legacy.mark || 'S-1',
@@ -559,6 +565,26 @@ export default function Stairs() {
                 </div>
               </>
             )}
+            {s.treadType === 'Grating' && (
+              <>
+                <div>
+                  <FieldLabel>BG Spacing</FieldLabel>
+                  <Select
+                    value={s.gratingSpacing}
+                    onChange={(v) => set('gratingSpacing', v)}
+                    options={BAR_GRATING_SPACINGS}
+                  />
+                </div>
+                <div>
+                  <FieldLabel>BG Bearing Bar (h × t)</FieldLabel>
+                  <Select
+                    value={s.gratingBarSize}
+                    onChange={(v) => set('gratingBarSize', v)}
+                    options={s.gratingSpacing === '19-2' ? BAR_GRATING_BAR_SIZES_19_2 : BAR_GRATING_BAR_SIZES_19_4}
+                  />
+                </div>
+              </>
+            )}
             <div>
               <FieldLabel>Stringer Section</FieldLabel>
               <Select value={s.stringerSection} onChange={(v) => set('stringerSection', v)} options={STRINGER_OPTIONS} />
@@ -796,7 +822,7 @@ export default function Stairs() {
               </thead>
               <tbody className="divide-y divide-silver-100">
                 <tr className="even:bg-steel-50">
-                  <td className="px-4 py-2.5 font-medium text-steel-700">{s.treadType}{s.treadType && s.treadType.startsWith('Channel Grating') ? ` — ${s.gratingTreadWidth} × ${s.gratingTreadHeight}` : ''}</td>
+                  <td className="px-4 py-2.5 font-medium text-steel-700">{s.treadType}{s.treadType && s.treadType.startsWith('Channel Grating') ? ` — ${s.gratingTreadWidth} × ${s.gratingTreadHeight}` : ''}{s.treadType === 'Grating' ? ` — ${s.gratingBarSize} (${s.gratingSpacing})` : ''}</td>
                   <td className="px-4 py-2.5 text-right font-mono text-steel-600">
                     {s.treadType === 'Grating'
                       ? `${fmtNum((geom.width * geom.run) / 92903 * treadQty, 2)} sqft`
