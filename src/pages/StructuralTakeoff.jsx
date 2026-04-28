@@ -39,6 +39,27 @@ const SECTIONS = [
   { id: 'xBracing',        label: 'X-BRACING',                   prefix: 'XB',    defaultRows: 2  },
   { id: 'lintels',         label: 'LINTELS',                     prefix: 'L',     defaultRows: 3  },
 ];
+/* Plate Library for Moment Connections */
+const PLATE_WIDTHS = [4, 5, 6, 7, 8, 9, 10, 12, 16, 18];
+const PLATE_THICKNESSES = [
+  { label: '1/2', value: 0.5 },
+  { label: '5/8', value: 0.625 },
+  { label: '3/4', value: 0.75 },
+];
+const PLATE_LIBRARY = [];
+PLATE_WIDTHS.forEach(w => {
+  PLATE_THICKNESSES.forEach(t => {
+    PLATE_LIBRARY.push({
+      id: w + 'x' + t.label,
+      label: 'PL ' + w + '"\u00d7' + t.label + '"',
+      width: w,
+      thickness: t.value,
+      thicknessLabel: t.label,
+      lbsPerFt: Math.round(w * t.value * 3.4028 * 100) / 100,
+    });
+  });
+});
+
 
 /* ─── Helpers ─── */
 const fmtNum = (v, d = 0) => {
@@ -73,6 +94,8 @@ function makeEmptyRow(sectionId, prefix, index) {
     instPerPcOverride: null,
     instCrew: 2,
     notes: '',
+    // Moment connection fields
+    ...(sectionId === 'moment' ? { plateSize: '', plateQty: 2, plateLengthFt: 0, wtOverride: null } : {}),
   };
 }
 
@@ -282,6 +305,155 @@ function getEffectiveInstPerPc(row) {
 /* ─── Joist Reinforcement Sync Table ─── 
    Auto-reads from JoistReinf Calculator (state.joistReinf).
    Fab/Inst hours are overridable inline. */
+
+/* ─── Moment Connection Row ─── */
+function MomentConnectionRow({ row, index, fabRate, installRate, steelRate, onUpdate, onDelete }) {
+  const plate = PLATE_LIBRARY.find(p => p.id === row.plateSize);
+  const lbsPerFt = plate ? plate.lbsPerFt : 0;
+  const pQty = toNum(row.plateQty) || 0;
+  const pLen = toNum(row.plateLengthFt) || 0;
+  const totalLbs = row.wtOverride != null ? toNum(row.wtOverride) : Math.round(pQty * lbsPerFt * pLen * 100) / 100;
+  const totalTon = totalLbs / 2000;
+  const calcFabPerPc = (toNum(row.setup) + toNum(row.cut) + toNum(row.drill) + toNum(row.feed) + toNum(row.weld) + toNum(row.grind) + toNum(row.paint)) / 60;
+  const fabPerPc = row.fabPerPcOverride != null ? toNum(row.fabPerPcOverride) : calcFabPerPc;
+  const totFab = fabPerPc * (toNum(row.fabCrew) || 1);
+  const calcInstPerPc = (toNum(row.unload) + toNum(row.rig) + toNum(row.fit) + toNum(row.bolt) + toNum(row.touchUp)) / 60;
+  const instPerPc = row.instPerPcOverride != null ? toNum(row.instPerPcOverride) : calcInstPerPc;
+  const totInst = instPerPc * (toNum(row.instCrew) || 1);
+  const matCost = totalLbs * steelRate;
+  const fabCost = totFab * fabRate;
+  const instCost = totInst * installRate;
+  const rowTotal = matCost + fabCost + instCost;
+  const set = (field) => (e) => { onUpdate(row.id, { [field]: e.target.value }); };
+  const mcSel = 'w-full bg-steel-900 border border-blue-500/30 rounded px-1 py-1 text-sm text-white focus:outline-none focus:ring-1 focus:ring-blue-500/50';
+  const mcIn = 'w-full bg-steel-900 border border-steel-600 rounded px-1 py-1 text-sm text-white text-right font-mono focus:outline-none focus:ring-1 focus:ring-blue-500/50';
+  const mcRo = 'text-sm text-right font-mono';
+  return (
+    <tr className="border-b border-steel-800/50 hover:bg-steel-800/30 transition-colors">
+      <td className="px-1 py-1 text-center text-xs text-steel-500 font-mono w-8">{index + 1}</td>
+      <td className="px-1 py-1"><EditCell value={row.mark} onChange={set('mark')} /></td>
+      <td className="px-1 py-1"><EditCell value={row.dwgRef} onChange={set('dwgRef')} placeholder="S-101" /></td>
+      <td className="px-1 py-1"><EditCell value={row.notes} onChange={set('notes')} placeholder="Location" /></td>
+      <td className="px-1 py-1" style={{minWidth:'160px'}}>
+        <select value={row.plateSize || ''} onChange={e => onUpdate(row.id, { plateSize: e.target.value })} className={mcSel}>
+          <option value="" style={{backgroundColor:'#0c1222',color:'white'}}>-- Select Plate --</option>
+          {PLATE_LIBRARY.map(p => <option key={p.id} value={p.id} style={{backgroundColor:'#0c1222',color:'white'}}>{p.label}</option>)}
+        </select>
+      </td>
+      <td className="px-1 py-1 text-sm text-right text-steel-400 font-mono" style={{minWidth:'70px'}}>{lbsPerFt > 0 ? fmtNum(lbsPerFt, 2) : '—'}</td>
+      <td className="px-1 py-1"><input type="text" inputMode="decimal" value={row.plateQty} onChange={e => onUpdate(row.id, { plateQty: e.target.value })} className={mcIn} style={{width:'50px'}} /></td>
+      <td className="px-1 py-1"><input type="text" inputMode="decimal" value={row.plateLengthFt} onChange={e => onUpdate(row.id, { plateLengthFt: e.target.value })} className={mcIn} style={{width:'60px'}} /></td>
+      <td className="px-1 py-1"><input type="text" inputMode="decimal" value={row.wtOverride != null ? row.wtOverride : ''} onChange={e => onUpdate(row.id, { wtOverride: e.target.value === '' ? null : e.target.value })} placeholder={fmtNum(pQty * lbsPerFt * pLen, 1)} className={mcIn + ' placeholder:text-steel-500'} style={{width:'70px'}} title="Override total weight (leave blank for auto)" /></td>
+      <td className="px-1 py-1 text-sm text-right text-white font-mono font-bold">{fmtNum(totalLbs, 1)}</td>
+      <td className="px-1 py-1 text-sm text-right text-steel-400 font-mono">{fmtNum(totalTon, 3)}</td>
+      <td className="px-1 py-1"><input type="text" inputMode="decimal" value={row.basePlLb} onChange={set('basePlLb')} className={mcIn} style={{width:'55px'}} /></td>
+      <td className="px-1 py-1"><input type="text" inputMode="decimal" value={row.anchorsPc} onChange={set('anchorsPc')} className={mcIn} style={{width:'55px'}} /></td>
+      <td className="px-1 py-1"><input type="text" inputMode="decimal" value={row.setup} onChange={set('setup')} className={mcIn} style={{width:'45px'}} /></td>
+      <td className="px-1 py-1"><input type="text" inputMode="decimal" value={row.cut} onChange={set('cut')} className={mcIn} style={{width:'45px'}} /></td>
+      <td className="px-1 py-1"><input type="text" inputMode="decimal" value={row.drill} onChange={set('drill')} className={mcIn} style={{width:'45px'}} /></td>
+      <td className="px-1 py-1"><input type="text" inputMode="decimal" value={row.feed} onChange={set('feed')} className={mcIn} style={{width:'45px'}} /></td>
+      <td className="px-1 py-1"><input type="text" inputMode="decimal" value={row.weld} onChange={set('weld')} className={mcIn} style={{width:'45px'}} /></td>
+      <td className="px-1 py-1"><input type="text" inputMode="decimal" value={row.grind} onChange={set('grind')} className={mcIn} style={{width:'45px'}} /></td>
+      <td className="px-1 py-1"><input type="text" inputMode="decimal" value={row.paint} onChange={set('paint')} className={mcIn} style={{width:'45px'}} /></td>
+      <td className={'px-1 py-1 ' + mcRo + (row.fabPerPcOverride != null ? ' text-amber-400' : ' text-green-400')}>{fmtNum(fabPerPc, 2)}</td>
+      <td className={'px-1 py-1 ' + mcRo + ' text-white'}>{fmtNum(totFab, 2)}</td>
+      <td className="px-1 py-1"><input type="text" inputMode="decimal" value={row.fabCrew || 1} onChange={e => onUpdate(row.id, { fabCrew: e.target.value })} className={mcIn} style={{width:'40px'}} /></td>
+      <td className="px-1 py-1"><input type="text" inputMode="decimal" value={row.unload} onChange={set('unload')} className={mcIn} style={{width:'45px'}} /></td>
+      <td className="px-1 py-1"><input type="text" inputMode="decimal" value={row.rig} onChange={set('rig')} className={mcIn} style={{width:'45px'}} /></td>
+      <td className="px-1 py-1"><input type="text" inputMode="decimal" value={row.fit} onChange={set('fit')} className={mcIn} style={{width:'45px'}} /></td>
+      <td className="px-1 py-1"><input type="text" inputMode="decimal" value={row.bolt} onChange={set('bolt')} className={mcIn} style={{width:'45px'}} /></td>
+      <td className="px-1 py-1"><input type="text" inputMode="decimal" value={row.touchUp} onChange={set('touchUp')} className={mcIn} style={{width:'45px'}} /></td>
+      <td className={'px-1 py-1 ' + mcRo + (row.instPerPcOverride != null ? ' text-amber-400' : ' text-cyan-400')}>{fmtNum(instPerPc, 2)}</td>
+      <td className={'px-1 py-1 ' + mcRo + ' text-white'}>{fmtNum(totInst, 2)}</td>
+      <td className="px-1 py-1"><input type="text" inputMode="decimal" value={row.instCrew || 2} onChange={e => onUpdate(row.id, { instCrew: e.target.value })} className={mcIn} style={{width:'40px'}} /></td>
+      <td className="px-1 py-1 text-sm text-right text-steel-300 font-mono">{fmtDollar(matCost)}</td>
+      <td className="px-1 py-1 text-sm text-right text-steel-300 font-mono">{fmtDollar(fabCost)}</td>
+      <td className="px-1 py-1 text-sm text-right text-steel-300 font-mono">{fmtDollar(instCost)}</td>
+      <td className="px-1 py-1 text-sm text-right text-white font-bold font-mono">{fmtDollar(rowTotal)}</td>
+      <td className="px-1 py-1 text-center"><button onClick={() => onDelete(row.id)} className="text-red-500 hover:text-red-400 text-xs">✕</button></td>
+    </tr>
+  );
+}
+
+
+/* ─── Moment Connection Table ─── */
+function MomentConnectionTable({ sectionRows, fabRate, installRate, steelRate, onUpdate, onDelete }) {
+  const mcColGroups = [
+    { label: 'Identification', cols: 3, color: 'bg-purple-800/60', border: 'border-purple-500' },
+    { label: 'Plate Selection & Weight', cols: 8, color: 'bg-orange-800/60', border: 'border-orange-500' },
+    { label: 'Connections', cols: 2, color: 'bg-red-800/60', border: 'border-red-500' },
+    { label: 'Fabrication Hours', cols: 10, color: 'bg-amber-800/60', border: 'border-amber-500' },
+    { label: 'Installation Hours', cols: 8, color: 'bg-cyan-800/60', border: 'border-cyan-500' },
+    { label: 'Cost Preview', cols: 4, color: 'bg-emerald-800/60', border: 'border-emerald-500' },
+  ];
+  const mcSubHeaders = [
+    'Mark','Dwg Ref','Location',
+    'Plate Size','Lbs/ft','Plate Qty','Length (ft)','Wt Override','Total (lb)','Total (ton)',
+    'Extra Pl (lb)','Bolts',
+    'Setup','Cut','Drill','Feed','Weld','Grind','Paint','Fab/Pc (h)','Tot Fab (h)','Fab Crew',
+    'Unload','Rig','Fit','Bolt','Touch-up','Inst/Pc (h)','Tot Inst (h)','Inst Crew',
+    'Material','Fab $','Install $','Total',
+  ];
+  let tW = 0, tFab = 0, tInst = 0, tMat = 0, tFabC = 0, tInstC = 0, tTotal = 0;
+  sectionRows.forEach(row => {
+    const plate = PLATE_LIBRARY.find(p => p.id === row.plateSize);
+    const lbsPerFt = plate ? plate.lbsPerFt : 0;
+    const pQty = toNum(row.plateQty) || 0;
+    const pLen = toNum(row.plateLengthFt) || 0;
+    const totalLbs = row.wtOverride != null ? toNum(row.wtOverride) : pQty * lbsPerFt * pLen;
+    const calcFabPc = (toNum(row.setup)+toNum(row.cut)+toNum(row.drill)+toNum(row.feed)+toNum(row.weld)+toNum(row.grind)+toNum(row.paint))/60;
+    const fabPc = row.fabPerPcOverride != null ? toNum(row.fabPerPcOverride) : calcFabPc;
+    const totFab = fabPc * (toNum(row.fabCrew)||1);
+    const calcInstPc = (toNum(row.unload)+toNum(row.rig)+toNum(row.fit)+toNum(row.bolt)+toNum(row.touchUp))/60;
+    const instPc = row.instPerPcOverride != null ? toNum(row.instPerPcOverride) : calcInstPc;
+    const totInstH = instPc * (toNum(row.instCrew)||1);
+    tW += totalLbs; tFab += totFab; tInst += totInstH;
+    tMat += totalLbs * steelRate; tFabC += totFab * fabRate; tInstC += totInstH * installRate;
+  });
+  tTotal = tMat + tFabC + tInstC;
+  return (
+    <div className="overflow-x-auto border border-steel-700 rounded-b-lg bg-steel-900/50">
+      <table className="w-full text-left whitespace-nowrap" style={{minWidth:'2200px'}}>
+        <thead>
+          <tr>
+            <th className="w-8 bg-steel-800"></th>
+            {mcColGroups.map((g,i) => (
+              <th key={i} colSpan={g.cols} className={'text-center text-[10px] font-bold uppercase tracking-wider py-1.5 border-b-2 ' + g.color + ' ' + g.border + ' text-white'}>{g.label}</th>
+            ))}
+            <th className="w-8 bg-steel-800"></th>
+          </tr>
+          <tr className="bg-steel-800/80 text-[10px] text-steel-300 uppercase">
+            <th className="px-1 py-1.5 text-center">#</th>
+            {mcSubHeaders.map((h,i) => <th key={i} className="px-1 py-1.5 text-center">{h}</th>)}
+            <th className="px-1 py-1.5"></th>
+          </tr>
+        </thead>
+        <tbody>
+          {sectionRows.map((row, i) => (
+            <MomentConnectionRow key={row.id} row={row} index={i} fabRate={fabRate} installRate={installRate} steelRate={steelRate} onUpdate={onUpdate} onDelete={onDelete} />
+          ))}
+          <tr className="bg-steel-800/80 font-bold text-sm border-t-2 border-steel-600">
+            <td colSpan={9} className="px-2 py-2 text-right text-steel-300 uppercase text-xs">Section Totals</td>
+            <td className="px-1 py-1 text-right text-white font-mono">{fmtNum(tW, 0)}</td>
+            <td className="px-1 py-1 text-right text-white font-mono">{fmtNum(tW/2000, 3)}</td>
+            <td colSpan={12}></td>
+            <td className="px-1 py-1 text-right text-white font-mono">{fmtNum(tFab, 1)}</td>
+            <td></td>
+            <td colSpan={5}></td>
+            <td className="px-1 py-1 text-right text-white font-mono">{fmtNum(tInst, 1)}</td>
+            <td></td>
+            <td className="px-1 py-1 text-right text-white font-mono">{fmtDollar(tMat)}</td>
+            <td className="px-1 py-1 text-right text-white font-mono">{fmtDollar(tFabC)}</td>
+            <td className="px-1 py-1 text-right text-white font-mono">{fmtDollar(tInstC)}</td>
+            <td className="px-1 py-1 text-right text-yellow-400 font-mono">{fmtDollar(tTotal)}</td>
+            <td></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
 function JoistReinfSyncTable({ fabRate, installRate }) {
   const { state } = useProject();
   const jrRows = state.joistReinf || [];
@@ -489,19 +661,27 @@ function SectionTotalsRow({ rows, fabRate, installRate }) {
 }
 
 /* ─── Calculate totals for a section ─── */
-function calcSectionTotals(rows, fabRate, installRate) {
+function calcSectionTotals(rows, fabRate, installRate, steelRate) {
   let totalPcs = 0, totalLbs = 0, totFab = 0, totInst = 0;
   rows.forEach(r => {
-    const lbs = toNum(r.qty) * toNum(r.lengthFt) * toNum(r.wtPerFt);
+    let lbs;
+    if (r.section === 'moment') {
+      const plate = PLATE_LIBRARY.find(p => p.id === r.plateSize);
+      const plbsft = plate ? plate.lbsPerFt : 0;
+      lbs = r.wtOverride != null ? toNum(r.wtOverride) : toNum(r.plateQty) * plbsft * toNum(r.plateLengthFt);
+      totalPcs += 1;
+    } else {
+      lbs = toNum(r.qty) * toNum(r.lengthFt) * toNum(r.wtPerFt);
+      totalPcs += toNum(r.qty);
+    }
     const fabPc = getEffectiveFabPerPc(r);
     const instPc = getEffectiveInstPerPc(r);
-    totalPcs += toNum(r.qty);
     totalLbs += lbs;
-    totFab += fabPc * toNum(r.qty);
-    totInst += instPc * toNum(r.qty);
+    totFab += r.section === 'moment' ? fabPc * (toNum(r.fabCrew)||1) : fabPc * toNum(r.qty);
+    totInst += r.section === 'moment' ? instPc * (toNum(r.instCrew)||1) : instPc * toNum(r.qty);
   });
   const totalTons = totalLbs / 2000;
-  const matCost = totalLbs * 1.15;
+  const matCost = totalLbs * (steelRate || 1.15);
   const fabCost = totFab * fabRate;
   const instCost = totInst * installRate;
   return {
@@ -519,6 +699,7 @@ function StructuralTakeoffInner() {
   const { state, dispatch } = useProject();
   const fabRate = toNum(state.rates?.labourRates?.fabRate ?? 50);
   const installRate = toNum(state.rates?.labourRates?.installRate ?? 55);
+  const steelRate = (state.rates?.materialRates || []).find(m => m.item === 'Structural steel')?.rate ?? 1.00;
 
   /* ─── Row state: all rows stored flat, each has a .section field ─── */
   const [rows, setRows] = useState(() => {
@@ -647,7 +828,7 @@ function StructuralTakeoffInner() {
       <div className="space-y-1">
         {SECTIONS.map(sec => {
           const sectionRows = rows.filter(r => r.section === sec.id);
-          const sectionTotals = calcSectionTotals(sectionRows, fabRate, installRate);
+          const sectionTotals = calcSectionTotals(sectionRows, fabRate, installRate, steelRate);
           const isOpen = openSections[sec.id];
 
           return (
@@ -661,7 +842,7 @@ function StructuralTakeoffInner() {
                 onAddRow={() => addRow(sec.id)}
               />
 
-              {isOpen && (sec.id === 'joistReinf' ? <JoistReinfSyncTable fabRate={fabRate} installRate={installRate} /> : (
+              {isOpen && (sec.id === 'moment' ? <MomentConnectionTable sectionRows={sectionRows} fabRate={fabRate} installRate={installRate} steelRate={steelRate} onUpdate={updateRow} onDelete={deleteRow} /> : sec.id === 'joistReinf' ? <JoistReinfSyncTable fabRate={fabRate} installRate={installRate} /> : (
                 <div className="overflow-x-auto border border-steel-700 rounded-b-lg bg-steel-900/50">
                   <table className="w-full text-left whitespace-nowrap" style={{ minWidth: '2400px' }}>
                     {/* Column group headers */}
