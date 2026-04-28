@@ -5,12 +5,12 @@ import {
 } from 'lucide-react'
 import { useProject } from '../context/ProjectContext'
 
-/* ââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
-   LADDER â Parametric Calculator with OHSA Compliance
+/* ────────────────────────────────────────────────────────────────────────────
+   LADDER — Parametric Calculator with OHSA Compliance
    Mirrors Estimator Pro v5.1 Excel "Ladder" tab (85 rows, 10 sections)
-   ââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ */
+   ──────────────────────────────────────────────────────────────────────────── */
 
-// âââ Helpers âââ
+// ─── Helpers ───
 const fmt = (v) =>
   typeof v === 'number' && !isNaN(v)
     ? v.toLocaleString('en-CA', { style: 'currency', currency: 'CAD' })
@@ -25,7 +25,7 @@ const toNum = (v) => {
   return isNaN(n) ? 0 : n
 }
 
-// âââ Section weights (lb/ft) â from Excel Lookup tab âââ
+// ─── Section weights (lb/ft) — from Excel Lookup tab ───
 const SECTION_WEIGHTS = {
   'FB 38x6': 1.79, 'FB 51x6': 2.4, 'FB 51x10': 4.0, 'FB 64x10': 5.04,
   'FB 64x13': 6.55, 'FB 76x10': 5.97, 'FB 76x13': 7.77,
@@ -74,7 +74,7 @@ const DEFAULT_INST_BREAKDOWN = {
   descentLadder:   { unload: 6, rig: 12, fit: 9, bolt: 9, touchup: 3, qc: 2 },
 }
 
-// Component-key â display label
+// Component-key → display label
 const COMPONENT_LABELS = {
   sideRails: 'Side rails',
   rungs: 'Rungs',
@@ -127,7 +127,7 @@ function computeBOM(s, g) {
   })
 }
 
-// âââ Tiny presentational helpers âââ
+// ─── Tiny presentational helpers ───
 function NumInput({ value, onChange, step = 'any', className = '', disabled = false }) {
   return (
     <input
@@ -187,7 +187,7 @@ function SectionCard({ icon: Icon, title, subtitle, children }) {
   )
 }
 
-// âââ Ladder type sketches (inline SVG) âââ
+// ─── Ladder type sketches (inline SVG) ───
 function LadderSketch({ type, config, cageRequired }) {
   // Simple, schematic SVG sketches showing the geometry of each ladder type
   const stroke = '#475569'      // steel-600
@@ -219,7 +219,7 @@ function LadderSketch({ type, config, cageRequired }) {
 
   let body = null
   if (type === 'Ship Ladder') {
-    // Inclined ladder (~70Â°) with treads (steps) and handrails on both sides
+    // Inclined ladder (~70°) with treads (steps) and handrails on both sides
     body = (
       <g>
         {/* Floor */}
@@ -333,18 +333,18 @@ function LadderSketch({ type, config, cageRequired }) {
       </svg>
       <p className="mt-2 text-center text-xs font-semibold text-steel-300">
         {type}
-        {config !== 'Standard' && <span className="text-steel-400"> Â· {config}</span>}
-        {cageRequired && <span className="text-fire-400"> Â· caged</span>}
+        {config !== 'Standard' && <span className="text-steel-400"> · {config}</span>}
+        {cageRequired && <span className="text-fire-400"> · caged</span>}
       </p>
     </div>
   )
 }
 
-/* ââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ */
+/* ──────────────────────────────────────────────────────────────────────────── */
 export default function Ladder() {
   const { state, dispatch } = useProject()
 
-  // Multi-ladder mode â no auto-add. User clicks "Add Ladder" to begin.
+  // Multi-ladder mode — no auto-add. User clicks "Add Ladder" to begin.
 
   // Use empty object as fallback so all hooks below run unconditionally (React rules-of-hooks)
   const [activeIdx, setActiveIdx] = useState(0)
@@ -396,7 +396,7 @@ export default function Ladder() {
     set('instBreakdown', next)
   }
 
-  // ââ OHSA limits from context ââ
+  // ── OHSA limits from context ──
   const codeLimits = state.rates?.codeLimits || []
   const limitOf = (item, fallback) => {
     const found = codeLimits.find((c) => c.item === item)
@@ -405,7 +405,7 @@ export default function Ladder() {
   const rungSpacingDefault = limitOf('Rung spacing (ladder)', 12)
   const cageHeightThresholdM = limitOf('Cage required above', 5)
 
-  // ââ Geometry calculations ââ
+  // ── Geometry calculations ──
   const geom = useMemo(() => {
     const heightFt = toNum(s.heightFt)
     const widthIn = toNum(s.widthIn)
@@ -431,7 +431,7 @@ export default function Ladder() {
     rungSpacingDefault, cageHeightThresholdM,
   ])
 
-  // ââ OHSA compliance ââ
+  // ── OHSA compliance ──
   const compliance = [
     {
       label: `Rung spacing = ${rungSpacingDefault}"`,
@@ -449,14 +449,14 @@ export default function Ladder() {
       severity: 'info',
     },
     {
-      label: 'Extension above â¥ 3.5 ft',
+      label: 'Extension above ≥ 3.5 ft',
       requirement: 'OHSA: 3.5ft min above landing',
       value: `${fmtNum(geom.extensionFt, 1)} ft`,
       ok: geom.extensionFt >= 3.5,
       severity: 'fail',
     },
     {
-      label: 'Wall offset â¥ 7"',
+      label: 'Wall offset ≥ 7"',
       requirement: 'OHSA: 7" min rung to wall',
       value: `${fmtNum(geom.offsetIn, 1)}"`,
       ok: geom.offsetIn >= 7,
@@ -464,7 +464,7 @@ export default function Ladder() {
     },
   ]
 
-  // ââ Material BOM ââ
+  // ── Material BOM ──
   const bom = useMemo(() => computeBOM(s, geom), [
     s.sideRail, s.config, s.counterbalance,
     geom.heightFt, geom.widthIn, geom.extensionFt, geom.numRungs, geom.numWallBrackets,
@@ -484,10 +484,10 @@ export default function Ladder() {
   const totalMaterialCost = totalMaterialCostBase * (1 + wasteAllowance)
   const totalHoles = bom.reduce((sum, b) => sum + b.holes, 0)
 
-  // ââ Galvanizing ââ
+  // ── Galvanizing ──
   const galvCost = s.finish === 'Galvanized' ? totalLbs * galvRate : 0
 
-  // ââ Labour ââ
+  // ── Labour ──
   const fabRate = state.rates?.labourRates?.fabRate ?? 50
   const installRate = state.rates?.labourRates?.installRate ?? 55
   const defFabCrew = state.rates?.labourRates?.fabCrew ?? 2
@@ -542,7 +542,7 @@ export default function Ladder() {
   const instLabourCost = instHrsFinal * installRate
   const labourTotal = fabLabourCost + instLabourCost
 
-  // ââ Grand Total ââ
+  // ── Grand Total ──
   const grandTotal = totalMaterialCost + galvCost + labourTotal
 
   // Dispatch computed totals to state for Misc Metals aggregation
@@ -550,7 +550,7 @@ export default function Ladder() {
     dispatch({ type: 'SET_LADDER_COMPUTED', payload: { totalLbs, materialCost: totalMaterialCost, fabCost: fabLabourCost, instCost: instLabourCost, labourTotal, grandTotal, fabHrs: fabHrsFinal, instHrs: instHrsFinal } })
   }, [dispatch, totalLbs, totalMaterialCost, labourTotal, grandTotal, fabHrsFinal, instHrsFinal])
 
-  // ââ Benchmarks ââ
+  // ── Benchmarks ──
   const dPerLb = totalLbs > 0 ? grandTotal / totalLbs : 0
   const dPerFt = geom.heightFt > 0 ? grandTotal / geom.heightFt : 0
   const dPerRung = geom.numRungs > 0 ? grandTotal / geom.numRungs : 0
@@ -625,11 +625,11 @@ export default function Ladder() {
                 <div key={l.id} className={`border rounded-lg overflow-hidden transition ${isActive ? 'border-fire-500/60 bg-fire-950/20' : 'border-steel-700 bg-steel-900/40 hover:bg-steel-800/40'}`}>
                   <div className="flex items-center gap-3 px-3 py-2.5">
                     <button type="button" onClick={() => setActiveIdx(i)} className="flex-1 flex items-center gap-3 text-left">
-                      <span className={`text-steel-400 transition-transform ${isActive ? 'rotate-90' : ''}`}>â¶</span>
+                      <span className={`text-steel-400 transition-transform ${isActive ? 'rotate-90' : ''}`}>▶</span>
                       <span className="font-mono text-xs text-steel-500 w-6 text-right">{i + 1}</span>
                       <span className="font-bold text-white text-sm">{l.mark || `L-${i+1}`}</span>
                       <span className="text-fire-400 text-xs">{l.type || 'Roof Access'}</span>
-                      <span className="text-steel-400 text-xs">{l.heightFt || 14}ft Â· {l.config || 'Standard'}</span>
+                      <span className="text-steel-400 text-xs">{l.heightFt || 14}ft · {l.config || 'Standard'}</span>
                       <span className="ml-auto flex items-center gap-3 font-mono text-xs">
                         <span className="text-steel-400 hidden md:inline">{tot.weight ? `${Number(tot.weight).toFixed(0)} lb` : ""}</span>
                         <span className="text-blue-300">{tot.materialCost ? `M ${Number(tot.materialCost).toFixed(0)}` : "M $0"}</span>
@@ -637,7 +637,7 @@ export default function Ladder() {
                         <span className="text-cyan-300">{tot.instCost ? `I ${Number(tot.instCost).toFixed(0)}` : "I $0"}</span>
                         <span className="text-green-400 font-bold text-sm">{tot.total ? `${Number(tot.total).toFixed(0)}` : "$0"}</span>
                       </span>
-                      {l.committedAt && <span className="text-green-400 text-xs">â</span>}
+                      {l.committedAt && <span className="text-green-400 text-xs">✓</span>}
                     </button>
                     <button
                       type="button"
@@ -651,7 +651,7 @@ export default function Ladder() {
                       title="Delete"
                       className="text-steel-400 hover:text-red-400 transition px-1"
                     >
-                      â
+                      ✕
                     </button>
                   </div>
                 </div>
@@ -663,7 +663,7 @@ export default function Ladder() {
         {(state.ladder?.length || 0) === 0 && (
           <div className="mb-6 rounded-xl border border-dashed border-steel-600 bg-steel-900/40 p-10 text-center">
             <Calculator className="mx-auto mb-3 h-10 w-10 text-steel-500" />
-            <p className="text-steel-300 mb-4">No ladders yet â click "+ Add Ladder" above to start.</p>
+            <p className="text-steel-300 mb-4">No ladders yet — click "+ Add Ladder" above to start.</p>
             <button
               type="button"
               onClick={() => { dispatch({ type: 'ADD_LADDER_ROW' }); setActiveIdx(0) }}
@@ -675,8 +675,8 @@ export default function Ladder() {
         )}
 
         {(state.ladder?.length || 0) > 0 && (<>
-        {/* âââ 1. SETUP âââ */}
-        <SectionCard icon={Settings2} title="Setup" subtitle="Type, finish, side rail & mark â sketch on the right shows the selected configuration">
+        {/* ─── 1. SETUP ─── */}
+        <SectionCard icon={Settings2} title="Setup" subtitle="Type, finish, side rail & mark — sketch on the right shows the selected configuration">
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
             {/* Selectors take 2/3 */}
             <div className="lg:col-span-2 space-y-4">
@@ -715,8 +715,8 @@ export default function Ladder() {
           </div>
         </SectionCard>
 
-        {/* âââ 2. GEOMETRY âââ */}
-        <SectionCard icon={ListTree} title="Ladder Geometry" subtitle="Fill blue cells â rungs & wall brackets auto-calc">
+        {/* ─── 2. GEOMETRY ─── */}
+        <SectionCard icon={ListTree} title="Ladder Geometry" subtitle="Fill blue cells — rungs & wall brackets auto-calc">
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
             <div>
               <FieldLabel>Height (ft)</FieldLabel>
@@ -769,7 +769,7 @@ export default function Ladder() {
           </div>
         </SectionCard>
 
-        {/* âââ 3. OHSA COMPLIANCE âââ */}
+        {/* ─── 3. OHSA COMPLIANCE ─── */}
         <SectionCard icon={ShieldCheck} title="OHSA Compliance">
           <div className="space-y-2">
             {compliance.map((c, i) => {
@@ -811,8 +811,8 @@ export default function Ladder() {
           </div>
         </SectionCard>
 
-        {/* âââ 4. MATERIAL BOM âââ */}
-        <SectionCard icon={Layers} title="Material BOM" subtitle="12 components â cage / platform / counterbalance auto-toggled">
+        {/* ─── 4. MATERIAL BOM ─── */}
+        <SectionCard icon={Layers} title="Material BOM" subtitle="12 components — cage / platform / counterbalance auto-toggled">
           <div className="overflow-x-auto">
             <table className="w-full text-xs">
               <thead>
@@ -862,8 +862,8 @@ export default function Ladder() {
           </div>
         </SectionCard>
 
-        {/* âââ 5. LABOUR âââ */}
-        <SectionCard icon={Wrench} title="Labour" subtitle="Detailed (sum of fab/install breakdowns) or Simple (hrs/lb). Complexity baked: 1.20Ã fab, 1.30Ã install. Crew = # people Ã hrs/pc">
+        {/* ─── 5. LABOUR ─── */}
+        <SectionCard icon={Wrench} title="Labour" subtitle="Detailed (sum of fab/install breakdowns) or Simple (hrs/lb). Complexity baked: 1.20× fab, 1.30× install. Crew = # people × hrs/pc">
           <div className="mb-4 grid grid-cols-1 gap-4 sm:grid-cols-3">
             <div>
               <FieldLabel>Method</FieldLabel>
@@ -891,7 +891,7 @@ export default function Ladder() {
               </thead>
               <tbody className="divide-y divide-silver-100">
                 <tr className="even:bg-steel-900/30">
-                  <td className="px-4 py-2.5 font-medium text-steel-300">Shop fabrication (crew {fabCrew} Ã{fabComplexity.toFixed(2)})</td>
+                  <td className="px-4 py-2.5 font-medium text-steel-300">Shop fabrication (crew {fabCrew} ×{fabComplexity.toFixed(2)})</td>
                   <td className="px-4 py-2.5 text-right font-mono text-steel-400">
                     {fmtNum(s.method === 'Detailed' ? fabHrsDetailed : fabHrsSimple, 1)}
                   </td>
@@ -900,7 +900,7 @@ export default function Ladder() {
                   <td className="px-4 py-2.5 text-right font-mono font-semibold text-white">{fmt(fabLabourCost)}</td>
                 </tr>
                 <tr className="even:bg-steel-900/30">
-                  <td className="px-4 py-2.5 font-medium text-steel-300">Field install (crew {instCrew} Ã{instComplexity.toFixed(2)})</td>
+                  <td className="px-4 py-2.5 font-medium text-steel-300">Field install (crew {instCrew} ×{instComplexity.toFixed(2)})</td>
                   <td className="px-4 py-2.5 text-right font-mono text-steel-400">
                     {fmtNum(s.method === 'Detailed' ? instHrsDetailed : instHrsSimple, 1)}
                   </td>
@@ -921,7 +921,7 @@ export default function Ladder() {
           </div>
         </SectionCard>
 
-        {/* âââ 6. GRAND TOTAL âââ */}
+        {/* ─── 6. GRAND TOTAL ─── */}
         <SectionCard icon={Weight} title="Ladder Grand Total">
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
@@ -951,7 +951,7 @@ export default function Ladder() {
           </div>
         </SectionCard>
 
-        {/* âââ 7. BENCHMARKS âââ */}
+        {/* ─── 7. BENCHMARKS ─── */}
         <SectionCard icon={BarChart3} title="Benchmarks" subtitle="Sanity-check the bid against industry ranges">
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
             {[
@@ -974,7 +974,7 @@ export default function Ladder() {
                 >
                   <p className="text-xs font-semibold uppercase tracking-wide text-steel-400">{b.label}</p>
                   <p className="mt-1 text-2xl font-bold font-mono text-white">{fmt(b.value)}</p>
-                  <p className="mt-1 text-xs text-steel-400">Range: {fmt(b.lo)} â {fmt(b.hi)}</p>
+                  <p className="mt-1 text-xs text-steel-400">Range: {fmt(b.lo)} – {fmt(b.hi)}</p>
                   <span
                     className={`mt-2 inline-block rounded-full px-2.5 py-0.5 text-xs font-bold ${
                       ok ? 'bg-green-200 text-green-800' : low ? 'bg-amber-200 text-amber-800' : 'bg-red-200 text-red-800'
@@ -988,7 +988,7 @@ export default function Ladder() {
           </div>
         </SectionCard>
 
-        {/* âââ 8. FAB TIME BREAKDOWN âââ */}
+        {/* ─── 8. FAB TIME BREAKDOWN ─── */}
         <SectionCard icon={Wrench} title="Fab Time Breakdown" subtitle="Hours per piece by activity (input in MINUTES, blue = editable)">
           <details>
             <summary className="cursor-pointer select-none text-sm font-semibold text-fire-400 hover:text-fire-300">
@@ -1041,7 +1041,7 @@ export default function Ladder() {
           </details>
         </SectionCard>
 
-        {/* âââ 9. INSTALL TIME BREAKDOWN âââ */}
+        {/* ─── 9. INSTALL TIME BREAKDOWN ─── */}
         <SectionCard icon={Hammer} title="Install Time Breakdown" subtitle="Hours per piece by activity (input in MINUTES, blue = editable)">
           <details>
             <summary className="cursor-pointer select-none text-sm font-semibold text-fire-400 hover:text-fire-300">
@@ -1097,7 +1097,7 @@ export default function Ladder() {
         {/* Grand total bar */}
         <div className="mt-6 bg-steel-800/80 border border-steel-600 rounded-lg p-4">
           <div className="flex items-center justify-between flex-wrap gap-3">
-            <span className="text-lg font-bold text-white uppercase tracking-wider">Grand Total â All Ladders</span>
+            <span className="text-lg font-bold text-white uppercase tracking-wider">Grand Total — All Ladders</span>
             <div className="flex gap-4 text-sm font-mono flex-wrap items-center">
               <span className="text-steel-300">{state.ladder?.length || 0} ladders</span>
               <span className="text-steel-300">{(state.ladder?.reduce((sum, l) => sum + Number(l.totalsCommit?.weight || 0), 0)).toFixed(0) || 0} lb</span>
@@ -1112,7 +1112,7 @@ export default function Ladder() {
 
         {/* Footer */}
         <div className="mt-10 border-t border-steel-700 pt-6 text-center">
-          <p className="text-xs text-steel-500">Triple Weld Inc. Â· Steel Estimator Pro Â· Ladder v2 (Excel v5.1 match)</p>
+          <p className="text-xs text-steel-500">Triple Weld Inc. · Steel Estimator Pro · Ladder v2 (Excel v5.1 match)</p>
         </div>
       </div>
     </div>
