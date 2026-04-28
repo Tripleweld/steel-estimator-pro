@@ -492,7 +492,7 @@ export default function Ladder() {
 
   // ── Material BOM ──
   const bom = useMemo(() => computeBOM(s, geom), [
-    s.sideRail, s.config, s.counterbalance,
+    s.sideRail, s.config, s.counterbalance, s.bomToggles, s.bomCustom,
     geom.heightFt, geom.widthIn, geom.extensionFt, geom.numRungs, geom.numWallBrackets,
     geom.cageRequired, geom.parapetFt, geom.platformWidthFt, geom.platformDepthFt,
   ])
