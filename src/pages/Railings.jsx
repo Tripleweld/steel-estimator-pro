@@ -466,9 +466,20 @@ function RailingCard({ row, idx, calc, fabRate, installRate, onUpdate, onDelete,
           placeholder="Location (e.g. Mezzanine)"
           className="flex-1 min-w-[140px] bg-blue-500/5 border border-blue-500/30 rounded px-2 py-0.5 text-xs text-white focus:outline-none"
         />
-        <span className="text-[11px] text-steel-400 font-mono whitespace-nowrap">
-          {fmtNum(toNum(row.lengthFt), 1)} lnft · {fmtNum(calc.totalLbs)} lb · {fmtNum(calc.totFab, 1)}h fab · {fmtNum(calc.totInst, 1)}h inst
-        </span>
+        <div className="flex items-center gap-3 text-xs font-mono whitespace-nowrap">
+          <div className="text-right">
+            <div className="text-steel-500 text-[10px] uppercase tracking-wider">Material</div>
+            <div className="text-steel-200">${Math.round(calc.matCost || 0).toLocaleString()}</div>
+          </div>
+          <div className="text-right">
+            <div className="text-steel-500 text-[10px] uppercase tracking-wider">Fab</div>
+            <div className="text-steel-200">${Math.round(calc.fabCost || 0).toLocaleString()}</div>
+          </div>
+          <div className="text-right">
+            <div className="text-steel-500 text-[10px] uppercase tracking-wider">Install</div>
+            <div className="text-steel-200">${Math.round((calc.grandTotal || 0) - (calc.matCost || 0) - (calc.fabCost || 0)).toLocaleString()}</div>
+          </div>
+        </div>
         <span className={`text-sm font-bold font-mono ${allOk ? 'text-green-400' : 'text-amber-400'}`}>
           {fmtDollar(calc.grandTotal)}
         </span>
