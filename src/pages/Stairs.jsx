@@ -284,6 +284,17 @@ export default function Stairs() {
   const safeIdx = Math.min(Math.max(activeIdx, 0), Math.max(stairsArr.length - 1, 0))
   const stairsId = stairsArr[safeIdx]?.id
   const legacy = stairsArr[safeIdx] || {}
+  // Aggregate totals across ALL stairs
+  const grandTotals = useMemo(() => {
+    return stairsArr.reduce((acc, st) => {
+      const tc = st.totalsCommit || {};
+      acc.material += Number(tc.material) || 0;
+      acc.fab += Number(tc.fab) || 0;
+      acc.install += Number(tc.install) || 0;
+      acc.total += Number(tc.total) || 0;
+      return acc;
+    }, { material: 0, fab: 0, install: 0, total: 0 });
+  }, [stairsArr])
 
   // Map legacy fields → new shape (backward-compatible)
   const legacyFinish =
@@ -640,6 +651,33 @@ export default function Stairs() {
                 </div>
               );
             })}
+          </div>
+        )}
+
+        {/* Grand Total panel — sum across all stairs */}
+        {stairsArr.length > 0 && (
+          <div className="mb-6 rounded-xl border border-fire-500/30 bg-fire-950/20 p-5">
+            <div className="text-xs font-bold uppercase tracking-wider text-fire-400 mb-3">
+              Grand Total — All Stairs ({stairsArr.length})
+            </div>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+              <div>
+                <div className="text-[10px] text-steel-400 uppercase tracking-wider">Total Material</div>
+                <div className="text-lg font-bold font-mono text-steel-100">${grandTotals.material.toLocaleString()}</div>
+              </div>
+              <div>
+                <div className="text-[10px] text-steel-400 uppercase tracking-wider">Total Fabrication</div>
+                <div className="text-lg font-bold font-mono text-steel-100">${grandTotals.fab.toLocaleString()}</div>
+              </div>
+              <div>
+                <div className="text-[10px] text-steel-400 uppercase tracking-wider">Total Install</div>
+                <div className="text-lg font-bold font-mono text-steel-100">${grandTotals.install.toLocaleString()}</div>
+              </div>
+              <div className="border-l border-fire-500/30 pl-4">
+                <div className="text-[10px] text-fire-400 uppercase tracking-wider font-bold">Grand Total</div>
+                <div className="text-2xl font-bold font-mono text-fire-400">${grandTotals.total.toLocaleString()}</div>
+              </div>
+            </div>
           </div>
         )}
 
