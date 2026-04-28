@@ -207,7 +207,7 @@ function NumInput({ value, onChange, step = 'any', className = '', disabled = fa
       disabled={disabled}
       value={value ?? ''}
       onChange={(e) => onChange(e.target.value)}
-      className={`w-full rounded-lg border border-silver-200 bg-silver-50 px-3 py-2 text-sm font-mono text-steel-800 outline-none transition focus:border-fire-500 focus:ring-1 focus:ring-fire-500 disabled:bg-silver-100 disabled:text-silver-400 ${className}`}
+      className={`w-full rounded-lg border border-steel-700/50 bg-steel-900/40 px-3 py-2 text-sm font-mono text-steel-100 outline-none transition focus:border-fire-500 focus:ring-1 focus:ring-fire-500 disabled:bg-steel-900/30 disabled:text-steel-500 ${className}`}
     />
   )
 }
@@ -218,7 +218,7 @@ function TextInput({ value, onChange, className = '' }) {
       type="text"
       value={value ?? ''}
       onChange={(e) => onChange(e.target.value)}
-      className={`w-full rounded-lg border border-silver-200 bg-silver-50 px-3 py-2 text-sm text-steel-800 outline-none transition focus:border-fire-500 focus:ring-1 focus:ring-fire-500 ${className}`}
+      className={`w-full rounded-lg border border-steel-700/50 bg-steel-900/40 px-3 py-2 text-sm text-steel-100 outline-none transition focus:border-fire-500 focus:ring-1 focus:ring-fire-500 ${className}`}
     />
   )
 }
@@ -228,7 +228,7 @@ function Select({ value, onChange, options, className = '' }) {
     <select
       value={value}
       onChange={(e) => onChange(e.target.value)}
-      className={`w-full rounded-lg border border-silver-200 bg-silver-50 px-3 py-2 text-sm text-steel-800 outline-none transition focus:border-fire-500 focus:ring-1 focus:ring-fire-500 ${className}`}
+      className={`w-full rounded-lg border border-steel-700/50 bg-steel-900/40 px-3 py-2 text-sm text-steel-100 outline-none transition focus:border-fire-500 focus:ring-1 focus:ring-fire-500 ${className}`}
     >
       {options.map((o) => (
         <option key={o} value={o}>{o}</option>
@@ -239,18 +239,18 @@ function Select({ value, onChange, options, className = '' }) {
 
 function FieldLabel({ children }) {
   return (
-    <label className="mb-1 block text-xs font-semibold text-steel-600">{children}</label>
+    <label className="mb-1 block text-xs font-semibold text-steel-400">{children}</label>
   )
 }
 
 function SectionCard({ icon: Icon, title, subtitle, children }) {
   return (
-    <div className="mb-6 rounded-xl border border-silver-200 bg-white p-5 shadow-sm">
+    <div className="mb-6 rounded-xl border border-steel-700/50 bg-steel-900/60 p-5 shadow-sm">
       <div className="mb-4 flex items-center gap-2">
         {Icon && <Icon className="h-5 w-5 text-fire-600" />}
         <div>
-          <h2 className="text-sm font-bold uppercase tracking-wider text-steel-800">{title}</h2>
-          {subtitle && <p className="text-xs text-silver-500">{subtitle}</p>}
+          <h2 className="text-sm font-bold uppercase tracking-wider text-steel-100">{title}</h2>
+          {subtitle && <p className="text-xs text-steel-400">{subtitle}</p>}
         </div>
       </div>
       {children}
@@ -260,7 +260,7 @@ function SectionCard({ icon: Icon, title, subtitle, children }) {
 
 function StatCard({ label, value, unit, highlight }) {
   return (
-    <div className={`rounded-lg p-4 ${highlight ? 'bg-fire-500 text-white' : 'bg-steel-100 text-steel-800'}`}>
+    <div className={`rounded-lg p-4 ${highlight ? 'bg-fire-500 text-white shadow-lg shadow-fire-500/20' : 'bg-steel-800/60 text-white'}`}>
       <p className="text-xs font-semibold uppercase tracking-wide opacity-70">{label}</p>
       <p className="mt-1 text-2xl font-bold font-mono">
         {value}
@@ -514,13 +514,13 @@ export default function Stairs() {
   const inRange = (v, lo, hi) => v >= lo && v <= hi
 
   return (
-    <div className="min-h-screen bg-silver-50">
+    <div className="min-h-screen bg-steel-950 text-white">
       <div className="accent-stripe" />
       <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
 
         {/* Header */}
         <div className="mb-8 flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-fire-500 text-white">
+          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-fire-500 text-white shadow-lg shadow-fire-500/20">
             <Calculator className="h-5 w-5" />
           </div>
           <div>
@@ -599,9 +599,9 @@ export default function Stairs() {
               <TextInput value={s.mark} onChange={(v) => set('mark', v)} />
             </div>
           </div>
-          <div className="mt-3 text-xs text-silver-500">
+          <div className="mt-3 text-xs text-steel-400">
             Complexity multiplier from preset:&nbsp;
-            <span className="font-mono font-semibold text-steel-700">{complexity.toFixed(2)}x</span>
+            <span className="font-mono font-semibold text-steel-200">{complexity.toFixed(2)}x</span>
           </div>
         </SectionCard>
 
@@ -675,25 +675,25 @@ export default function Stairs() {
               <div
                 key={i}
                 className={`flex items-start justify-between gap-3 rounded-lg border px-4 py-3 ${
-                  c.ok ? 'border-green-200 bg-green-50' : 'border-red-200 bg-red-50'
+                  c.ok ? 'border-green-500/30 bg-green-500/10' : 'border-red-500/30 bg-red-500/10'
                 }`}
               >
                 <div className="flex items-center gap-3">
                   {c.ok ? (
-                    <CheckCircle className="h-5 w-5 flex-shrink-0 text-green-600" />
+                    <CheckCircle className="h-5 w-5 flex-shrink-0 text-green-400" />
                   ) : (
-                    <AlertTriangle className="h-5 w-5 flex-shrink-0 text-red-600" />
+                    <AlertTriangle className="h-5 w-5 flex-shrink-0 text-red-400" />
                   )}
                   <div>
-                    <p className="text-sm font-semibold text-steel-800">{c.label}</p>
-                    <p className="text-xs text-silver-500">{c.requirement}</p>
+                    <p className="text-sm font-semibold text-steel-100">{c.label}</p>
+                    <p className="text-xs text-steel-400">{c.requirement}</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-3">
-                  <span className="font-mono text-sm text-steel-700">{c.value}</span>
+                  <span className="font-mono text-sm text-steel-200">{c.value}</span>
                   <span
                     className={`rounded-full px-2.5 py-0.5 text-xs font-bold ${
-                      c.ok ? 'bg-green-200 text-green-800' : 'bg-red-200 text-red-800'
+                      c.ok ? 'bg-green-500/20 text-green-300' : 'bg-red-500/20 text-red-300'
                     }`}
                   >
                     {c.ok ? 'OK' : 'FAIL'}
@@ -721,12 +721,12 @@ export default function Stairs() {
                   <th className="rounded-tr-lg px-3 py-2 text-right font-bold uppercase tracking-wider">Material $</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-silver-100">
+              <tbody className="divide-y divide-steel-700/40">
                 {bom.map((b) => (
-                  <tr key={b.key} className={`even:bg-steel-50 ${b.isDisabled ? 'opacity-50' : ''}`}>
-                    <td className="px-3 py-2 font-medium text-steel-700">
+                  <tr key={b.key} className={`even:bg-steel-800/30 ${b.isDisabled ? 'opacity-50' : ''}`}>
+                    <td className="px-3 py-2 font-medium text-steel-200">
                       <label className="flex items-center gap-2 cursor-pointer">
-                        <input type="checkbox" checked={!b.isDisabled} onChange={() => toggleBomItem(b.key)} className="h-3.5 w-3.5 rounded border-silver-300 text-fire-500 focus:ring-fire-400" />
+                        <input type="checkbox" checked={!b.isDisabled} onChange={() => toggleBomItem(b.key)} className="h-3.5 w-3.5 rounded border-steel-600 text-fire-500 focus:ring-fire-400" />
                         <span className={b.isDisabled ? 'line-through' : ''}>{b.label}</span>
                       </label>
                     </td>
@@ -734,7 +734,7 @@ export default function Stairs() {
                       <select
                         value={b.section}
                         onChange={(e) => setBomOverride(b.key, 'section', e.target.value === b.defaultSection ? '' : e.target.value)}
-                        className={`w-full rounded border px-1.5 py-1 text-xs font-mono outline-none focus:ring-1 focus:ring-fire-500 ${b.sectionOverridden ? 'bg-amber-50 border-amber-300 text-amber-900' : 'bg-silver-50 border-silver-200 text-steel-800'}`}
+                        className={`w-full rounded border px-1.5 py-1 text-xs font-mono outline-none focus:ring-1 focus:ring-fire-500 ${b.sectionOverridden ? 'bg-amber-50 border-amber-300 text-amber-900' : 'bg-steel-900/40 border-steel-700/50 text-steel-100'}`}
                       >
                         {!SECTION_OPTIONS.some((g) => g.items.includes(b.section)) && (
                           <option value={b.section}>{b.section}</option>
@@ -748,27 +748,27 @@ export default function Stairs() {
                         ))}
                       </select>
                     </td>
-                    <td className="px-3 py-2 text-right font-mono text-steel-600">{fmtNum(b.qty)}</td>
+                    <td className="px-3 py-2 text-right font-mono text-steel-400">{fmtNum(b.qty)}</td>
                     <td className="px-2 py-1" title={b.lenEaOverridden ? `Default: ${fmtNum(b.defaultLenEa, 2)}` : ''}>
                       <NumInput
                         value={b.lenEaOverridden ? b.lenEa : fmtNum(b.lenEa, 2)}
                         onChange={(v) => setBomOverride(b.key, 'lenEa', v === '' ? '' : v)}
-                        className={`!py-1 !text-xs text-right ${b.lenEaOverridden ? '!bg-amber-50 !border-amber-300 !text-amber-900' : ''}`}
+                        className={`!py-1 !text-xs text-right ${b.lenEaOverridden ? '!bg-amber-500/15 !border-amber-500/40 !text-amber-200' : ''}`}
                       />
                     </td>
-                    <td className="px-3 py-2 text-right font-mono text-steel-600">{fmtNum(b.totalLnft, 2)}</td>
-                    <td className="px-3 py-2 text-right font-mono text-steel-600">{fmtNum(b.lbPerFt, 2)}</td>
-                    <td className="px-3 py-2 text-right font-mono text-steel-600">{fmtNum(b.totalLbs, 1)}</td>
-                    <td className="px-3 py-2 text-right font-mono text-steel-600">{fmtNum(b.holes)}</td>
-                    <td className="px-3 py-2 text-right font-mono text-steel-700">{fmt(b.totalLbs * appliedRate)}</td>
+                    <td className="px-3 py-2 text-right font-mono text-steel-400">{fmtNum(b.totalLnft, 2)}</td>
+                    <td className="px-3 py-2 text-right font-mono text-steel-400">{fmtNum(b.lbPerFt, 2)}</td>
+                    <td className="px-3 py-2 text-right font-mono text-steel-400">{fmtNum(b.totalLbs, 1)}</td>
+                    <td className="px-3 py-2 text-right font-mono text-steel-400">{fmtNum(b.holes)}</td>
+                    <td className="px-3 py-2 text-right font-mono text-steel-200">{fmt(b.totalLbs * appliedRate)}</td>
                   </tr>
                 ))}
 
                 {/* Custom row (editable section/qty/length) */}
-                <tr className="bg-amber-50/40">
-                  <td className="px-3 py-2 font-medium text-steel-700">Custom</td>
+                <tr className="bg-amber-500/10">
+                  <td className="px-3 py-2 font-medium text-steel-200">Custom</td>
                   <td className="px-2 py-1">
-                    <select value={s.customSection || ''} onChange={(e) => set('customSection', e.target.value)} className="w-full rounded border border-silver-200 bg-silver-50 px-1.5 py-1 text-xs font-mono text-steel-800 outline-none focus:ring-1 focus:ring-fire-500">
+                    <select value={s.customSection || ''} onChange={(e) => set('customSection', e.target.value)} className="w-full rounded border border-steel-700/50 bg-steel-900/40 px-1.5 py-1 text-xs font-mono text-steel-100 outline-none focus:ring-1 focus:ring-fire-500">
                       <option value="">— select —</option>
                       {SECTION_OPTIONS.map((g) => (
                         <optgroup key={g.group} label={g.group}>
@@ -783,23 +783,23 @@ export default function Stairs() {
                   <td className="px-2 py-1">
                     <NumInput value={s.customLength} onChange={(v) => set('customLength', v)} className="!py-1 !text-xs text-right" />
                   </td>
-                  <td className="px-3 py-2 text-right font-mono text-steel-600">{fmtNum(customLnft, 2)}</td>
-                  <td className="px-3 py-2 text-right font-mono text-steel-600">{fmtNum(customLbPerFt, 2)}</td>
-                  <td className="px-3 py-2 text-right font-mono text-steel-600">{fmtNum(customLbs, 1)}</td>
-                  <td className="px-3 py-2 text-right font-mono text-steel-600">0</td>
-                  <td className="px-3 py-2 text-right font-mono text-steel-700">{fmt(customMatCost)}</td>
+                  <td className="px-3 py-2 text-right font-mono text-steel-400">{fmtNum(customLnft, 2)}</td>
+                  <td className="px-3 py-2 text-right font-mono text-steel-400">{fmtNum(customLbPerFt, 2)}</td>
+                  <td className="px-3 py-2 text-right font-mono text-steel-400">{fmtNum(customLbs, 1)}</td>
+                  <td className="px-3 py-2 text-right font-mono text-steel-400">0</td>
+                  <td className="px-3 py-2 text-right font-mono text-steel-200">{fmt(customMatCost)}</td>
                 </tr>
               </tbody>
               <tfoot>
                 <tr className="border-t-2 border-steel-800">
-                  <td colSpan={5} className="px-3 py-3 text-right text-xs font-bold uppercase tracking-wider text-steel-800">
+                  <td colSpan={5} className="px-3 py-3 text-right text-xs font-bold uppercase tracking-wider text-steel-100">
                     Subtotal (incl. waste {fmtNum(wasteAllowance * 100, 0)}%)
                   </td>
-                  <td className="px-3 py-3 text-right font-mono text-xs text-steel-800"></td>
-                  <td className="px-3 py-3 text-right font-mono text-sm font-bold text-steel-800">
+                  <td className="px-3 py-3 text-right font-mono text-xs text-steel-100"></td>
+                  <td className="px-3 py-3 text-right font-mono text-sm font-bold text-steel-100">
                     {fmtNum(totalLbsWithWaste + customLbs * (1 + wasteAllowance), 1)} lbs
                   </td>
-                  <td className="px-3 py-3 text-right font-mono text-sm text-steel-800">{fmtNum(totalHoles)}</td>
+                  <td className="px-3 py-3 text-right font-mono text-sm text-steel-100">{fmtNum(totalHoles)}</td>
                   <td className="px-3 py-3 text-right font-mono text-base font-bold text-fire-600">
                     {fmt((totalMaterialCostBase + customMatCost) * (1 + wasteAllowance))}
                   </td>
@@ -821,29 +821,29 @@ export default function Stairs() {
                   <th className="rounded-tr-lg px-4 py-2.5 text-right text-xs font-bold uppercase tracking-wider">Cost</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-silver-100">
-                <tr className="even:bg-steel-50">
-                  <td className="px-4 py-2.5 font-medium text-steel-700">{s.treadType}{s.treadType && s.treadType.startsWith('Channel Grating') ? ` — ${s.gratingTreadWidth} × ${s.gratingTreadHeight}` : ''}{(s.treadType === 'Grating' || s.treadType === 'Bar Grating Tread (Galv)') ? ` — ${s.gratingBarSize} (${s.gratingSpacing})` : ''}</td>
-                  <td className="px-4 py-2.5 text-right font-mono text-steel-600">
+              <tbody className="divide-y divide-steel-700/40">
+                <tr className="even:bg-steel-800/30">
+                  <td className="px-4 py-2.5 font-medium text-steel-200">{s.treadType}{s.treadType && s.treadType.startsWith('Channel Grating') ? ` — ${s.gratingTreadWidth} × ${s.gratingTreadHeight}` : ''}{(s.treadType === 'Grating' || s.treadType === 'Bar Grating Tread (Galv)') ? ` — ${s.gratingBarSize} (${s.gratingSpacing})` : ''}</td>
+                  <td className="px-4 py-2.5 text-right font-mono text-steel-400">
                     {s.treadType === 'Grating'
                       ? `${fmtNum((geom.width * geom.run) / 92903 * treadQty, 2)} sqft`
                       : `${fmtNum(treadQty)}`}
                   </td>
-                  <td className="px-4 py-2.5 text-right font-mono text-steel-600">{fmt(treadUnitRate)}</td>
-                  <td className="px-4 py-2.5 text-right font-mono font-semibold text-steel-800">{fmt(treadCost)}</td>
+                  <td className="px-4 py-2.5 text-right font-mono text-steel-400">{fmt(treadUnitRate)}</td>
+                  <td className="px-4 py-2.5 text-right font-mono font-semibold text-steel-100">{fmt(treadCost)}</td>
                 </tr>
-                <tr className="even:bg-steel-50">
-                  <td className="px-4 py-2.5 font-medium text-steel-700">Landing surface (grating/plate)</td>
-                  <td className="px-4 py-2.5 text-right font-mono text-steel-600">
+                <tr className="even:bg-steel-800/30">
+                  <td className="px-4 py-2.5 font-medium text-steel-200">Landing surface (grating/plate)</td>
+                  <td className="px-4 py-2.5 text-right font-mono text-steel-400">
                     {fmtNum((geom.width * geom.landingDepth) / 92903 * Math.max(geom.numLandings, 1), 2)} sqft
                   </td>
-                  <td className="px-4 py-2.5 text-right font-mono text-steel-600">{fmt(45)}</td>
-                  <td className="px-4 py-2.5 text-right font-mono font-semibold text-steel-800">{fmt(landingSurfaceCost)}</td>
+                  <td className="px-4 py-2.5 text-right font-mono text-steel-400">{fmt(45)}</td>
+                  <td className="px-4 py-2.5 text-right font-mono font-semibold text-steel-100">{fmt(landingSurfaceCost)}</td>
                 </tr>
               </tbody>
               <tfoot>
                 <tr className="border-t-2 border-steel-800">
-                  <td colSpan={3} className="px-4 py-3 text-right text-sm font-bold uppercase tracking-wider text-steel-800">
+                  <td colSpan={3} className="px-4 py-3 text-right text-sm font-bold uppercase tracking-wider text-steel-100">
                     Treads subtotal
                   </td>
                   <td className="px-4 py-3 text-right font-mono text-base font-bold text-fire-600">{fmt(treadsTotal)}</td>
@@ -865,29 +865,29 @@ export default function Stairs() {
                   <th className="rounded-tr-lg px-4 py-2.5 text-right text-xs font-bold uppercase tracking-wider">Cost</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-silver-100">
-                <tr className="even:bg-steel-50">
-                  <td className="px-4 py-2.5 font-medium text-steel-700">Stair guardrail (both sides)</td>
-                  <td className="px-4 py-2.5 text-right font-mono text-steel-600">{fmtNum(stairGuardLnft, 2)}</td>
-                  <td className="px-4 py-2.5 text-right font-mono text-steel-600">{fmt(guardRate)}/lnft</td>
-                  <td className="px-4 py-2.5 text-right font-mono font-semibold text-steel-800">{fmt(stairGuardCost)}</td>
+              <tbody className="divide-y divide-steel-700/40">
+                <tr className="even:bg-steel-800/30">
+                  <td className="px-4 py-2.5 font-medium text-steel-200">Stair guardrail (both sides)</td>
+                  <td className="px-4 py-2.5 text-right font-mono text-steel-400">{fmtNum(stairGuardLnft, 2)}</td>
+                  <td className="px-4 py-2.5 text-right font-mono text-steel-400">{fmt(guardRate)}/lnft</td>
+                  <td className="px-4 py-2.5 text-right font-mono font-semibold text-steel-100">{fmt(stairGuardCost)}</td>
                 </tr>
-                <tr className="even:bg-steel-50">
-                  <td className="px-4 py-2.5 font-medium text-steel-700">Landing guardrail</td>
-                  <td className="px-4 py-2.5 text-right font-mono text-steel-600">{fmtNum(landingGuardLnft, 2)}</td>
-                  <td className="px-4 py-2.5 text-right font-mono text-steel-600">{fmt(guardRate)}/lnft</td>
-                  <td className="px-4 py-2.5 text-right font-mono font-semibold text-steel-800">{fmt(landingGuardCost)}</td>
+                <tr className="even:bg-steel-800/30">
+                  <td className="px-4 py-2.5 font-medium text-steel-200">Landing guardrail</td>
+                  <td className="px-4 py-2.5 text-right font-mono text-steel-400">{fmtNum(landingGuardLnft, 2)}</td>
+                  <td className="px-4 py-2.5 text-right font-mono text-steel-400">{fmt(guardRate)}/lnft</td>
+                  <td className="px-4 py-2.5 text-right font-mono font-semibold text-steel-100">{fmt(landingGuardCost)}</td>
                 </tr>
-                <tr className="even:bg-steel-50">
-                  <td className="px-4 py-2.5 font-medium text-steel-700">Wall-mounted handrail</td>
-                  <td className="px-4 py-2.5 text-right font-mono text-steel-600">{fmtNum(wallHandLnft, 2)}</td>
-                  <td className="px-4 py-2.5 text-right font-mono text-steel-600">{fmt(handRate)}/lnft</td>
-                  <td className="px-4 py-2.5 text-right font-mono font-semibold text-steel-800">{fmt(wallHandCost)}</td>
+                <tr className="even:bg-steel-800/30">
+                  <td className="px-4 py-2.5 font-medium text-steel-200">Wall-mounted handrail</td>
+                  <td className="px-4 py-2.5 text-right font-mono text-steel-400">{fmtNum(wallHandLnft, 2)}</td>
+                  <td className="px-4 py-2.5 text-right font-mono text-steel-400">{fmt(handRate)}/lnft</td>
+                  <td className="px-4 py-2.5 text-right font-mono font-semibold text-steel-100">{fmt(wallHandCost)}</td>
                 </tr>
               </tbody>
               <tfoot>
                 <tr className="border-t-2 border-steel-800">
-                  <td colSpan={3} className="px-4 py-3 text-right text-sm font-bold uppercase tracking-wider text-steel-800">
+                  <td colSpan={3} className="px-4 py-3 text-right text-sm font-bold uppercase tracking-wider text-steel-100">
                     Railings subtotal
                   </td>
                   <td className="px-4 py-3 text-right font-mono text-base font-bold text-fire-600">{fmt(railingsTotal)}</td>
@@ -904,7 +904,7 @@ export default function Stairs() {
             <div className="flex-1 max-w-[200px]">
               <Select value={s.method} onChange={(v) => set('method', v)} options={METHOD_OPTIONS} />
             </div>
-            <p className="text-xs text-silver-500">
+            <p className="text-xs text-steel-400">
               Complexity:&nbsp;<span className="font-mono font-semibold">{complexity.toFixed(2)}x</span>
             </p>
           </div>
@@ -919,29 +919,29 @@ export default function Stairs() {
                   <th className="rounded-tr-lg px-4 py-2.5 text-right text-xs font-bold uppercase tracking-wider">Cost</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-silver-100">
-                <tr className="even:bg-steel-50">
-                  <td className="px-4 py-2.5 font-medium text-steel-700">Shop fabrication</td>
-                  <td className="px-4 py-2.5 text-right font-mono text-steel-600">
+              <tbody className="divide-y divide-steel-700/40">
+                <tr className="even:bg-steel-800/30">
+                  <td className="px-4 py-2.5 font-medium text-steel-200">Shop fabrication</td>
+                  <td className="px-4 py-2.5 text-right font-mono text-steel-400">
                     {fmtNum(s.method === 'Detailed' ? fabHrsDetailed : fabHrsSimple, 1)}
                   </td>
-                  <td className="px-4 py-2.5 text-right font-mono text-steel-600">{fmtNum(fabHrsFinal, 1)}</td>
-                  <td className="px-4 py-2.5 text-right font-mono text-steel-600">{fmt(fabRate)}/hr</td>
-                  <td className="px-4 py-2.5 text-right font-mono font-semibold text-steel-800">{fmt(fabLabourCost)}</td>
+                  <td className="px-4 py-2.5 text-right font-mono text-steel-400">{fmtNum(fabHrsFinal, 1)}</td>
+                  <td className="px-4 py-2.5 text-right font-mono text-steel-400">{fmt(fabRate)}/hr</td>
+                  <td className="px-4 py-2.5 text-right font-mono font-semibold text-steel-100">{fmt(fabLabourCost)}</td>
                 </tr>
-                <tr className="even:bg-steel-50">
-                  <td className="px-4 py-2.5 font-medium text-steel-700">Field install</td>
-                  <td className="px-4 py-2.5 text-right font-mono text-steel-600">
+                <tr className="even:bg-steel-800/30">
+                  <td className="px-4 py-2.5 font-medium text-steel-200">Field install</td>
+                  <td className="px-4 py-2.5 text-right font-mono text-steel-400">
                     {fmtNum(s.method === 'Detailed' ? instHrsDetailed : instHrsSimple, 1)}
                   </td>
-                  <td className="px-4 py-2.5 text-right font-mono text-steel-600">{fmtNum(instHrsFinal, 1)}</td>
-                  <td className="px-4 py-2.5 text-right font-mono text-steel-600">{fmt(installRate)}/hr</td>
-                  <td className="px-4 py-2.5 text-right font-mono font-semibold text-steel-800">{fmt(instLabourCost)}</td>
+                  <td className="px-4 py-2.5 text-right font-mono text-steel-400">{fmtNum(instHrsFinal, 1)}</td>
+                  <td className="px-4 py-2.5 text-right font-mono text-steel-400">{fmt(installRate)}/hr</td>
+                  <td className="px-4 py-2.5 text-right font-mono font-semibold text-steel-100">{fmt(instLabourCost)}</td>
                 </tr>
               </tbody>
               <tfoot>
                 <tr className="border-t-2 border-steel-800">
-                  <td colSpan={4} className="px-4 py-3 text-right text-sm font-bold uppercase tracking-wider text-steel-800">
+                  <td colSpan={4} className="px-4 py-3 text-right text-sm font-bold uppercase tracking-wider text-steel-100">
                     Labour subtotal
                   </td>
                   <td className="px-4 py-3 text-right font-mono text-base font-bold text-fire-600">{fmt(labourTotal)}</td>
@@ -955,33 +955,33 @@ export default function Stairs() {
         <SectionCard icon={Weight} title="Stair Grand Total">
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
-              <tbody className="divide-y divide-silver-100">
-                <tr className="even:bg-steel-50">
-                  <td className="px-4 py-2.5 font-medium text-steel-700">Material (incl. waste & custom)</td>
-                  <td className="px-4 py-2.5 text-right font-mono text-steel-800">
+              <tbody className="divide-y divide-steel-700/40">
+                <tr className="even:bg-steel-800/30">
+                  <td className="px-4 py-2.5 font-medium text-steel-200">Material (incl. waste & custom)</td>
+                  <td className="px-4 py-2.5 text-right font-mono text-steel-100">
                     {fmt((totalMaterialCostBase + customMatCost) * (1 + wasteAllowance))}
                   </td>
                 </tr>
-                <tr className="even:bg-steel-50">
-                  <td className="px-4 py-2.5 font-medium text-steel-700">Treads</td>
-                  <td className="px-4 py-2.5 text-right font-mono text-steel-800">{fmt(treadsTotal)}</td>
+                <tr className="even:bg-steel-800/30">
+                  <td className="px-4 py-2.5 font-medium text-steel-200">Treads</td>
+                  <td className="px-4 py-2.5 text-right font-mono text-steel-100">{fmt(treadsTotal)}</td>
                 </tr>
-                <tr className="even:bg-steel-50">
-                  <td className="px-4 py-2.5 font-medium text-steel-700">Railings</td>
-                  <td className="px-4 py-2.5 text-right font-mono text-steel-800">{fmt(railingsTotal)}</td>
+                <tr className="even:bg-steel-800/30">
+                  <td className="px-4 py-2.5 font-medium text-steel-200">Railings</td>
+                  <td className="px-4 py-2.5 text-right font-mono text-steel-100">{fmt(railingsTotal)}</td>
                 </tr>
-                <tr className="even:bg-steel-50">
-                  <td className="px-4 py-2.5 font-medium text-steel-700">Galvanizing {s.finish === 'Galvanized' ? '' : '(n/a)'}</td>
-                  <td className="px-4 py-2.5 text-right font-mono text-steel-800">{fmt(galvCost)}</td>
+                <tr className="even:bg-steel-800/30">
+                  <td className="px-4 py-2.5 font-medium text-steel-200">Galvanizing {s.finish === 'Galvanized' ? '' : '(n/a)'}</td>
+                  <td className="px-4 py-2.5 text-right font-mono text-steel-100">{fmt(galvCost)}</td>
                 </tr>
-                <tr className="even:bg-steel-50">
-                  <td className="px-4 py-2.5 font-medium text-steel-700">Labour</td>
-                  <td className="px-4 py-2.5 text-right font-mono text-steel-800">{fmt(labourTotal)}</td>
+                <tr className="even:bg-steel-800/30">
+                  <td className="px-4 py-2.5 font-medium text-steel-200">Labour</td>
+                  <td className="px-4 py-2.5 text-right font-mono text-steel-100">{fmt(labourTotal)}</td>
                 </tr>
               </tbody>
               <tfoot>
                 <tr className="border-t-2 border-steel-800">
-                  <td className="px-4 py-3 text-right text-sm font-bold uppercase tracking-wider text-steel-800">
+                  <td className="px-4 py-3 text-right text-sm font-bold uppercase tracking-wider text-steel-100">
                     GRAND TOTAL
                   </td>
                   <td className="px-4 py-3 text-right font-mono text-lg font-bold text-fire-600">{fmt(grandTotal)}</td>
@@ -1006,18 +1006,18 @@ export default function Stairs() {
                   key={i}
                   className={`rounded-lg border p-4 ${
                     ok
-                      ? 'border-green-200 bg-green-50'
+                      ? 'border-green-500/30 bg-green-500/10'
                       : low
-                      ? 'border-amber-200 bg-amber-50'
-                      : 'border-red-200 bg-red-50'
+                      ? 'border-amber-500/30 bg-amber-500/10'
+                      : 'border-red-500/30 bg-red-500/10'
                   }`}
                 >
-                  <p className="text-xs font-semibold uppercase tracking-wide text-steel-600">{b.label}</p>
-                  <p className="mt-1 text-2xl font-bold font-mono text-steel-800">{b.fmt(b.value)}</p>
-                  <p className="mt-1 text-xs text-silver-500">Range: {b.fmt(b.lo)} – {b.fmt(b.hi)}</p>
+                  <p className="text-xs font-semibold uppercase tracking-wide text-steel-400">{b.label}</p>
+                  <p className="mt-1 text-2xl font-bold font-mono text-steel-100">{b.fmt(b.value)}</p>
+                  <p className="mt-1 text-xs text-steel-400">Range: {b.fmt(b.lo)} – {b.fmt(b.hi)}</p>
                   <span
                     className={`mt-2 inline-block rounded-full px-2.5 py-0.5 text-xs font-bold ${
-                      ok ? 'bg-green-200 text-green-800' : low ? 'bg-amber-200 text-amber-800' : 'bg-red-200 text-red-800'
+                      ok ? 'bg-green-500/20 text-green-300' : low ? 'bg-amber-500/20 text-amber-300' : 'bg-red-500/20 text-red-300'
                     }`}
                   >
                     {ok ? 'In range' : low ? 'Low' : 'High'}
@@ -1047,11 +1047,11 @@ export default function Stairs() {
                     <th className="rounded-tr-lg px-2 py-2 text-right font-bold uppercase tracking-wider">Total hrs</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-silver-100">
+                <tbody className="divide-y divide-steel-700/40">
                   {fabComponents.map((c) => (
-                    <tr key={c.key} className="even:bg-steel-50">
-                      <td className="px-2 py-1 font-medium text-steel-700">{c.label}</td>
-                      <td className="px-2 py-1 text-right font-mono text-steel-600">{fmtNum(c.qty)}</td>
+                    <tr key={c.key} className="even:bg-steel-800/30">
+                      <td className="px-2 py-1 font-medium text-steel-200">{c.label}</td>
+                      <td className="px-2 py-1 text-right font-mono text-steel-400">{fmtNum(c.qty)}</td>
                       {FAB_SUBSTEPS.map((sk) => (
                         <td key={sk} className="px-1 py-1">
                           <NumInput
@@ -1061,14 +1061,14 @@ export default function Stairs() {
                           />
                         </td>
                       ))}
-                      <td className="px-2 py-1 text-right font-mono text-steel-700">{fmtNum(c.hrsPerPc, 2)}</td>
-                      <td className="px-2 py-1 text-right font-mono font-semibold text-steel-800">{fmtNum(c.totalHrs, 2)}</td>
+                      <td className="px-2 py-1 text-right font-mono text-steel-200">{fmtNum(c.hrsPerPc, 2)}</td>
+                      <td className="px-2 py-1 text-right font-mono font-semibold text-steel-100">{fmtNum(c.totalHrs, 2)}</td>
                     </tr>
                   ))}
                 </tbody>
                 <tfoot>
                   <tr className="border-t-2 border-steel-800">
-                    <td colSpan={9 + FAB_SUBSTEPS.length - 7} className="px-2 py-2 text-right text-xs font-bold uppercase tracking-wider text-steel-800">
+                    <td colSpan={9 + FAB_SUBSTEPS.length - 7} className="px-2 py-2 text-right text-xs font-bold uppercase tracking-wider text-steel-100">
                       Fab breakdown total
                     </td>
                     <td className="px-2 py-2 text-right font-mono text-sm font-bold text-fire-600">
@@ -1100,11 +1100,11 @@ export default function Stairs() {
                     <th className="rounded-tr-lg px-2 py-2 text-right font-bold uppercase tracking-wider">Total hrs</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-silver-100">
+                <tbody className="divide-y divide-steel-700/40">
                   {instComponents.map((c) => (
-                    <tr key={c.key} className="even:bg-steel-50">
-                      <td className="px-2 py-1 font-medium text-steel-700">{c.label}</td>
-                      <td className="px-2 py-1 text-right font-mono text-steel-600">{fmtNum(c.qty)}</td>
+                    <tr key={c.key} className="even:bg-steel-800/30">
+                      <td className="px-2 py-1 font-medium text-steel-200">{c.label}</td>
+                      <td className="px-2 py-1 text-right font-mono text-steel-400">{fmtNum(c.qty)}</td>
                       {INST_SUBSTEPS.map((sk) => (
                         <td key={sk} className="px-1 py-1">
                           <NumInput
@@ -1114,14 +1114,14 @@ export default function Stairs() {
                           />
                         </td>
                       ))}
-                      <td className="px-2 py-1 text-right font-mono text-steel-700">{fmtNum(c.hrsPerPc, 2)}</td>
-                      <td className="px-2 py-1 text-right font-mono font-semibold text-steel-800">{fmtNum(c.totalHrs, 2)}</td>
+                      <td className="px-2 py-1 text-right font-mono text-steel-200">{fmtNum(c.hrsPerPc, 2)}</td>
+                      <td className="px-2 py-1 text-right font-mono font-semibold text-steel-100">{fmtNum(c.totalHrs, 2)}</td>
                     </tr>
                   ))}
                 </tbody>
                 <tfoot>
                   <tr className="border-t-2 border-steel-800">
-                    <td colSpan={2 + INST_SUBSTEPS.length + 1} className="px-2 py-2 text-right text-xs font-bold uppercase tracking-wider text-steel-800">
+                    <td colSpan={2 + INST_SUBSTEPS.length + 1} className="px-2 py-2 text-right text-xs font-bold uppercase tracking-wider text-steel-100">
                       Install breakdown total
                     </td>
                     <td className="px-2 py-2 text-right font-mono text-sm font-bold text-fire-600">
@@ -1135,8 +1135,8 @@ export default function Stairs() {
         </SectionCard>
 
         {/* Footer */}
-        <div className="mt-10 border-t border-silver-200 pt-6 text-center">
-          <p className="text-xs text-silver-400">Triple Weld Inc. · Steel Estimator Pro · Stairs v2 (Excel v5.1 match)</p>
+        <div className="mt-10 border-t border-steel-700/50 pt-6 text-center">
+          <p className="text-xs text-steel-500">Triple Weld Inc. · Steel Estimator Pro · Stairs v2 (Excel v5.1 match)</p>
         </div>
       </div>
     </div>
