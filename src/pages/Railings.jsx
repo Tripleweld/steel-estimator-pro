@@ -411,6 +411,21 @@ return (<svg viewBox={`0 0 ${Vw} ${Vh}`} className='w-full max-w-[460px] h-auto'
 function RailingCard({ row, idx, calc, fabRate, installRate, onUpdate, onDelete, onCopy }) {
   const [open, setOpen] = useState(idx === 0);
 
+  // Persist breakdown onto the row for Misc Metals aggregation
+  useEffect(() => {
+    const material = Math.round((calc.matSubtotal || 0) + (calc.galvSubtotal || 0));
+    const fab = Math.round(calc.fabCost || 0);
+    const install = Math.round((calc.instCost || 0) + (calc.hardwareCost || 0) + (calc.installMethodCost || 0));
+    const total = Math.round(calc.grandTotal || 0);
+    const cur = row.totalsCommit || {};
+    if (Math.round(cur.material || 0) !== material ||
+        Math.round(cur.fab || 0) !== fab ||
+        Math.round(cur.install || 0) !== install ||
+        Math.round(cur.total || 0) !== total) {
+      onUpdate(row.id, { totalsCommit: { material, fab, install, total } });
+    }
+  }, [calc.matSubtotal, calc.galvSubtotal, calc.fabCost, calc.instCost, calc.hardwareCost, calc.installMethodCost, calc.grandTotal, row.id, row.totalsCommit, onUpdate]);
+
   const set = (field) => (e) => onUpdate(row.id, { [field]: e.target.value });
   const setNum = (field) => (e) => onUpdate(row.id, { [field]: e.target.value });
   const setSubMin = (kind, comp, op) => (e) => {
