@@ -1,576 +1,496 @@
-import React, { useState, useMemo, useCallback } from 'react';
-import { useProject } from '../context/ProjectContext';
-import { searchShapes } from '../data/aisc-shapes';
-import { Plus, Trash2, Search, Wrench, ChevronDown, ChevronRight, RotateCcw, Copy } from 'lucide-react';
+import { useMemo } from 'react'
+import { Link } from 'react-router-dom'
+import {
+  Layers, Calculator, ListTree, Plus, Trash2, ExternalLink,
+  Shield, Wrench, Settings2, Ruler, Anchor, Box, Building2
+} from 'lucide-react'
+import { useProject } from '../context/ProjectContext'
 
-/* ─── helpers ─── */
-const fmt = (v) => (v == null || isNaN(v) ? '' : Number(v).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
-const fmtNum = (v) => (v == null || isNaN(v) ? '' : Number(v).toLocaleString('en-US'));
+/* ────────────────────────────────────────────────────────────────────────────
+   MISC METALS — Phase 1 (Aggregation + Tier 1 standard items)
+   Tier 1 sections: Bollards, Corner Guards SS, Corner Guards MS, Embed Plates
+   Custom Takeoff (Structural-style) coming in Phase 4
+   ──────────────────────────────────────────────────────────────────────────── */
 
-const MISC_METAL_TYPES = [
-  'Stairs', 'Railings', 'Handrails', 'Guardrails', 'Ladders',
-  'Grating', 'Lintels', 'Embeds', 'Bollards', 'Platforms',
-  'Catwalks', 'Mezzanine', 'Angles/Channels', 'Plates', 'Other',
-];
-
-const emptyRow = () => ({
-  id: crypto.randomUUID(),
-  mark: '', drawingRef: '', profile: '', qty: 0, lengthFt: 0,
-  plateBP: 0, anchorsPerPc: 0,
-  fabSetup: 0, fabCut: 0, fabDrill: 0, fabFeed: 0, fabWeld: 0, fabGrind: 0, fabPaint: 0,
-  instUnload: 0, instRig: 0, instFit: 0, instBolt: 0, instTouchup: 0, instQC: 0,
-  fabCrew: 1, instCrew: 1,
-  type: 'Stairs', lbsPerFt: 0, notes: '',
-});
-
-/* ─── ProfileSearch sub-component ─── */
-function ProfileSearch({ value, onChange, onSelect }) {
-  const [open, setOpen] = useState(false);
-  const [query, setQuery] = useState('');
-  const results = useMemo(() => (query.length >= 2 ? searchShapes(query) : []), [query]);
-
-  return (
-    <div className="relative">
-      <div className="flex items-center gap-0.5">
-        <input
-          type="text"
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          className="w-24 text-xs py-1 px-1.5 border border-slate-300 rounded-l bg-white focus:ring-1 focus:ring-purple-400 focus:border-purple-400 outline-none"
-          placeholder="Profile"
-        />
-        <button
-          type="button"
-          onClick={() => setOpen(!open)}
-          className="px-1 py-1 border border-l-0 border-slate-300 rounded-r bg-slate-50 hover:bg-slate-100"
-        >
-          <Search size={12} className="text-slate-500" />
-        </button>
-      </div>
-      {open && (
-        <div className="absolute z-50 mt-1 w-64 bg-white border border-slate-300 rounded shadow-lg">
-          <div className="p-1.5">
-            <input
-              autoFocus
-              type="text"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              className="w-full text-xs py-1 px-2 border border-slate-300 rounded focus:ring-1 focus:ring-purple-400 outline-none"
-              placeholder="Search AISC shapes..."
-            />
-          </div>
-          <ul className="max-h-48 overflow-y-auto">
-            {results.length === 0 && query.length >= 2 && (
-              <li className="px-3 py-2 text-xs text-slate-400 italic">No shapes found</li>
-            )}
-            {results.slice(0, 50).map((s) => (
-              <li
-                key={s.AISC_Manual_Label}
-                className="px-3 py-1.5 text-xs hover:bg-purple-50 cursor-pointer flex justify-between"
-                onClick={() => {
-                  onSelect(s);
-                  setOpen(false);
-                  setQuery('');
-                }}
-              >
-                <span className="font-medium">{s.AISC_Manual_Label}</span>
-                <span className="text-slate-400">{s.W} lb/ft</span>
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
-    </div>
-  );
+// ─── Helpers ───
+const fmt = (v) =>
+  typeof v === 'number' && !isNaN(v) && isFinite(v)
+    ? v.toLocaleString('en-CA', { style: 'currency', currency: 'CAD' })
+    : '$0.00'
+const fmtNum = (v, d = 0) =>
+  typeof v === 'number' && !isNaN(v)
+    ? v.toLocaleString('en-CA', { minimumFractionDigits: d, maximumFractionDigits: d })
+    : '0'
+const toNum = (v) => {
+  if (v === '' || v == null) return 0
+  const n = parseFloat(v)
+  return isNaN(n) ? 0 : n
 }
 
-/* ─── Main Component ─── */
-export default function MiscMetalsTakeoff() {
-  const { state, dispatch } = useProject();
-  const rows = state.miscMetals || [];
-  const rates = state.rates || {};
-  const materialRate = rates.materialRates?.miscMetals ?? rates.materialRates?.structural ?? 0.85;
-  const fabRate = rates.labourRates?.fabRate ?? 65;
-  const installRate = rates.labourRates?.installRate ?? 75;
-
-  /* ─── column group collapse ─── */
-  const [collapsed, setCollapsed] = useState({
-    identification: false,
-    qtyWeight: false,
-    connections: false,
-    fabrication: false,
-    installation: false,
-    costPreview: false,
-    notes: false,
-  });
-  const toggle = (g) => setCollapsed((p) => ({ ...p, [g]: !p[g] }));
-
-  /* ─── sorting ─── */
-  const [sortCol, setSortCol] = useState(null);
-  const [sortDir, setSortDir] = useState('asc');
-  const handleSort = (col) => {
-    if (sortCol === col) setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'));
-    else { setSortCol(col); setSortDir('asc'); }
-  };
-  const sortIndicator = (col) => (sortCol === col ? (sortDir === 'asc' ? ' \u25B2' : ' \u25BC') : '');
-
-  /* ─── row CRUD ─── */
-  const addRow = () => dispatch({ type: 'ADD_MISC_METAL_ROW', payload: emptyRow() });
-  const updateRow = useCallback((id, field, value) => {
-    dispatch({ type: 'UPDATE_MISC_METAL_ROW', payload: { id, field, value } });
-  }, [dispatch]);
-  const deleteRow = (id) => dispatch({ type: 'DELETE_MISC_METAL_ROW', payload: id });
-  const duplicateRow = (row) => {
-    const dup = { ...row, id: crypto.randomUUID(), mark: row.mark ? `${row.mark}-copy` : '' };
-    dispatch({ type: 'ADD_MISC_METAL_ROW', payload: dup });
-  };
-  const resetRow = (id) => {
-    const fresh = emptyRow();
-    Object.keys(fresh).forEach((k) => { if (k !== 'id') updateRow(id, k, fresh[k]); });
-  };
-
-  /* ─── derived calculations ─── */
-  const computed = useMemo(() => {
-    return rows.map((r) => {
-      const totalLbs = (r.qty || 0) * (r.lengthFt || 0) * (r.lbsPerFt || 0);
-      const totalTons = totalLbs / 2000;
-      const fabHrsPerPc = (r.fabSetup || 0) + (r.fabCut || 0) + (r.fabDrill || 0) + (r.fabFeed || 0) + (r.fabWeld || 0) + (r.fabGrind || 0) + (r.fabPaint || 0);
-      const totalFabHrs = fabHrsPerPc * (r.qty || 0);
-      const instHrsPerPc = (r.instUnload || 0) + (r.instRig || 0) + (r.instFit || 0) + (r.instBolt || 0) + (r.instTouchup || 0) + (r.instQC || 0);
-      const totalInstHrs = instHrsPerPc * (r.qty || 0);
-      const materialCost = totalLbs * materialRate;
-      const fabCost = totalFabHrs * fabRate;
-      const installCost = totalInstHrs * installRate;
-      const rowTotal = materialCost + fabCost + installCost;
-      return { ...r, totalLbs, totalTons, fabHrsPerPc, totalFabHrs, instHrsPerPc, totalInstHrs, materialCost, fabCost, installCost, rowTotal };
-    });
-  }, [rows, materialRate, fabRate, installRate]);
-
-  /* ─── sorting applied ─── */
-  const sorted = useMemo(() => {
-    if (!sortCol) return computed;
-    return [...computed].sort((a, b) => {
-      const va = a[sortCol] ?? '';
-      const vb = b[sortCol] ?? '';
-      if (typeof va === 'number' && typeof vb === 'number') return sortDir === 'asc' ? va - vb : vb - va;
-      return sortDir === 'asc' ? String(va).localeCompare(String(vb)) : String(vb).localeCompare(String(va));
-    });
-  }, [computed, sortCol, sortDir]);
-
-  /* ─── summary totals ─── */
-  const totals = useMemo(() => {
-    return computed.reduce(
-      (acc, r) => ({
-        qty: acc.qty + (r.qty || 0),
-        totalLbs: acc.totalLbs + r.totalLbs,
-        totalTons: acc.totalTons + r.totalTons,
-        totalFabHrs: acc.totalFabHrs + r.totalFabHrs,
-        totalInstHrs: acc.totalInstHrs + r.totalInstHrs,
-        materialCost: acc.materialCost + r.materialCost,
-        fabCost: acc.fabCost + r.fabCost,
-        installCost: acc.installCost + r.installCost,
-        rowTotal: acc.rowTotal + r.rowTotal,
-      }),
-      { qty: 0, totalLbs: 0, totalTons: 0, totalFabHrs: 0, totalInstHrs: 0, materialCost: 0, fabCost: 0, installCost: 0, rowTotal: 0 }
-    );
-  }, [computed]);
-
-  /* ─── compact input ─── */
-  const NumInput = ({ value, onChange, className = 'w-16' }) => (
+// ─── Tiny UI components (dark theme, same pattern as Stairs/Ladder) ───
+function NumInput({ value, onChange, step = 'any', className = '', disabled = false, placeholder = '' }) {
+  return (
     <input
       type="number"
-      value={value || ''}
-      onChange={(e) => onChange(parseFloat(e.target.value) || 0)}
-      className={`${className} text-xs py-1 px-1.5 border border-slate-300 rounded bg-white text-right focus:ring-1 focus:ring-purple-400 focus:border-purple-400 outline-none`}
+      step={step}
+      disabled={disabled}
+      value={value ?? ''}
+      placeholder={placeholder}
+      onChange={(e) => onChange(e.target.value)}
+      className={`w-full rounded border border-steel-700/50 bg-steel-900/40 px-2 py-1 text-xs font-mono text-steel-100 outline-none transition focus:border-fire-500 focus:ring-1 focus:ring-fire-500 disabled:bg-steel-900/30 disabled:text-steel-500 ${className}`}
     />
-  );
+  )
+}
 
-  const TextInput = ({ value, onChange, className = 'w-20', placeholder = '' }) => (
+function TextInput({ value, onChange, className = '', placeholder = '' }) {
+  return (
     <input
       type="text"
-      value={value || ''}
-      onChange={(e) => onChange(e.target.value)}
+      value={value ?? ''}
       placeholder={placeholder}
-      className={`${className} text-xs py-1 px-1.5 border border-slate-300 rounded bg-white focus:ring-1 focus:ring-purple-400 focus:border-purple-400 outline-none`}
+      onChange={(e) => onChange(e.target.value)}
+      className={`w-full rounded border border-steel-700/50 bg-steel-900/40 px-2 py-1 text-xs text-steel-100 outline-none transition focus:border-fire-500 focus:ring-1 focus:ring-fire-500 ${className}`}
     />
-  );
+  )
+}
 
-  const ColHeader = ({ label, col, className = '' }) => (
-    <th
-      className={`px-2 py-1.5 text-xs font-medium whitespace-nowrap cursor-pointer select-none ${className}`}
-      onClick={() => handleSort(col)}
+function Select({ value, onChange, options, className = '' }) {
+  return (
+    <select
+      value={value ?? ''}
+      onChange={(e) => onChange(e.target.value)}
+      className={`w-full rounded border border-steel-700/50 bg-steel-900/60 px-2 py-1 text-xs text-steel-100 outline-none transition focus:border-fire-500 focus:ring-1 focus:ring-fire-500 ${className}`}
     >
-      {label}{sortIndicator(col)}
-    </th>
-  );
+      {options.map((o) => (
+        <option key={o} value={o} className="bg-steel-900">{o}</option>
+      ))}
+    </select>
+  )
+}
 
-  const Chevron = ({ group }) => (
-    <button onClick={() => toggle(group)} className="mr-1 inline-flex items-center">
-      {collapsed[group] ? <ChevronRight size={12} /> : <ChevronDown size={12} />}
-    </button>
-  );
+function SectionCard({ icon: Icon, title, subtitle, children, color = 'text-fire-500' }) {
+  return (
+    <div className="mb-6 rounded-xl border border-steel-700/50 bg-steel-900/60 p-5">
+      <div className="mb-4 flex items-center gap-2">
+        {Icon && <Icon className={`h-5 w-5 ${color}`} />}
+        <div>
+          <h2 className="text-sm font-bold uppercase tracking-wider text-steel-100">{title}</h2>
+          {subtitle && <p className="text-xs text-steel-400">{subtitle}</p>}
+        </div>
+      </div>
+      {children}
+    </div>
+  )
+}
+
+// ─── Section configs for the 4 Tier-1 standard items ───
+// Each section defines: title, icon, sectionKey, columns, rateKey lookup, unit
+const TIER1_SECTIONS = [
+  {
+    key: 'bollards',
+    title: 'Bollards',
+    icon: Anchor,
+    color: 'text-yellow-400',
+    columns: [
+      { field: 'type',     label: 'Type',     type: 'select', options: ['Fixed','Removable','Sleeve'], default: 'Fixed' },
+      { field: 'pipeSize', label: 'Pipe Size', type: 'select', options: ['Pipe 4"','Pipe 6"','Pipe 8"'], default: 'Pipe 6"' },
+      { field: 'heightFt', label: 'Height (ft)', type: 'number', default: 4 },
+      { field: 'filled',   label: 'Filled',   type: 'select', options: ['Yes','No'], default: 'Yes' },
+      { field: 'qty',      label: 'Qty',      type: 'number', default: 1 },
+    ],
+    rateLookup: (row) => {
+      if (row.type === 'Removable') return 'Bollard removable 6" sleeve'
+      if (row.pipeSize === 'Pipe 8"') return 'Bollard fixed 8" pipe (filled)'
+      return 'Bollard fixed 6" pipe (filled)'
+    },
+    multiplier: (row) => toNum(row.qty),
+    unit: '$/each',
+  },
+  {
+    key: 'cornerGuardsSS',
+    title: 'Corner Guards — Stainless Steel',
+    icon: Shield,
+    color: 'text-cyan-400',
+    columns: [
+      { field: 'profile',  label: 'Profile', type: 'select', options: ['2x2x12GA','3x3x12GA','4x4x12GA'], default: '2x2x12GA' },
+      { field: 'lengthFt', label: 'Length (ft)', type: 'number', default: 4 },
+      { field: 'qty',      label: 'Qty',     type: 'number', default: 1 },
+    ],
+    rateLookup: (row) => row.profile && row.profile.includes('3x3') ? 'Corner guard SS 3x3x12GA' : 'Corner guard SS 2x2x12GA',
+    multiplier: (row) => toNum(row.qty) * toNum(row.lengthFt),
+    unit: '$/lnft',
+  },
+  {
+    key: 'cornerGuardsMS',
+    title: 'Corner Guards — Mild Steel (angle)',
+    icon: Shield,
+    color: 'text-amber-500',
+    columns: [
+      { field: 'angleSize', label: 'Angle Size', type: 'select', options: ['L51x51x6','L76x76x6','L102x102x9.5'], default: 'L76x76x6' },
+      { field: 'lengthFt',  label: 'Length (ft)', type: 'number', default: 4 },
+      { field: 'qty',       label: 'Qty',     type: 'number', default: 1 },
+    ],
+    rateLookup: (row) => row.angleSize === 'L102x102x9.5'
+      ? 'Corner guard mild steel L102x102x9.5'
+      : 'Corner guard mild steel L76x76x6',
+    multiplier: (row) => toNum(row.qty) * toNum(row.lengthFt),
+    unit: '$/lnft',
+  },
+  {
+    key: 'embedPlates',
+    title: 'Embed Plates',
+    icon: Box,
+    color: 'text-purple-400',
+    columns: [
+      { field: 'size',          label: 'Plate Size', type: 'select', options: ['8x8x1/4','10x10x1/2','12x12x1/2'], default: '8x8x1/4' },
+      { field: 'anchorsPerPc',  label: 'Anchors/pc', type: 'number', default: 4 },
+      { field: 'qty',           label: 'Qty',       type: 'number', default: 1 },
+    ],
+    rateLookup: (row) => {
+      if (row.size === '12x12x1/2') return 'Embed plate 12x12x1/2 (4 anchors)'
+      if (row.size === '10x10x1/2') return 'Embed plate 10x10x1/2 (4 anchors)'
+      return 'Embed plate 8x8x1/4 (4 anchors)'
+    },
+    multiplier: (row) => toNum(row.qty),
+    unit: '$/each',
+  },
+]
+
+// ─── Generic StandardItemTable ───
+// Renders: table with config'd columns + Rate (default + override) + Total $ + Notes + Delete
+function StandardItemTable({ section, miscRates, rows, dispatch }) {
+  const findRate = (item) => {
+    if (!item) return 0
+    const found = miscRates.find((r) => r.item === item)
+    return found ? Number(found.rate) || 0 : 0
+  }
+
+  // Compute total for one row (default rate or override × multiplier from config)
+  const rowCalc = (row) => {
+    const rateKey = section.rateLookup(row)
+    const defaultRate = findRate(rateKey)
+    const ovRate = row.rateOverride
+    const rateOverridden = ovRate != null && ovRate !== '' && Number(ovRate) !== defaultRate
+    const finalRate = rateOverridden ? Number(ovRate) : defaultRate
+    const mult = section.multiplier(row)
+    const total = mult * finalRate
+    return { defaultRate, finalRate, rateOverridden, mult, total, rateKey }
+  }
+
+  const subtotal = rows.reduce((s, r) => s + rowCalc(r).total, 0)
+
+  const addRow = () => {
+    const defaults = {}
+    section.columns.forEach((c) => { if (c.default !== undefined) defaults[c.field] = c.default })
+    dispatch({ type: 'ADD_MM_STANDARD_ITEM', payload: { section: section.key, defaults } })
+  }
+  const updateRow = (id, field, value) => {
+    dispatch({ type: 'UPDATE_MM_STANDARD_ITEM', payload: { section: section.key, id, [field]: value } })
+  }
+  const deleteRow = (id) => {
+    dispatch({ type: 'DELETE_MM_STANDARD_ITEM', payload: { section: section.key, id } })
+  }
 
   return (
-    <div className="space-y-4">
-      {/* ─── Header ─── */}
-      <div className="relative overflow-hidden rounded-lg bg-white shadow">
-        <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-purple-500 via-amber-500 to-green-500" />
-        <div className="px-6 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-purple-100 rounded-lg">
-              <Wrench className="h-6 w-6 text-purple-600" />
-            </div>
-            <div>
-              <h1 className="text-xl font-bold text-slate-800">Misc Metals Takeoff</h1>
-              <p className="text-sm text-slate-500">Division 05 50 00 — Metal Fabrications</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-3">
-            {/* Rate badges */}
-            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-amber-100 text-amber-800">
-              Fab ${fabRate}/hr
-            </span>
-            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
-              Install ${installRate}/hr
-            </span>
-            <button
-              onClick={addRow}
-              className="inline-flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-white bg-purple-600 hover:bg-purple-700 rounded-lg shadow-sm transition"
-            >
-              <Plus size={16} /> Add Row
-            </button>
-          </div>
-        </div>
-      </div>
-
-      {/* ─── Table ─── */}
-      <div className="bg-white rounded-lg shadow overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="min-w-full border-collapse">
-            {/* ─── Group Headers ─── */}
+    <SectionCard icon={section.icon} title={section.title} color={section.color}>
+      {rows.length === 0 ? (
+        <p className="text-sm text-steel-400 italic mb-3">No items yet — click "Add Row" below to start.</p>
+      ) : (
+        <div className="overflow-x-auto mb-3">
+          <table className="w-full text-xs">
             <thead>
-              <tr>
-                {/* GROUP A — IDENTIFICATION */}
-                <th colSpan={collapsed.identification ? 1 : 5} className="bg-slate-700 text-white text-xs font-semibold px-2 py-1.5 text-left border-r border-slate-600">
-                  <Chevron group="identification" />Identification{!collapsed.identification && ` (5)`}
-                </th>
-                {/* GROUP B — QTY & WEIGHT */}
-                <th colSpan={collapsed.qtyWeight ? 1 : 5} className="bg-purple-700 text-white text-xs font-semibold px-2 py-1.5 text-left border-r border-purple-600">
-                  <Chevron group="qtyWeight" />Qty &amp; Weight{!collapsed.qtyWeight && ` (5)`}
-                </th>
-                {/* GROUP C — CONNECTIONS */}
-                <th colSpan={collapsed.connections ? 1 : 2} className="bg-indigo-700 text-white text-xs font-semibold px-2 py-1.5 text-left border-r border-indigo-600">
-                  <Chevron group="connections" />Connections{!collapsed.connections && ` (2)`}
-                </th>
-                {/* GROUP D — FABRICATION */}
-                <th colSpan={collapsed.fabrication ? 1 : 9} className="bg-amber-700 text-white text-xs font-semibold px-2 py-1.5 text-left border-r border-amber-600">
-                  <Chevron group="fabrication" />Fabrication{!collapsed.fabrication && ` (9)`}
-                </th>
-                {/* GROUP E — INSTALLATION */}
-                <th colSpan={collapsed.installation ? 1 : 8} className="bg-green-700 text-white text-xs font-semibold px-2 py-1.5 text-left border-r border-green-600">
-                  <Chevron group="installation" />Installation{!collapsed.installation && ` (8)`}
-                </th>
-                {/* GROUP F — COST PREVIEW */}
-                <th colSpan={collapsed.costPreview ? 1 : 4} className="bg-red-700 text-white text-xs font-semibold px-2 py-1.5 text-left border-r border-red-600">
-                  <Chevron group="costPreview" />Cost Preview{!collapsed.costPreview && ` (4)`}
-                </th>
-                {/* GROUP G — NOTES + ACTIONS */}
-                <th colSpan={collapsed.notes ? 1 : 2} className="bg-slate-600 text-white text-xs font-semibold px-2 py-1.5 text-left">
-                  <Chevron group="notes" />Notes{!collapsed.notes && ` + Actions`}
-                </th>
-              </tr>
-
-              {/* ─── Column Sub-Headers ─── */}
-              <tr className="bg-slate-50 border-b border-slate-200">
-                {/* A — IDENTIFICATION */}
-                <th className="sticky left-0 z-10 bg-slate-50 px-2 py-1.5 text-xs font-medium text-slate-600 whitespace-nowrap">#</th>
-                {!collapsed.identification && (
-                  <>
-                    <th className="sticky left-8 z-10 bg-slate-50 px-2 py-1.5 text-xs font-medium text-slate-600 whitespace-nowrap">Mark</th>
-                    <ColHeader label="Dwg Ref" col="drawingRef" className="text-slate-600" />
-                    <ColHeader label="Type" col="type" className="text-slate-600" />
-                    <ColHeader label="Profile" col="profile" className="text-slate-600" />
-                  </>
-                )}
-
-                {/* B — QTY & WEIGHT */}
-                <ColHeader label="Qty" col="qty" className="text-slate-600" />
-                {!collapsed.qtyWeight && (
-                  <>
-                    <ColHeader label="Length (ft)" col="lengthFt" className="text-slate-600" />
-                    <ColHeader label="Wt/ft (lb)" col="lbsPerFt" className="text-slate-600" />
-                    <ColHeader label="Total (lb)" col="totalLbs" className="text-slate-600" />
-                    <ColHeader label="Total (ton)" col="totalTons" className="text-slate-600" />
-                  </>
-                )}
-
-                {/* C — CONNECTIONS */}
-                <ColHeader label="Base Pl (lb)" col="plateBP" className="text-slate-600" />
-                {!collapsed.connections && (
-                  <ColHeader label="Anchors/pc" col="anchorsPerPc" className="text-slate-600" />
-                )}
-
-                {/* D — FABRICATION */}
-                <ColHeader label="Setup" col="fabSetup" className="text-slate-600" />
-                {!collapsed.fabrication && (
-                  <>
-                    <ColHeader label="Cut" col="fabCut" className="text-slate-600" />
-                    <ColHeader label="Drill" col="fabDrill" className="text-slate-600" />
-                    <ColHeader label="Feed" col="fabFeed" className="text-slate-600" />
-                    <ColHeader label="Weld" col="fabWeld" className="text-slate-600" />
-                    <ColHeader label="Grind" col="fabGrind" className="text-slate-600" />
-                    <ColHeader label="Paint" col="fabPaint" className="text-slate-600" />
-                    <ColHeader label="Fab/Pc" col="fabHrsPerPc" className="text-slate-600" />
-                    <ColHeader label="Tot Fab" col="totalFabHrs" className="text-slate-600" />
-                  </>
-                )}
-
-                {/* E — INSTALLATION */}
-                <ColHeader label="Unload" col="instUnload" className="text-slate-600" />
-                {!collapsed.installation && (
-                  <>
-                    <ColHeader label="Rig" col="instRig" className="text-slate-600" />
-                    <ColHeader label="Fit" col="instFit" className="text-slate-600" />
-                    <ColHeader label="Bolt" col="instBolt" className="text-slate-600" />
-                    <ColHeader label="Touch-up" col="instTouchup" className="text-slate-600" />
-                    <ColHeader label="QC" col="instQC" className="text-slate-600" />
-                    <ColHeader label="Inst/Pc" col="instHrsPerPc" className="text-slate-600" />
-                    <ColHeader label="Tot Inst" col="totalInstHrs" className="text-slate-600" />
-                  </>
-                )}
-
-                {/* F — COST PREVIEW */}
-                <ColHeader label="Material $" col="materialCost" className="text-slate-600" />
-                {!collapsed.costPreview && (
-                  <>
-                    <ColHeader label="Fab $" col="fabCost" className="text-slate-600" />
-                    <ColHeader label="Install $" col="installCost" className="text-slate-600" />
-                    <ColHeader label="Row Total" col="rowTotal" className="text-slate-600" />
-                  </>
-                )}
-
-                {/* G — NOTES + ACTIONS */}
-                <th className="px-2 py-1.5 text-xs font-medium text-slate-600 whitespace-nowrap">Notes</th>
-                {!collapsed.notes && (
-                  <th className="px-2 py-1.5 text-xs font-medium text-slate-600 whitespace-nowrap">Actions</th>
-                )}
+              <tr className="border-b border-steel-700/50 text-steel-400 uppercase text-[10px] tracking-wider">
+                {section.columns.map((c) => (
+                  <th key={c.field} className="px-2 py-2 text-left font-semibold">{c.label}</th>
+                ))}
+                <th className="px-2 py-2 text-right font-semibold">Rate</th>
+                <th className="px-2 py-2 text-right font-semibold">Total</th>
+                <th className="px-2 py-2 text-left font-semibold">Notes</th>
+                <th className="px-2 py-2 text-center font-semibold w-10"></th>
               </tr>
             </thead>
-
-            <tbody className="divide-y divide-slate-100">
-              {sorted.length === 0 && (
-                <tr>
-                  <td colSpan={34} className="px-6 py-12 text-center">
-                    <Wrench className="mx-auto h-10 w-10 text-slate-300 mb-3" />
-                    <p className="text-sm text-slate-500 font-medium">No misc metals items yet</p>
-                    <p className="text-xs text-slate-400 mt-1">Click "Add Row" to start your takeoff</p>
-                  </td>
-                </tr>
-              )}
-
-              {sorted.map((r, idx) => (
-                <tr key={r.id} className="hover:bg-slate-50 group">
-                  {/* A — IDENTIFICATION */}
-                  <td className="sticky left-0 z-10 bg-white group-hover:bg-slate-50 px-2 py-1 text-xs text-slate-500 text-center font-mono">{idx + 1}</td>
-                  {!collapsed.identification && (
-                    <>
-                      <td className="sticky left-8 z-10 bg-white group-hover:bg-slate-50 px-1 py-1">
-                        <TextInput value={r.mark} onChange={(v) => updateRow(r.id, 'mark', v)} className="w-16" placeholder="Mk" />
+            <tbody className="divide-y divide-steel-700/30">
+              {rows.map((row) => {
+                const { defaultRate, finalRate, rateOverridden, total } = rowCalc(row)
+                return (
+                  <tr key={row.id} className="hover:bg-steel-800/30">
+                    {section.columns.map((c) => (
+                      <td key={c.field} className="px-1 py-1">
+                        {c.type === 'select' ? (
+                          <Select
+                            value={row[c.field] ?? c.default ?? ''}
+                            onChange={(v) => updateRow(row.id, c.field, v)}
+                            options={c.options}
+                          />
+                        ) : c.type === 'number' ? (
+                          <NumInput
+                            value={row[c.field] ?? ''}
+                            onChange={(v) => updateRow(row.id, c.field, v)}
+                            className="text-right"
+                          />
+                        ) : (
+                          <TextInput
+                            value={row[c.field] ?? ''}
+                            onChange={(v) => updateRow(row.id, c.field, v)}
+                          />
+                        )}
                       </td>
-                      <td className="px-1 py-1">
-                        <TextInput value={r.drawingRef} onChange={(v) => updateRow(r.id, 'drawingRef', v)} className="w-16" placeholder="S-101" />
-                      </td>
-                      <td className="px-1 py-1">
-                        <select
-                          value={r.type || 'Stairs'}
-                          onChange={(e) => updateRow(r.id, 'type', e.target.value)}
-                          className="w-24 text-xs py-1 px-1 border border-slate-300 rounded bg-white focus:ring-1 focus:ring-purple-400 outline-none"
-                        >
-                          {MISC_METAL_TYPES.map((t) => <option key={t} value={t}>{t}</option>)}
-                        </select>
-                      </td>
-                      <td className="px-1 py-1">
-                        <ProfileSearch
-                          value={r.profile}
-                          onChange={(v) => updateRow(r.id, 'profile', v)}
-                          onSelect={(shape) => {
-                            updateRow(r.id, 'profile', shape.AISC_Manual_Label);
-                            updateRow(r.id, 'lbsPerFt', shape.W);
-                          }}
-                        />
-                      </td>
-                    </>
-                  )}
-
-                  {/* B — QTY & WEIGHT */}
-                  <td className="px-1 py-1"><NumInput value={r.qty} onChange={(v) => updateRow(r.id, 'qty', v)} /></td>
-                  {!collapsed.qtyWeight && (
-                    <>
-                      <td className="px-1 py-1"><NumInput value={r.lengthFt} onChange={(v) => updateRow(r.id, 'lengthFt', v)} /></td>
-                      <td className="px-1 py-1"><NumInput value={r.lbsPerFt} onChange={(v) => updateRow(r.id, 'lbsPerFt', v)} /></td>
-                      <td className="px-2 py-1 text-xs text-right font-mono text-slate-700">{fmtNum(r.totalLbs)}</td>
-                      <td className="px-2 py-1 text-xs text-right font-mono text-slate-700">{fmt(r.totalTons)}</td>
-                    </>
-                  )}
-
-                  {/* C — CONNECTIONS */}
-                  <td className="px-1 py-1"><NumInput value={r.plateBP} onChange={(v) => updateRow(r.id, 'plateBP', v)} /></td>
-                  {!collapsed.connections && (
-                    <td className="px-1 py-1"><NumInput value={r.anchorsPerPc} onChange={(v) => updateRow(r.id, 'anchorsPerPc', v)} /></td>
-                  )}
-
-                  {/* D — FABRICATION */}
-                  <td className="px-1 py-1"><NumInput value={r.fabSetup} onChange={(v) => updateRow(r.id, 'fabSetup', v)} /></td>
-                  {!collapsed.fabrication && (
-                    <>
-                      <td className="px-1 py-1"><NumInput value={r.fabCut} onChange={(v) => updateRow(r.id, 'fabCut', v)} /></td>
-                      <td className="px-1 py-1"><NumInput value={r.fabDrill} onChange={(v) => updateRow(r.id, 'fabDrill', v)} /></td>
-                      <td className="px-1 py-1"><NumInput value={r.fabFeed} onChange={(v) => updateRow(r.id, 'fabFeed', v)} /></td>
-                      <td className="px-1 py-1"><NumInput value={r.fabWeld} onChange={(v) => updateRow(r.id, 'fabWeld', v)} /></td>
-                      <td className="px-1 py-1"><NumInput value={r.fabGrind} onChange={(v) => updateRow(r.id, 'fabGrind', v)} /></td>
-                      <td className="px-1 py-1"><NumInput value={r.fabPaint} onChange={(v) => updateRow(r.id, 'fabPaint', v)} /></td>
-                      <td className="px-2 py-1 text-xs text-right font-mono text-amber-700 font-medium">{fmt(r.fabHrsPerPc)}</td>
-                      <td className="px-2 py-1 text-xs text-right font-mono text-amber-700 font-medium">{fmt(r.totalFabHrs)}</td>
-                    </>
-                  )}
-
-                  {/* E — INSTALLATION */}
-                  <td className="px-1 py-1"><NumInput value={r.instUnload} onChange={(v) => updateRow(r.id, 'instUnload', v)} /></td>
-                  {!collapsed.installation && (
-                    <>
-                      <td className="px-1 py-1"><NumInput value={r.instRig} onChange={(v) => updateRow(r.id, 'instRig', v)} /></td>
-                      <td className="px-1 py-1"><NumInput value={r.instFit} onChange={(v) => updateRow(r.id, 'instFit', v)} /></td>
-                      <td className="px-1 py-1"><NumInput value={r.instBolt} onChange={(v) => updateRow(r.id, 'instBolt', v)} /></td>
-                      <td className="px-1 py-1"><NumInput value={r.instTouchup} onChange={(v) => updateRow(r.id, 'instTouchup', v)} /></td>
-                      <td className="px-1 py-1"><NumInput value={r.instQC} onChange={(v) => updateRow(r.id, 'instQC', v)} /></td>
-                      <td className="px-2 py-1 text-xs text-right font-mono text-green-700 font-medium">{fmt(r.instHrsPerPc)}</td>
-                      <td className="px-2 py-1 text-xs text-right font-mono text-green-700 font-medium">{fmt(r.totalInstHrs)}</td>
-                    </>
-                  )}
-
-                  {/* F — COST PREVIEW */}
-                  <td className="px-2 py-1 text-xs text-right font-mono text-slate-700">${fmtNum(Math.round(r.materialCost))}</td>
-                  {!collapsed.costPreview && (
-                    <>
-                      <td className="px-2 py-1 text-xs text-right font-mono text-amber-700">${fmtNum(Math.round(r.fabCost))}</td>
-                      <td className="px-2 py-1 text-xs text-right font-mono text-green-700">${fmtNum(Math.round(r.installCost))}</td>
-                      <td className="px-2 py-1 text-xs text-right font-mono font-bold text-slate-800">${fmtNum(Math.round(r.rowTotal))}</td>
-                    </>
-                  )}
-
-                  {/* G — NOTES + ACTIONS */}
-                  <td className="px-1 py-1">
-                    <TextInput value={r.notes} onChange={(v) => updateRow(r.id, 'notes', v)} className="w-28" placeholder="Notes..." />
-                  </td>
-                  {!collapsed.notes && (
-                    <td className="px-1 py-1">
-                      <div className="flex items-center gap-0.5">
-                        <button onClick={() => duplicateRow(r)} className="p-1 rounded hover:bg-purple-100 text-slate-400 hover:text-purple-600 transition" title="Duplicate">
-                          <Copy size={13} />
-                        </button>
-                        <button onClick={() => resetRow(r.id)} className="p-1 rounded hover:bg-amber-100 text-slate-400 hover:text-amber-600 transition" title="Reset">
-                          <RotateCcw size={13} />
-                        </button>
-                        <button onClick={() => deleteRow(r.id)} className="p-1 rounded hover:bg-red-100 text-slate-400 hover:text-red-600 transition" title="Delete">
-                          <Trash2 size={13} />
-                        </button>
-                      </div>
+                    ))}
+                    <td className="px-1 py-1" title={rateOverridden ? `Default: ${fmt(defaultRate)} ${section.unit}` : ''}>
+                      <NumInput
+                        value={rateOverridden ? row.rateOverride : fmtNum(defaultRate, 2)}
+                        onChange={(v) => updateRow(row.id, 'rateOverride', v === '' ? null : v)}
+                        className={`text-right ${rateOverridden ? '!bg-amber-500/15 !border-amber-500/40 !text-amber-200' : ''}`}
+                      />
                     </td>
-                  )}
-                </tr>
-              ))}
-
-              {/* ─── Summary Totals Row ─── */}
-              {sorted.length > 0 && (
-                <tr className="bg-slate-100 border-t-2 border-slate-300 font-semibold">
-                  <td className="sticky left-0 z-10 bg-slate-100 px-2 py-2 text-xs text-slate-600" />
-                  {!collapsed.identification && (
-                    <>
-                      <td className="sticky left-8 z-10 bg-slate-100 px-2 py-2 text-xs text-slate-700">TOTALS</td>
-                      <td /><td /><td />
-                    </>
-                  )}
-
-                  <td className="px-2 py-2 text-xs text-right font-mono">{fmtNum(totals.qty)}</td>
-                  {!collapsed.qtyWeight && (
-                    <>
-                      <td /><td />
-                      <td className="px-2 py-2 text-xs text-right font-mono">{fmtNum(Math.round(totals.totalLbs))}</td>
-                      <td className="px-2 py-2 text-xs text-right font-mono">{fmt(totals.totalTons)}</td>
-                    </>
-                  )}
-
-                  <td />
-                  {!collapsed.connections && <td />}
-
-                  <td />
-                  {!collapsed.fabrication && (
-                    <>
-                      <td /><td /><td /><td /><td /><td /><td />
-                      <td className="px-2 py-2 text-xs text-right font-mono text-amber-700">{fmt(totals.totalFabHrs)}</td>
-                    </>
-                  )}
-
-                  <td />
-                  {!collapsed.installation && (
-                    <>
-                      <td /><td /><td /><td /><td /><td />
-                      <td className="px-2 py-2 text-xs text-right font-mono text-green-700">{fmt(totals.totalInstHrs)}</td>
-                    </>
-                  )}
-
-                  <td className="px-2 py-2 text-xs text-right font-mono">${fmtNum(Math.round(totals.materialCost))}</td>
-                  {!collapsed.costPreview && (
-                    <>
-                      <td className="px-2 py-2 text-xs text-right font-mono text-amber-700">${fmtNum(Math.round(totals.fabCost))}</td>
-                      <td className="px-2 py-2 text-xs text-right font-mono text-green-700">${fmtNum(Math.round(totals.installCost))}</td>
-                      <td className="px-2 py-2 text-xs text-right font-mono font-bold">${fmtNum(Math.round(totals.rowTotal))}</td>
-                    </>
-                  )}
-
-                  <td />
-                  {!collapsed.notes && <td />}
-                </tr>
-              )}
+                    <td className="px-2 py-1 text-right font-mono font-semibold text-steel-100">{fmt(total)}</td>
+                    <td className="px-1 py-1">
+                      <TextInput
+                        value={row.notes ?? ''}
+                        onChange={(v) => updateRow(row.id, 'notes', v)}
+                        placeholder="—"
+                      />
+                    </td>
+                    <td className="px-1 py-1 text-center">
+                      <button
+                        onClick={() => deleteRow(row.id)}
+                        className="rounded p-1 text-steel-500 hover:bg-red-500/10 hover:text-red-400"
+                        title="Delete row"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </button>
+                    </td>
+                  </tr>
+                )
+              })}
             </tbody>
+            <tfoot>
+              <tr className="border-t-2 border-steel-700/50">
+                <td colSpan={section.columns.length + 1} className="px-2 py-2 text-right text-xs font-bold uppercase tracking-wider text-steel-200">
+                  {section.title} subtotal
+                </td>
+                <td className="px-2 py-2 text-right font-mono text-sm font-bold text-fire-400">{fmt(subtotal)}</td>
+                <td colSpan={2}></td>
+              </tr>
+            </tfoot>
           </table>
         </div>
-      </div>
+      )}
+      <button
+        onClick={addRow}
+        className="inline-flex items-center gap-1.5 rounded-lg bg-fire-500/10 border border-fire-500/30 px-3 py-1.5 text-xs font-semibold text-fire-400 hover:bg-fire-500/20 transition"
+      >
+        <Plus className="h-3.5 w-3.5" /> Add {section.title.split(' ')[0]} Row
+      </button>
+    </SectionCard>
+  )
+}
 
-      {/* ─── Bottom Summary Cards ─── */}
-      {sorted.length > 0 && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
-          {/* Pieces */}
-          <div className="bg-white rounded-lg shadow p-4 border-t-4 border-purple-500">
-            <p className="text-xs text-slate-500 uppercase tracking-wide">Total Pieces</p>
-            <p className="text-2xl font-bold text-purple-700 mt-1">{fmtNum(totals.qty)}</p>
+// ─── Aggregation Section (read-only summary from other calculators) ───
+function AggregationSection({ state }) {
+  const stairsC = state.stairsComputed || {}
+  const ladderC = state.ladderComputed || {}
+  const railings = state.railings || []
+  const joistReinf = state.joistReinf || []
+
+  const stairs = {
+    label: 'Stairs',
+    qty: stairsC.totalLbs > 0 ? '1 set' : '—',
+    lbs: stairsC.totalLbs || 0,
+    matCost: stairsC.materialCost || 0,
+    grandTotal: stairsC.grandTotal || 0,
+    fabHrs: stairsC.fabHrs || 0,
+    instHrs: stairsC.instHrs || 0,
+    link: '/stairs',
+  }
+  const ladder = {
+    label: 'Ladder',
+    qty: ladderC.totalLbs > 0 ? '1 ladder' : '—',
+    lbs: ladderC.totalLbs || 0,
+    matCost: ladderC.materialCost || 0,
+    grandTotal: ladderC.grandTotal || 0,
+    fabHrs: ladderC.fabHrs || 0,
+    instHrs: ladderC.instHrs || 0,
+    link: '/ladder',
+  }
+  const rl = {
+    label: 'Railings',
+    qty: railings.length > 0 ? `${railings.length} runs` : '—',
+    lbs: railings.reduce((s, r) => s + Number(r.weightLbs || 0), 0),
+    matCost: 0,
+    grandTotal: 0,
+    fabHrs: railings.reduce((s, r) => s + Number(r.fabHrs || 0), 0),
+    instHrs: railings.reduce((s, r) => s + Number(r.instHrs || 0), 0),
+    link: '/railings',
+  }
+  const jr = {
+    label: 'Joist Reinforcement',
+    qty: joistReinf.length > 0 ? `${joistReinf.length} marks` : '—',
+    lbs: joistReinf.reduce((s, r) => s + Number(r.weightLbs || 0), 0),
+    matCost: 0,
+    grandTotal: 0,
+    fabHrs: joistReinf.reduce((s, r) => s + Number(r.fabHrs || 0), 0),
+    instHrs: joistReinf.reduce((s, r) => s + Number(r.instHrs || 0), 0),
+    link: '/joist-reinf',
+  }
+  const rows = [stairs, ladder, rl, jr]
+  const totalLbs = rows.reduce((s, r) => s + r.lbs, 0)
+  const totalGrand = rows.reduce((s, r) => s + r.grandTotal, 0)
+  const totalFab = rows.reduce((s, r) => s + r.fabHrs, 0)
+  const totalInst = rows.reduce((s, r) => s + r.instHrs, 0)
+
+  return (
+    <SectionCard icon={Calculator} title="Aggregation from calculators" subtitle="Auto-pulled from Stairs, Ladder, Railings, Joist Reinf — read-only" color="text-blue-400">
+      <div className="overflow-x-auto">
+        <table className="w-full text-xs">
+          <thead>
+            <tr className="border-b border-steel-700/50 text-steel-400 uppercase text-[10px] tracking-wider">
+              <th className="px-2 py-2 text-left font-semibold">Source</th>
+              <th className="px-2 py-2 text-left font-semibold">Qty</th>
+              <th className="px-2 py-2 text-right font-semibold">Total lbs</th>
+              <th className="px-2 py-2 text-right font-semibold">Fab hrs</th>
+              <th className="px-2 py-2 text-right font-semibold">Install hrs</th>
+              <th className="px-2 py-2 text-right font-semibold">Grand $</th>
+              <th className="px-2 py-2 text-center font-semibold w-12"></th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-steel-700/30">
+            {rows.map((r) => (
+              <tr key={r.label} className={r.lbs > 0 ? '' : 'opacity-40'}>
+                <td className="px-2 py-2 font-medium text-steel-200">{r.label}</td>
+                <td className="px-2 py-2 text-steel-400">{r.qty}</td>
+                <td className="px-2 py-2 text-right font-mono text-steel-200">{fmtNum(r.lbs, 1)}</td>
+                <td className="px-2 py-2 text-right font-mono text-steel-300">{fmtNum(r.fabHrs, 1)}</td>
+                <td className="px-2 py-2 text-right font-mono text-steel-300">{fmtNum(r.instHrs, 1)}</td>
+                <td className="px-2 py-2 text-right font-mono font-semibold text-steel-100">{fmt(r.grandTotal)}</td>
+                <td className="px-2 py-2 text-center">
+                  <Link to={r.link} className="inline-flex items-center gap-1 rounded p-1 text-steel-400 hover:bg-blue-500/10 hover:text-blue-400" title={`Edit ${r.label}`}>
+                    <ExternalLink className="h-3.5 w-3.5" />
+                  </Link>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+          <tfoot>
+            <tr className="border-t-2 border-steel-700/50">
+              <td colSpan={2} className="px-2 py-2 text-right text-xs font-bold uppercase tracking-wider text-steel-200">Calculators subtotal</td>
+              <td className="px-2 py-2 text-right font-mono text-sm font-bold text-steel-100">{fmtNum(totalLbs, 1)} lbs</td>
+              <td className="px-2 py-2 text-right font-mono text-xs font-bold text-steel-200">{fmtNum(totalFab, 1)}</td>
+              <td className="px-2 py-2 text-right font-mono text-xs font-bold text-steel-200">{fmtNum(totalInst, 1)}</td>
+              <td className="px-2 py-2 text-right font-mono text-sm font-bold text-fire-400">{fmt(totalGrand)}</td>
+              <td></td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+    </SectionCard>
+  )
+}
+
+/* ──────────────────────────────────────────────────────────────────────────── */
+export default function MiscMetals() {
+  const { state, dispatch } = useProject()
+  const miscRates = state.rates?.miscMetalsRates || []
+  const standard = state.miscMetalsStandard || {}
+
+  // Compute aggregation totals from calculators
+  const stairsC = state.stairsComputed || {}
+  const ladderC = state.ladderComputed || {}
+  const railings = state.railings || []
+  const joistReinf = state.joistReinf || []
+  const calcsTotal =
+    (stairsC.grandTotal || 0) +
+    (ladderC.grandTotal || 0) +
+    (railings.reduce((s, r) => s + Number(r.weightLbs || 0), 0) * 1.20) + // crude estimate
+    (joistReinf.reduce((s, r) => s + Number(r.weightLbs || 0), 0) * 1.20)
+
+  // Compute Tier-1 standard totals
+  const findRate = (item) => {
+    const found = miscRates.find((r) => r.item === item)
+    return found ? Number(found.rate) || 0 : 0
+  }
+  const sectionSubtotal = (section) => {
+    const rows = standard[section.key] || []
+    return rows.reduce((sum, row) => {
+      const defaultRate = findRate(section.rateLookup(row))
+      const finalRate = (row.rateOverride != null && row.rateOverride !== '') ? Number(row.rateOverride) : defaultRate
+      return sum + section.multiplier(row) * finalRate
+    }, 0)
+  }
+  const tier1Total = useMemo(
+    () => TIER1_SECTIONS.reduce((s, sec) => s + sectionSubtotal(sec), 0),
+    [standard, miscRates]
+  )
+
+  const grandTotal = calcsTotal + tier1Total
+
+  return (
+    <div className="min-h-screen bg-steel-950 text-white">
+      <div className="accent-stripe" />
+      <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+
+        {/* Header */}
+        <div className="mb-8 flex items-center gap-3">
+          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-fire-500 text-white shadow-lg shadow-fire-500/20">
+            <Layers className="h-5 w-5" />
           </div>
-          {/* Weight */}
-          <div className="bg-white rounded-lg shadow p-4 border-t-4 border-purple-500">
-            <p className="text-xs text-slate-500 uppercase tracking-wide">Total Weight</p>
-            <p className="text-2xl font-bold text-purple-700 mt-1">{fmt(totals.totalTons)} <span className="text-sm font-normal">tons</span></p>
-            <p className="text-xs text-slate-400 mt-0.5">{fmtNum(Math.round(totals.totalLbs))} lbs</p>
-          </div>
-          {/* Fabrication */}
-          <div className="bg-white rounded-lg shadow p-4 border-t-4 border-amber-500">
-            <p className="text-xs text-slate-500 uppercase tracking-wide">Fabrication</p>
-            <p className="text-2xl font-bold text-amber-700 mt-1">{fmt(totals.totalFabHrs)} <span className="text-sm font-normal">hrs</span></p>
-            <p className="text-xs text-slate-400 mt-0.5">${fmtNum(Math.round(totals.fabCost))}</p>
-          </div>
-          {/* Installation */}
-          <div className="bg-white rounded-lg shadow p-4 border-t-4 border-green-500">
-            <p className="text-xs text-slate-500 uppercase tracking-wide">Installation</p>
-            <p className="text-2xl font-bold text-green-700 mt-1">{fmt(totals.totalInstHrs)} <span className="text-sm font-normal">hrs</span></p>
-            <p className="text-xs text-slate-400 mt-0.5">${fmtNum(Math.round(totals.installCost))}</p>
-          </div>
-          {/* Grand Total */}
-          <div className="bg-white rounded-lg shadow p-4 border-t-4 border-red-500">
-            <p className="text-xs text-slate-500 uppercase tracking-wide">Grand Total</p>
-            <p className="text-2xl font-bold text-red-700 mt-1">${fmtNum(Math.round(totals.rowTotal))}</p>
-            <p className="text-xs text-slate-400 mt-0.5">Material ${fmtNum(Math.round(totals.materialCost))}</p>
+          <div>
+            <h1 className="page-title text-white">Misc Metals</h1>
+            <p className="page-subtitle text-steel-400">
+              Aggregation from calculators + Tier 1 standard items (Bollards, Corner Guards SS/MS, Embed Plates).
+              Tier 2/3 + Custom Takeoff coming in upcoming phases.
+            </p>
           </div>
         </div>
-      )}
+
+        {/* ─── 1. Aggregation ─── */}
+        <AggregationSection state={state} />
+
+        {/* ─── 2-5. Tier 1 standard items ─── */}
+        {TIER1_SECTIONS.map((section) => (
+          <StandardItemTable
+            key={section.key}
+            section={section}
+            miscRates={miscRates}
+            rows={standard[section.key] || []}
+            dispatch={dispatch}
+          />
+        ))}
+
+        {/* ─── Grand Total ─── */}
+        <SectionCard icon={Building2} title="Misc Metals — Grand Total" color="text-green-400">
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <tbody className="divide-y divide-steel-700/30">
+                <tr>
+                  <td className="px-2 py-2 font-medium text-steel-200">From calculators (Stairs / Ladder / Railings / Joist Reinf)</td>
+                  <td className="px-2 py-2 text-right font-mono text-steel-100">{fmt(calcsTotal)}</td>
+                </tr>
+                <tr>
+                  <td className="px-2 py-2 font-medium text-steel-200">Tier 1 standard items (this page)</td>
+                  <td className="px-2 py-2 text-right font-mono text-steel-100">{fmt(tier1Total)}</td>
+                </tr>
+              </tbody>
+              <tfoot>
+                <tr className="border-t-2 border-fire-500/40">
+                  <td className="px-2 py-3 text-right text-sm font-bold uppercase tracking-wider text-steel-100">
+                    GRAND TOTAL
+                  </td>
+                  <td className="px-2 py-3 text-right font-mono text-lg font-bold text-fire-400">{fmt(grandTotal)}</td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+          <p className="mt-3 text-[11px] text-steel-500">
+            Tier 2 (Lintels, Edge Angles, Bumper Rails, Wheel Stops, Floor Plates, Pipe Supports), Tier 3 (Anchor Bolts, Equipment Dunnage, Architectural) and a Structural Takeoff-style Custom Takeoff section will be added in upcoming phases.
+          </p>
+        </SectionCard>
+
+        {/* Footer */}
+        <div className="mt-10 border-t border-steel-700/40 pt-6 text-center">
+          <p className="text-xs text-steel-500">Triple Weld Inc. · Steel Estimator Pro · Misc Metals (Phase 1)</p>
+        </div>
+      </div>
     </div>
-  );
+  )
 }
