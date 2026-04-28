@@ -551,22 +551,8 @@ export default function Stairs() {
           </div>
         </div>
 
-        {/* Multi-stair tab nav */}
-        <div className="mb-6 flex flex-wrap items-center gap-2">
-          {stairsArr.map((st, i) => (
-            <button
-              key={st.id}
-              type="button"
-              onClick={() => setActiveIdx(i)}
-              className={`px-3 py-1.5 rounded-lg text-sm font-semibold transition ${
-                i === safeIdx
-                  ? 'bg-fire-600 text-white shadow-md'
-                  : 'bg-steel-700 text-steel-300 hover:bg-steel-600'
-              }`}
-            >
-              {`Stair ${i + 1}${st.mark ? ` — ${st.mark}` : ''}`}
-            </button>
-          ))}
+        {/* Add Stair button (top-right) */}
+        <div className="mb-3 flex justify-end">
           <button
             type="button"
             onClick={() => {
@@ -578,21 +564,56 @@ export default function Stairs() {
           >
             + Add Stair
           </button>
-          {stairsArr.length > 0 && (
-            <button
-              type="button"
-              onClick={() => {
-                if (window.confirm(`Delete Stair ${safeIdx + 1}?`)) {
-                  dispatch({ type: 'DELETE_STAIRS_ROW', payload: stairsId });
-                  setActiveIdx(Math.max(safeIdx - 1, 0));
-                }
-              }}
-              className="ml-auto px-3 py-1.5 rounded-lg text-sm font-semibold bg-red-500/20 text-red-300 hover:bg-red-500/40"
-            >
-              Delete current
-            </button>
-          )}
         </div>
+
+        {/* Vertical card list — Ladder/Railings style */}
+        {stairsArr.length > 0 && (
+          <div className="mb-6 space-y-2">
+            {stairsArr.map((st, i) => {
+              const isActive = i === safeIdx;
+              const mark = st.mark || `S-${i + 1}`;
+              const f2f = st.f2fHeight ?? st.floorHeight ?? 0;
+              const treadType = st.treadType || 'Pan Tread (Galv)';
+              const flights = st.flights ?? 1;
+              return (
+                <div
+                  key={st.id}
+                  onClick={() => setActiveIdx(i)}
+                  className={`rounded-lg border px-4 py-3 flex items-center gap-3 cursor-pointer transition ${
+                    isActive
+                      ? 'border-fire-500 bg-fire-950/40 shadow-md shadow-fire-500/10'
+                      : 'border-steel-700 bg-steel-800 hover:bg-steel-700/60'
+                  }`}
+                >
+                  <span className={`text-lg w-4 ${isActive ? 'text-fire-400' : 'text-steel-500'}`}>
+                    {isActive ? '▼' : '▶'}
+                  </span>
+                  <span className="text-steel-500 text-sm font-mono w-6">{i + 1}</span>
+                  <span className="text-fire-400 font-bold w-20">{mark}</span>
+                  <span className="text-steel-200 text-sm font-medium">{treadType}</span>
+                  <span className="text-steel-400 text-sm">
+                    {f2f > 0 ? `${f2f}mm · ` : ''}
+                    {flights} flight{flights !== 1 ? 's' : ''}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (window.confirm(`Delete Stair ${i + 1}?`)) {
+                        dispatch({ type: 'DELETE_STAIRS_ROW', payload: st.id });
+                        setActiveIdx(Math.max(Math.min(safeIdx, stairsArr.length - 2), 0));
+                      }
+                    }}
+                    className="ml-auto p-1.5 rounded text-red-400 hover:bg-red-500/20 transition"
+                    title={`Delete Stair ${i + 1}`}
+                  >
+                    <span className="text-base">✕</span>
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+        )}
 
         {stairsArr.length === 0 && (
           <div className="mb-6 rounded-xl border border-dashed border-steel-600 bg-steel-900/40 p-10 text-center">
