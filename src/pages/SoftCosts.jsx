@@ -50,7 +50,7 @@ export default function SoftCosts() {
   };
 
   return (
-    <div className="min-h-screen bg-steel-50">
+    <div className="min-h-screen">
       {/* Accent stripe */}
       <div className="accent-stripe h-1.5 w-full bg-gradient-to-r from-fire-500 via-fire-600 to-steel-800" />
 
@@ -224,7 +224,7 @@ export default function SoftCosts() {
               </tbody>
               {rows.length > 0 && (
                 <tfoot>
-                  <tr className="border-t-2 border-steel-200 bg-steel-50">
+                  <tr className="border-t-2 border-steel-700 bg-steel-900/60">
                     <td colSpan={5} className="px-3 py-3 text-right text-sm font-bold text-steel-700">
                       Total (flat costs)
                     </td>
