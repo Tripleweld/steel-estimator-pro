@@ -595,7 +595,9 @@ function DataRow({ row, index, fabRate, installRate, onUpdate, onDelete }) {
       {/* Total ton */}
       <td className="px-1 py-1 text-right text-sm text-white font-mono">{fmtNum(totalTon, 2)}</td>
       {/* Base Pl */}
-      <td className="px-1 py-1">{row.section === 'steelDeck' ? <span className="text-steel-500 text-xs italic">—</span> : <EditCell value={row.basePlLb} onChange={set('basePlLb')} type="text" inputMode="decimal" className="text-right w-16" />}</td>
+      {row.section !== 'steelDeck' && (
+        <td className="px-1 py-1"><EditCell value={row.basePlLb} onChange={set('basePlLb')} type="text" inputMode="decimal" className="text-right w-16" /></td>
+      )
       {/* Anchors */}
       {row.section !== 'steelDeck' && (
         <td className="px-1 py-1"><EditCell value={row.anchorsPc} onChange={set('anchorsPc')} type="text" inputMode="decimal" className="text-right w-16" /></td>
@@ -879,7 +881,7 @@ function StructuralTakeoffInner() {
                     <thead>
                       <tr>
                         <th className="w-8 bg-steel-800"></th>
-                        {colGroups.map((g, i) => (
+                        {(sec.id === 'steelDeck' ? colGroups.filter(g => g.label !== 'Connections & Hardware') : colGroups).map((g, i) => (
                           <th key={i} colSpan={g.cols}
                             className={`text-center text-[10px] font-bold uppercase tracking-wider py-1.5 border-b-2 ${g.color} ${g.border} text-white`}>
                             {g.label}
@@ -889,7 +891,7 @@ function StructuralTakeoffInner() {
                       </tr>
                       <tr className="bg-steel-800">
                         <th className="px-1 py-1.5 text-[10px] font-bold text-steel-400 uppercase">#</th>
-                        {(sec.headerOverrides ? subHeaders.map(h => sec.headerOverrides[h] || h) : subHeaders).map((h, i) => (
+                        {(sec.headerOverrides ? (sec.id === 'steelDeck' ? subHeaders.filter(h => h !== 'Base Pl (lb)' && h !== 'Anchors/pc') : subHeaders).map(h => sec.headerOverrides[h] || h) : subHeaders).map((h, i) => (
                           <th key={i} className="px-1 py-1.5 text-[10px] font-bold text-steel-300 uppercase tracking-wider">{h}</th>
                         ))}
                         <th className="px-1 py-1.5 text-[10px] font-bold text-steel-400 uppercase">Del</th>
