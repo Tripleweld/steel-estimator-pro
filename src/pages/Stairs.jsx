@@ -524,8 +524,8 @@ export default function Stairs() {
             <Calculator className="h-5 w-5" />
           </div>
           <div>
-            <h1 className="page-title">Stairs Calculator</h1>
-            <p className="page-subtitle">
+            <h1 className="page-title text-white">Stairs Calculator</h1>
+            <p className="page-subtitle text-steel-400">
               Parametric OBC 3.4-compliant stair takeoff with auto BOM, treads, railings &amp; labour
             </p>
           </div>
