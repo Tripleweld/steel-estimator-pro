@@ -592,34 +592,6 @@ export default function MiscMetals() {
           />
         ))}
 
-        {/* ─── Grand Total ─── */}
-        <SectionCard icon={Building2} title="Misc Metals — Grand Total" color="text-green-400">
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <tbody className="divide-y divide-steel-700/30">
-                <tr>
-                  <td className="px-2 py-2 font-medium text-steel-200">From calculators (Stairs / Ladder / Railings)</td>
-                  <td className="px-2 py-2 text-right font-mono text-steel-100">{fmt(calcsTotal)}</td>
-                </tr>
-                <tr>
-                  <td className="px-2 py-2 font-medium text-steel-200">Standard items — Tier 1+2+3 (this page)</td>
-                  <td className="px-2 py-2 text-right font-mono text-steel-100">{fmt(tier1Total)}</td>
-                </tr>
-              </tbody>
-              <tfoot>
-                <tr className="border-t-2 border-fire-500/40">
-                  <td className="px-2 py-3 text-right text-sm font-bold uppercase tracking-wider text-steel-100">
-                    GRAND TOTAL
-                  </td>
-                  <td className="px-2 py-3 text-right font-mono text-lg font-bold text-fire-400">{fmt(grandTotal)}</td>
-                </tr>
-              </tfoot>
-            </table>
-          </div>
-          <p className="mt-3 text-[11px] text-steel-500">
-            Tier 2 (Lintels, Edge Angles, Bumper Rails, Wheel Stops, Floor Plates, Pipe Supports), Tier 3 (Anchor Bolts, Equipment Dunnage, Architectural) and a Structural Takeoff-style Custom Takeoff section will be added in upcoming phases.
-          </p>
-        </SectionCard>
 
         {/* Footer */}
         <div className="mt-10 border-t border-steel-700/40 pt-6 text-center">
