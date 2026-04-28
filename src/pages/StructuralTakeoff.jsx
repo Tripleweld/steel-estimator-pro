@@ -294,63 +294,53 @@ function JoistReinfSyncTable({ fabRate, installRate }) {
       No joist reinforcement items. <a href="/joist-reinf" className="text-blue-400 hover:text-blue-300 underline">Open Calculator</a>
     </div>
   );
-  let tW=0,tF=0,tI=0,tMat=0,tFC=0,tIC=0;
+
+  let tW=0, tI=0, tMat=0, tIC=0;
   return (
     <div className="overflow-x-auto border border-steel-700 rounded-b-lg bg-steel-900/50">
       <div className="px-3 py-1.5 bg-amber-900/30 border-b border-amber-500/30 text-amber-300 text-xs font-medium">
-        ⚡ Auto-synced from Joist Reinforcement Calculator — edit hours to override
+        \u26a1 Auto-synced from Joist Reinforcement Calculator \u2014 edit hours to override
       </div>
-      <table className="w-full text-left whitespace-nowrap" style={{minWidth:'1100px'}}>
+      <table className="w-full text-left whitespace-nowrap" style={{minWidth:'900px'}}>
         <thead><tr className="bg-steel-800 text-[10px] text-steel-300 uppercase">
           <th className="px-2 py-1.5">#</th><th className="px-2 py-1.5">Mark</th>
           <th className="px-2 py-1.5">Location</th><th className="px-2 py-1.5">Joist</th>
           <th className="px-2 py-1.5">Method</th><th className="px-2 py-1.5 text-right">Qty</th>
           <th className="px-2 py-1.5 text-right">Weight (lbs)</th>
-          <th className="px-2 py-1.5 text-right">Fab Hrs</th>
-          <th className="px-2 py-1.5 text-right">Inst Hrs</th>
+          <th className="px-2 py-1.5 text-right">Install Hrs</th>
           <th className="px-2 py-1.5 text-right">Material $</th>
-          <th className="px-2 py-1.5 text-right">Fab $</th>
           <th className="px-2 py-1.5 text-right">Install $</th>
           <th className="px-2 py-1.5 text-right">Row Total</th>
         </tr></thead>
         <tbody>
-          {jrRows.map((r,i) => {
-            const q=Number(r.qty)||0, w=Number(r.weightLbs)||0;
-            const fH=gv(r.id,'fab',Number(r.fabHrs)||0);
-            const iH=gv(r.id,'inst',Number(r.instHrs)||0);
-            const mat=w*q*1.15, fc=fH*q*fabRate, ic=iH*q*installRate;
-            tW+=w*q; tF+=fH*q; tI+=iH*q; tMat+=mat; tFC+=fc; tIC+=ic;
-            return (
-              <tr key={r.id} className="border-b border-steel-800/50 hover:bg-steel-800/30 transition-colors">
-                <td className="px-2 py-1 text-xs text-steel-500">{i+1}</td>
-                <td className="px-2 py-1 text-sm text-white font-medium">{r.mark||'—'}</td>
-                <td className="px-2 py-1 text-sm text-steel-300">{r.location||'—'}</td>
-                <td className="px-2 py-1 text-sm text-steel-300">{r.joistType}</td>
-                <td className="px-2 py-1 text-sm text-steel-300">{r.reinfMethod}</td>
-                <td className="px-2 py-1 text-sm text-right text-white">{q}</td>
-                <td className="px-2 py-1 text-sm text-right text-steel-300">{fmtNum(w*q,0)}</td>
-                <td className="px-2 py-1 text-right"><input type="text" inputMode="decimal" value={fH}
-                  onChange={e=>sv(r.id,'fab',e.target.value)}
-                  className="w-16 text-right bg-amber-900/40 border border-amber-500/50 rounded px-1 py-0.5 text-sm text-white font-mono focus:outline-none focus:ring-1 focus:ring-amber-400"/></td>
-                <td className="px-2 py-1 text-right"><input type="text" inputMode="decimal" value={iH}
-                  onChange={e=>sv(r.id,'inst',e.target.value)}
-                  className="w-16 text-right bg-amber-900/40 border border-amber-500/50 rounded px-1 py-0.5 text-sm text-white font-mono focus:outline-none focus:ring-1 focus:ring-amber-400"/></td>
-                <td className="px-2 py-1 text-sm text-right text-steel-300">{fmtDollar(mat)}</td>
-                <td className="px-2 py-1 text-sm text-right text-steel-300">{fmtDollar(fc)}</td>
-                <td className="px-2 py-1 text-sm text-right text-steel-300">{fmtDollar(ic)}</td>
-                <td className="px-2 py-1 text-sm text-right text-white font-bold">{fmtDollar(mat+fc+ic)}</td>
-              </tr>);
-          })}
-          <tr className="bg-steel-800/80 font-bold text-sm">
-            <td colSpan={6} className="px-2 py-2 text-right text-steel-300 uppercase text-xs">Totals</td>
-            <td className="px-2 py-1 text-right text-white">{fmtNum(tW,0)}</td>
-            <td className="px-2 py-1 text-right text-white">{fmtNum(tF,1)}</td>
-            <td className="px-2 py-1 text-right text-white">{fmtNum(tI,1)}</td>
-            <td className="px-2 py-1 text-right text-white">{fmtDollar(tMat)}</td>
-            <td className="px-2 py-1 text-right text-white">{fmtDollar(tFC)}</td>
-            <td className="px-2 py-1 text-right text-white">{fmtDollar(tIC)}</td>
-            <td className="px-2 py-1 text-right text-yellow-400">{fmtDollar(tMat+tFC+tIC)}</td>
-          </tr>
+        {jrRows.map((r,i) => {
+          const q=Number(r.qty)||0, w=Number(r.weightLbs)||0;
+          const iH=gv(r.id,'inst',Number(r.instHrs)||0);
+          const mat=w*q*1.15, ic=iH*q*installRate;
+          tW+=w*q; tI+=iH*q; tMat+=mat; tIC+=ic;
+          return (
+            <tr key={r.id} className="border-b border-steel-800/50 hover:bg-steel-800/30 transition-colors">
+              <td className="px-2 py-1 text-xs text-steel-500">{i+1}</td>
+              <td className="px-2 py-1 text-sm text-white font-medium">{r.mark||'\u2014'}</td>
+              <td className="px-2 py-1 text-sm text-steel-300">{r.location||'\u2014'}</td>
+              <td className="px-2 py-1 text-sm text-steel-300">{r.joistType}</td>
+              <td className="px-2 py-1 text-sm text-steel-300">{r.reinfMethod}</td>
+              <td className="px-2 py-1 text-sm text-right text-white">{q}</td>
+              <td className="px-2 py-1 text-sm text-right text-steel-300">{fmtNum(w*q,0)}</td>
+              <td className="px-2 py-1 text-right"><input type="text" inputMode="decimal" value={iH} onChange={e=>sv(r.id,'inst',e.target.value)} className="w-16 text-right bg-amber-900/40 border border-amber-500/50 rounded px-1 py-0.5 text-sm text-white font-mono focus:outline-none focus:ring-1 focus:ring-amber-400"/></td>
+              <td className="px-2 py-1 text-sm text-right text-steel-300">{fmtDollar(mat)}</td>
+              <td className="px-2 py-1 text-sm text-right text-steel-300">{fmtDollar(ic)}</td>
+              <td className="px-2 py-1 text-sm text-right text-white font-bold">{fmtDollar(mat+ic)}</td>
+            </tr>);
+        })}
+        <tr className="bg-steel-800/80 font-bold text-sm">
+          <td colSpan={6} className="px-2 py-2 text-right text-steel-300 uppercase text-xs">Totals</td>
+          <td className="px-2 py-1 text-right text-white">{fmtNum(tW,0)}</td>
+          <td className="px-2 py-1 text-right text-white">{fmtNum(tI,1)}</td>
+          <td className="px-2 py-1 text-right text-white">{fmtDollar(tMat)}</td>
+          <td className="px-2 py-1 text-right text-white">{fmtDollar(tIC)}</td>
+          <td className="px-2 py-1 text-right text-yellow-400">{fmtDollar(tMat+tIC)}</td>
+        </tr>
         </tbody>
       </table>
     </div>
