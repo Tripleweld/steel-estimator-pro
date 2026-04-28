@@ -162,6 +162,110 @@ export default function Quote() {
     };
   }, [state, rates]);
 
+  // Itemized pricing rows for Quote (non-zero only)
+  const pricingItems = useMemo(() => {
+    const rows = [];
+    const stairs = state.stairs || [];
+    const ladder = state.ladder || [];
+    const railings = state.railings || [];
+    const structuralRows = state.structuralRows || [];
+    const standard = state.miscMetalsStandard || {};
+    const lr = state.rates?.labourRates || {};
+    const fabRate = lr.fabRate || 50;
+    const installRate = lr.installRate || 55;
+    const matRates = state.rates?.materialRates || [];
+    const lookupMat = (item) => (matRates.find(m => m.item === item)?.rate) || 1;
+
+    // STRUCTURAL TAKEOFF — group by section
+    const SECT_LABELS = {
+      columns: 'Columns', beams: 'Beams', momentConnections: 'Moment Connections',
+      roofOpeningFrames: 'Roof Opening Frames', joists: 'Joists (OWSJ)',
+      joistReinforcement: 'Joist Reinforcement', joistReinf: 'Joist Reinforcement',
+      bridging: 'Bridging', steelDeck: 'Steel Deck'
+    };
+    const structGroups = {};
+    structuralRows.forEach(r => {
+      const key = r.section || 'other';
+      const qty = Number(r.qty) || 0;
+      const lengthFt = Number(r.lengthFt) || 0;
+      const wtPerFt = Number(r.wtPerFt) || 0;
+      const weight = qty * lengthFt * wtPerFt;
+      const matRate = lookupMat('Structural steel');
+      const material = weight * matRate;
+      const fabMin = Number(r.fabPerPcOverride) || (Number(r.setup||0)+Number(r.cut||0)+Number(r.drill||0)+Number(r.feed||0)+Number(r.weld||0)+Number(r.grind||0)+Number(r.paint||0));
+      const fabHrs = (qty * fabMin / 60) * (Number(r.fabCrew) || 1);
+      const fabCost = fabHrs * fabRate;
+      const instMin = Number(r.instPerPcOverride) || (Number(r.unload||0)+Number(r.rig||0)+Number(r.fit||0)+Number(r.bolt||0)+Number(r.touchUp||0));
+      const instHrs = (qty * instMin / 60) * (Number(r.instCrew) || 1);
+      const instCost = instHrs * installRate;
+      // For joistReinf, use stored fields (computed by JR page)
+      let total = material + fabCost + instCost;
+      if (key === 'joistReinf' && (r.materialCost || r.installCost)) {
+        total = (Number(r.materialCost) || 0) + (Number(r.installCost) || 0);
+      }
+      structGroups[key] = (structGroups[key] || 0) + total;
+    });
+    Object.entries(structGroups).forEach(([k, v]) => {
+      if (v > 0) rows.push({ label: 'Structural Takeoff — ' + (SECT_LABELS[k] || k), total: v });
+    });
+
+    // MISC METALS — calculator items
+    const stairsTot = stairs.reduce((s, x) => s + Number(x.totalsCommit?.total || 0), 0);
+    if (stairsTot > 0) rows.push({ label: 'Misc Metals — Stairs', total: stairsTot });
+    const ladderTot = ladder.reduce((s, x) => s + Number(x.totalsCommit?.total || 0), 0);
+    if (ladderTot > 0) rows.push({ label: 'Misc Metals — Ladders', total: ladderTot });
+    const railingsTot = railings.reduce((s, x) => s + Number(x.totalsCommit?.total || 0), 0);
+    if (railingsTot > 0) rows.push({ label: 'Misc Metals — Railings', total: railingsTot });
+
+    // MISC METALS — Standard items per section
+    const MM_LABELS = {
+      bollards: 'Bollards', cornerGuardsSS: 'Corner Guards (SS)', cornerGuardsMS: 'Corner Guards (MS)',
+      embedPlates: 'Embed Plates', lintels: 'Lintels', edgeAngles: 'Edge Angles',
+      bumperRails: 'Bumper Rails', wheelStops: 'Wheel Stops', floorPlates: 'Floor Plates',
+      pipeSupports: 'Pipe Supports', anchorBolts: 'Anchor Bolts', equipDunnage: 'Equipment Dunnage',
+      architectural: 'Architectural'
+    };
+    const miscRates = state.rates?.miscMetalsRates || [];
+    const findMiscRate = (item) => (miscRates.find(r => r.item === item)?.rate) || 0;
+    Object.entries(MM_LABELS).forEach(([key, label]) => {
+      const items = standard[key] || [];
+      const secTotal = items.reduce((s, row) => {
+        const rate = (row.rateOverride != null && row.rateOverride !== '') ? Number(row.rateOverride) : findMiscRate(row.section || row.item || row.type);
+        return s + (Number(row.qty) || 0) * rate;
+      }, 0);
+      if (secTotal > 0) rows.push({ label: 'Misc Metals — ' + label, total: secTotal });
+    });
+
+    // EQUIPMENT (use already-computed equipmentTotal from summary)
+    if (summary.equipmentTotal > 0) rows.push({ label: 'Equipment', total: summary.equipmentTotal });
+
+    // PURCHASED ITEMS — exclude joist/deck (already in Structural)
+    const purchased = state.purchased || [];
+    const purchExcl = purchased.filter(p => {
+      const cat = String(p.category || p.item || '').toLowerCase();
+      return !/(joist|deck)/.test(cat);
+    });
+    const purchTotal = purchExcl.reduce((s, p) => s + (Number(p.total) || (Number(p.qty || 0) * Number(p.unitCost || 0))), 0);
+    if (purchTotal > 0) rows.push({ label: 'Purchased Items', total: purchTotal });
+
+    // SOFT COSTS — single row, description = comma list of non-zero items
+    const softCosts = state.softCosts || [];
+    const softNonZero = softCosts.filter(c => {
+      if (c.unit === '%') return Number(c.rate) > 0;
+      return Number(c.qty || 0) * Number(c.rate || 0) > 0;
+    });
+    const softDesc = softNonZero.map(c => c.item).filter(Boolean).join(', ');
+    if (summary.softCostTotal > 0 || softDesc) {
+      rows.push({
+        label: 'Soft Costs' + (softDesc ? ' (' + softDesc + ')' : ''),
+        total: summary.softCostTotal || 0
+      });
+    }
+
+    return rows;
+  }, [state, summary.equipmentTotal, summary.softCostTotal]);
+
+
   const handlePrint = () => window.print();
 
   const quoteDate = info.quoteDate || new Date().toLocaleDateString('en-CA');
@@ -346,35 +450,15 @@ export default function Quote() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-silver-100">
-                  <tr>
-                    <td className="px-4 py-2.5 text-steel-700">Material</td>
-                    <td className="px-4 py-2.5 text-right text-steel-800">
-                      {fmt(summary.totalMaterialCost)}
-                    </td>
-                  </tr>
-                  <tr>
-                    <td className="px-4 py-2.5 text-steel-700">Labour</td>
-                    <td className="px-4 py-2.5 text-right text-steel-800">
-                      {fmt(summary.totalLabourCost)}
-                    </td>
-                  </tr>
-                  {summary.equipmentTotal > 0 && (
-                    <tr>
-                      <td className="px-4 py-2.5 text-steel-700">Equipment</td>
-                      <td className="px-4 py-2.5 text-right text-steel-800">
-                        {fmt(summary.equipmentTotal)}
-                      </td>
-                    </tr>
-                  )}
-                  {summary.softCostTotal > 0 && (
-                    <tr>
-                      <td className="px-4 py-2.5 text-steel-700">Other Costs</td>
-                      <td className="px-4 py-2.5 text-right text-steel-800">
-                        {fmt(summary.softCostTotal)}
-                      </td>
-                    </tr>
-                  )}
-                  <tr className="bg-silver-50">
+                    {pricingItems.map((it, idx) => (
+                      <tr key={'pi-'+idx}>
+                        <td className="px-4 py-2.5 text-steel-700">{it.label}</td>
+                        <td className="px-4 py-2.5 text-right text-steel-800">
+                          {fmt(it.total)}
+                        </td>
+                      </tr>
+                    ))}
+                    <tr className="bg-silver-50">
                     <td className="px-4 py-2.5 font-semibold text-steel-900">Subtotal</td>
                     <td className="px-4 py-2.5 text-right font-semibold text-steel-900">
                       {fmt(summary.subtotal)}
