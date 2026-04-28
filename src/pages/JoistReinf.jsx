@@ -1046,9 +1046,9 @@ export default function JoistReinf() {
       // Multiply by crew so ST sees true man-hours (JR formula: hours × crew × rate)
       const chordCrew = Number(r.chord_crewSize) || 2;
       const webCrew = 2; // JR formula uses fixed crew=2 for web work
-      const fabHrs = Math.round(c.chordHrs * q * chordCrew * 100) / 100;
-      // webHrs only (c.totalHrs already includes c.chordHrs)
-      const instHrs = Math.round((c.totalHrs - c.chordHrs) * q * webCrew * 100) / 100;
+      const fabHrs = 0; // JR is installation only — no shop fabrication
+      // All hours (chord + web) are install hours, multiplied by crew for man-hours
+      const instHrs = Math.round(c.totalHrs * q * chordCrew * 100) / 100;
       const materialCost = Math.round(c.totalMaterial);
       const installCost = Math.round(c.totalInstall);
       // Only dispatch if values actually changed to prevent infinite loops
