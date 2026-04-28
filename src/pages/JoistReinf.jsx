@@ -218,7 +218,7 @@ function calcRow(r) {
   return {
     topWelds, botWelds, chordTotalWelds, chordWeldInches, chordHrs, chordMaterial, chordInstall,
     webWelds, webHrs, webMaterial, webInstall,
-    totalHrs, totalDays, totalWeeks, totalMaterial, totalInstall, totalLabor, totalLabor, totalWeight, perJoist,
+    totalHrs, totalDays, totalWeeks, totalMaterial, totalInstall, totalLabor, totalWeight, perJoist,
   };
 }
 
@@ -1030,7 +1030,7 @@ export default function JoistReinf() {
       totalInstall += c.totalInstall;
       totalLabor += c.totalLabor;
     });
-    return { totalItems: rows.length, totalQty, totalWeight, totalTons: totalWeight / 2000, totalHrs, totalMaterial, totalInstall };
+    return { totalItems: rows.length, totalQty, totalWeight, totalTons: totalWeight / 2000, totalHrs, totalMaterial, totalInstall, totalLabor };
   }, [rows]);
 
   // Sync computed values (weight, hours, cost) back to context so StructuralTakeoff can read them
