@@ -574,22 +574,34 @@ export default function Ladder() {
           </div>
         </div>
 
-        {/* Multi-ladder tab nav */}
-        <div className="mb-6 flex flex-wrap items-center gap-2">
-          {(state.ladder || []).map((l, i) => (
-            <button
-              key={l.id}
-              type="button"
-              onClick={() => setActiveIdx(i)}
-              className={`px-3 py-1.5 rounded-lg text-sm font-semibold transition ${
-                i === safeIdx
-                  ? 'bg-fire-600 text-white shadow-md'
-                  : 'bg-steel-700 text-steel-300 hover:bg-steel-600'
-              }`}
-            >
-              {`Ladder ${i + 1}${l.location ? ` — ${l.location}` : ''}${l.committedAt ? ' ✓' : ''}`}
-            </button>
-          ))}
+        {/* Summary cards across all ladders */}
+        {(state.ladder?.length || 0) > 0 && (
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 mb-4">
+            <div className="rounded-lg border-l-4 border-blue-400/80 bg-blue-950 p-3 text-blue-100">
+              <div className="text-xs font-medium uppercase tracking-wider opacity-80">Ladders</div>
+              <div className="mt-0.5 text-lg font-bold font-mono">{state.ladder.length}</div>
+            </div>
+            <div className="rounded-lg border-l-4 border-amber-400/80 bg-amber-950 p-3 text-amber-100">
+              <div className="text-xs font-medium uppercase tracking-wider opacity-80">Total Height</div>
+              <div className="mt-0.5 text-lg font-bold font-mono">{(state.ladder.reduce((sum, l) => sum + Number(l.heightFt || 14), 0)).toFixed(1)} ft</div>
+            </div>
+            <div className="rounded-lg border-l-4 border-cyan-400/80 bg-cyan-950 p-3 text-cyan-100">
+              <div className="text-xs font-medium uppercase tracking-wider opacity-80">Total Weight</div>
+              <div className="mt-0.5 text-lg font-bold font-mono">{state.ladder.reduce((sum, l) => sum + Number(l.totalsCommit?.weight || 0), 0).toFixed(0)} lb</div>
+            </div>
+            <div className="rounded-lg border-l-4 border-fire-400/80 bg-fire-950 p-3 text-fire-100">
+              <div className="text-xs font-medium uppercase tracking-wider opacity-80">Total Hrs</div>
+              <div className="mt-0.5 text-lg font-bold font-mono">{(state.ladder.reduce((sum, l) => sum + Number(l.totalsCommit?.fabHrs || 0) + Number(l.totalsCommit?.instHrs || 0), 0)).toFixed(1)} h</div>
+            </div>
+            <div className="rounded-lg border-l-4 border-green-400/80 bg-green-950 p-3 text-green-100">
+              <div className="text-xs font-medium uppercase tracking-wider opacity-80">Grand Total</div>
+              <div className="mt-0.5 text-lg font-bold font-mono">${state.ladder.reduce((sum, l) => sum + Number(l.totalsCommit?.total || 0), 0).toFixed(0)}</div>
+            </div>
+          </div>
+        )}
+
+        {/* Add Ladder button */}
+        <div className="mb-4 flex justify-end">
           <button
             type="button"
             onClick={() => {
@@ -597,25 +609,53 @@ export default function Ladder() {
               dispatch({ type: 'ADD_LADDER_ROW' })
               setActiveIdx(newIdx)
             }}
-            className="px-3 py-1.5 rounded-lg text-sm font-semibold bg-blue-600 text-white hover:bg-blue-500"
+            className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white text-sm font-semibold rounded-lg shadow-sm transition"
           >
             + Add Ladder
           </button>
-          {(state.ladder?.length || 0) > 0 && (
-            <button
-              type="button"
-              onClick={() => {
-                if (window.confirm(`Delete Ladder ${safeIdx + 1}?`)) {
-                  dispatch({ type: 'DELETE_LADDER_ROW', payload: ladderId })
-                  setActiveIdx(Math.max(safeIdx - 1, 0))
-                }
-              }}
-              className="ml-auto px-3 py-1.5 rounded-lg text-sm font-semibold bg-red-500/20 text-red-300 hover:bg-red-500/40"
-            >
-              Delete current
-            </button>
-          )}
         </div>
+
+        {/* Ladder cards (vertical list, one per ladder) */}
+        {(state.ladder?.length || 0) > 0 && (
+          <div className="mb-6 space-y-2">
+            {(state.ladder || []).map((l, i) => {
+              const isActive = i === safeIdx
+              const tot = l.totalsCommit || {}
+              return (
+                <div key={l.id} className={`border rounded-lg overflow-hidden transition ${isActive ? 'border-fire-500/60 bg-fire-950/20' : 'border-steel-700 bg-steel-900/40 hover:bg-steel-800/40'}`}>
+                  <div className="flex items-center gap-3 px-3 py-2.5">
+                    <button type="button" onClick={() => setActiveIdx(i)} className="flex-1 flex items-center gap-3 text-left">
+                      <span className={`text-steel-400 transition-transform ${isActive ? 'rotate-90' : ''}`}>▶</span>
+                      <span className="font-mono text-xs text-steel-500 w-6 text-right">{i + 1}</span>
+                      <span className="font-bold text-white text-sm">{l.mark || `L-${i+1}`}</span>
+                      <span className="text-fire-400 text-xs">{l.type || 'Roof Access'}</span>
+                      <span className="text-steel-400 text-xs">{l.heightFt || 14}ft · {l.config || 'Standard'}</span>
+                      <span className="ml-auto text-steel-300 font-mono text-xs">
+                        {tot.weight ? `${Number(tot.weight).toFixed(0)} lb` : '—'}{tot.fabHrs ? ` · ${Number(tot.fabHrs).toFixed(1)}h fab` : ''}
+                      </span>
+                      <span className="text-green-400 font-mono font-bold text-sm">{tot.total ? `${Number(tot.total).toFixed(0)}` : '—'}</span>
+                      {l.committedAt && <span className="text-green-400 text-xs">✓</span>}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        if (window.confirm(`Delete Ladder ${i + 1}?`)) {
+                          dispatch({ type: 'DELETE_LADDER_ROW', payload: l.id })
+                          setActiveIdx(Math.max(i - 1, 0))
+                        }
+                      }}
+                      title="Delete"
+                      className="text-steel-400 hover:text-red-400 transition px-1"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        )}
 
         {(state.ladder?.length || 0) === 0 && (
           <div className="mb-6 rounded-xl border border-dashed border-steel-600 bg-steel-900/40 p-10 text-center">
@@ -1050,6 +1090,20 @@ export default function Ladder() {
             </div>
           </details>
         </SectionCard>
+
+        {/* Grand total bar */}
+        <div className="mt-6 bg-steel-800/80 border border-steel-600 rounded-lg p-4">
+          <div className="flex items-center justify-between flex-wrap gap-3">
+            <span className="text-lg font-bold text-white uppercase tracking-wider">Grand Total — All Ladders</span>
+            <div className="flex gap-5 text-sm font-mono flex-wrap">
+              <span className="text-steel-300">{state.ladder?.length || 0} ladders</span>
+              <span className="text-steel-300">{state.ladder?.reduce((sum, l) => sum + Number(l.totalsCommit?.weight || 0), 0).toFixed(0) || 0} lb</span>
+              <span className="text-amber-300">{state.ladder?.reduce((sum, l) => sum + Number(l.totalsCommit?.fabHrs || 0), 0).toFixed(1) || 0} fab hrs</span>
+              <span className="text-cyan-300">{state.ladder?.reduce((sum, l) => sum + Number(l.totalsCommit?.instHrs || 0), 0).toFixed(1) || 0} inst hrs</span>
+              <span className="text-green-400 font-bold text-base">${state.ladder?.reduce((sum, l) => sum + Number(l.totalsCommit?.total || 0), 0).toFixed(0) || 0}</span>
+            </div>
+          </div>
+        </div>
         </>)}
 
         {/* Footer */}
