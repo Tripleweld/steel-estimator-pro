@@ -355,7 +355,7 @@ function MomentConnectionRow({ row, index, fabRate, installRate, steelRate, onUp
       <td className="px-1 py-1"><input type="text" inputMode="decimal" value={row.weld} onChange={set('weld')} className={mcIn} style={{width:'45px'}} /></td>
       <td className="px-1 py-1"><input type="text" inputMode="decimal" value={row.grind} onChange={set('grind')} className={mcIn} style={{width:'45px'}} /></td>
       <td className="px-1 py-1"><input type="text" inputMode="decimal" value={row.paint} onChange={set('paint')} className={mcIn} style={{width:'45px'}} /></td>
-      <td className={'px-1 py-1 ' + mcRo + (row.fabPerPcOverride != null ? ' text-amber-400' : ' text-green-400')}>{fmtNum(fabPerPc, 2)}</td>
+      <td className='px-1 py-1'><OverridableCell calcValue={calcFabPerPc} override={row.fabPerPcOverride} onOverride={(v) => onUpdate(row.id, { fabPerPcOverride: v })} colorClass='text-green-400' /></td>
       <td className={'px-1 py-1 ' + mcRo + ' text-white'}>{fmtNum(totFab, 2)}</td>
       <td className="px-1 py-1"><input type="text" inputMode="decimal" value={row.fabCrew || 1} onChange={e => onUpdate(row.id, { fabCrew: e.target.value })} className={mcIn} style={{width:'40px'}} /></td>
       <td className="px-1 py-1"><input type="text" inputMode="decimal" value={row.unload} onChange={set('unload')} className={mcIn} style={{width:'45px'}} /></td>
@@ -363,7 +363,7 @@ function MomentConnectionRow({ row, index, fabRate, installRate, steelRate, onUp
       <td className="px-1 py-1"><input type="text" inputMode="decimal" value={row.fit} onChange={set('fit')} className={mcIn} style={{width:'45px'}} /></td>
       <td className="px-1 py-1"><input type="text" inputMode="decimal" value={row.bolt} onChange={set('bolt')} className={mcIn} style={{width:'45px'}} /></td>
       <td className="px-1 py-1"><input type="text" inputMode="decimal" value={row.touchUp} onChange={set('touchUp')} className={mcIn} style={{width:'45px'}} /></td>
-      <td className={'px-1 py-1 ' + mcRo + (row.instPerPcOverride != null ? ' text-amber-400' : ' text-cyan-400')}>{fmtNum(instPerPc, 2)}</td>
+      <td className='px-1 py-1'><OverridableCell calcValue={calcInstPerPc} override={row.instPerPcOverride} onOverride={(v) => onUpdate(row.id, { instPerPcOverride: v })} colorClass='text-cyan-400' /></td>
       <td className={'px-1 py-1 ' + mcRo + ' text-white'}>{fmtNum(totInst, 2)}</td>
       <td className="px-1 py-1"><input type="text" inputMode="decimal" value={row.instCrew || 2} onChange={e => onUpdate(row.id, { instCrew: e.target.value })} className={mcIn} style={{width:'40px'}} /></td>
       <td className="px-1 py-1 text-sm text-right text-steel-300 font-mono">{fmtDollar(matCost)}</td>
