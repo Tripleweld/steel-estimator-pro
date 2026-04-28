@@ -701,6 +701,7 @@ function JoistInfoLegend() {
 
 /* ââ Expandable JR Block Row ââ */
 function JRBlock({ row, index, onUpdate, onDelete, onDuplicate }) {
+  const { state } = useProject();
   const [expanded, setExpanded] = useState(false);
   const labourRates = state.rates?.labourRates || {};
   const calc = useMemo(() => calcRow(row, labourRates), [row, labourRates]);
