@@ -335,10 +335,10 @@ function JoistReinfSyncTable({ fabRate, installRate }) {
                 <td className="px-2 py-1 text-right"><input type="text" inputMode="decimal" value={iH}
                   onChange={e=>sv(r.id,'inst',e.target.value)}
                   className="w-16 text-right bg-amber-900/40 border border-amber-500/50 rounded px-1 py-0.5 text-sm text-white font-mono focus:outline-none focus:ring-1 focus:ring-amber-400"/></td>
-                <td className="px-2 py-1 text-sm text-right text-steel-300">{fmt(mat)}</td>
-                <td className="px-2 py-1 text-sm text-right text-steel-300">{fmt(fc)}</td>
-                <td className="px-2 py-1 text-sm text-right text-steel-300">{fmt(ic)}</td>
-                <td className="px-2 py-1 text-sm text-right text-white font-bold">{fmt(mat+fc+ic)}</td>
+                <td className="px-2 py-1 text-sm text-right text-steel-300">{fmtDollar(mat)}</td>
+                <td className="px-2 py-1 text-sm text-right text-steel-300">{fmtDollar(fc)}</td>
+                <td className="px-2 py-1 text-sm text-right text-steel-300">{fmtDollar(ic)}</td>
+                <td className="px-2 py-1 text-sm text-right text-white font-bold">{fmtDollar(mat+fc+ic)}</td>
               </tr>);
           })}
           <tr className="bg-steel-800/80 font-bold text-sm">
@@ -346,10 +346,10 @@ function JoistReinfSyncTable({ fabRate, installRate }) {
             <td className="px-2 py-1 text-right text-white">{fmtNum(tW,0)}</td>
             <td className="px-2 py-1 text-right text-white">{fmtNum(tF,1)}</td>
             <td className="px-2 py-1 text-right text-white">{fmtNum(tI,1)}</td>
-            <td className="px-2 py-1 text-right text-white">{fmt(tMat)}</td>
-            <td className="px-2 py-1 text-right text-white">{fmt(tFC)}</td>
-            <td className="px-2 py-1 text-right text-white">{fmt(tIC)}</td>
-            <td className="px-2 py-1 text-right text-yellow-400">{fmt(tMat+tFC+tIC)}</td>
+            <td className="px-2 py-1 text-right text-white">{fmtDollar(tMat)}</td>
+            <td className="px-2 py-1 text-right text-white">{fmtDollar(tFC)}</td>
+            <td className="px-2 py-1 text-right text-white">{fmtDollar(tIC)}</td>
+            <td className="px-2 py-1 text-right text-yellow-400">{fmtDollar(tMat+tFC+tIC)}</td>
           </tr>
         </tbody>
       </table>
