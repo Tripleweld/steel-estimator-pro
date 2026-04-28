@@ -151,7 +151,9 @@ const defaultRow = () => ({
 });
 
 /* ââ Calculations for a single JR row ââ */
-function calcRow(r) {
+function calcRow(r, rates = {}) {
+  const installRate = rates.installRate ?? INSTALL_RATE;
+  const fabRate = rates.fabRate ?? FAB_RATE;
   const qty = Number(r.qty) || 1;
 
   // CHORD calculations
@@ -182,7 +184,7 @@ function calcRow(r) {
   // Material: (topLbs Ã topLen Ã topBars + botLbs Ã botLen ï¿½ï¿½ botBars) Ã qty Ã markup
   const chordMaterial = (topLbs * topLen * bars + botLbs * botLen * botBars) * qty * MATERIAL_MARKUP;
   // Install: qty Ã hours Ã crewSize Ã rate + material
-  const chordInstall = qty * chordHrs * crewSize * INSTALL_RATE + chordMaterial;
+  const chordInstall = qty * chordHrs * crewSize * installRate + chordMaterial;
 
   // WEB calculations
   const webQty = Number(r.web_qtyPerJoist) || 0;
@@ -202,7 +204,7 @@ function calcRow(r) {
   // Web material: (vertQÃvertL + diagQÃdiagL) Ã webLbs Ã 2sides Ã markup + clip angles
   const webMaterial = (qty * webLbs * vertQ * vertL + qty * webLbs * diagQ * diagL) * 2 * MATERIAL_MARKUP
     + qty * webQty * 1.7 * 4; // clip angle allowance
-  const webInstall = qty * webHrs * 2 * INSTALL_RATE + webMaterial;
+  const webInstall = qty * webHrs * 2 * installRate + webMaterial;
 
   // Totals
   const totalHrs = chordHrs + webHrs;
@@ -700,7 +702,8 @@ function JoistInfoLegend() {
 /* ââ Expandable JR Block Row ââ */
 function JRBlock({ row, index, onUpdate, onDelete, onDuplicate }) {
   const [expanded, setExpanded] = useState(false);
-  const calc = useMemo(() => calcRow(row), [row]);
+  const labourRates = state.rates?.labourRates || {};
+  const calc = useMemo(() => calcRow(row, labourRates), [row, labourRates]);
 
   const set = (field, value) => onUpdate(row.id, field, value);
   const setNum = (field, val) => set(field, parseFloat(val) || 0);
@@ -986,7 +989,7 @@ function JRBlock({ row, index, onUpdate, onDelete, onDuplicate }) {
             <div><p className="text-[10px] text-silver-400">Days</p><p className="text-sm font-bold text-white">{fmtDec(calc.totalDays, 2)}</p></div>
             <div><p className="text-[10px] text-silver-400">Weeks</p><p className="text-sm font-bold text-white">{fmtDec(calc.totalWeeks, 2)}</p></div>
             <div><p className="text-[10px] text-silver-400">Material</p><p className="text-sm font-bold text-white">{fmt(calc.totalMaterial)}</p></div>
-            <div><p className="text-[10px] text-silver-400">Install</p><p className="text-sm font-bold text-white">{fmt(calc.totalInstall)}</p></div>
+            <div><p className="text-[10px] text-silver-400">Install</p><p className="text-sm font-bold text-white">{fmt(calc.totalLabor)}</p></div>
             <div><p className="text-[10px] text-fire-400 font-bold">$/Joist</p><p className="text-sm font-bold text-fire-400">{fmt(calc.perJoist)}</p></div>
           </div>
 
@@ -1021,7 +1024,7 @@ export default function JoistReinf() {
   const summary = useMemo(() => {
     let totalWeight = 0, totalHrs = 0, totalMaterial = 0, totalInstall = 0, totalLabor = 0, totalQty = 0;
     rows.forEach(r => {
-      const c = calcRow(r);
+      const c = calcRow(r, state.rates?.labourRates || {});
       const q = Number(r.qty) || 1;
       totalQty += q;
       totalWeight += c.totalWeight;
@@ -1036,7 +1039,7 @@ export default function JoistReinf() {
   // Sync computed values (weight, hours, cost) back to context so StructuralTakeoff can read them
   useEffect(() => {
     rows.forEach(r => {
-      const c = calcRow(r);
+      const c = calcRow(r, state.rates?.labourRates || {});
       const q = Number(r.qty) || 1;
       const weightLbs = Math.round(c.totalWeight);
       // Multiply by crew so ST sees true man-hours (JR formula: hours × crew × rate)
