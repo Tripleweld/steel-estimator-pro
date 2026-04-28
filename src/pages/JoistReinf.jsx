@@ -215,186 +215,358 @@ function calcRow(r) {
 /* ── Reactive Cross-Section Diagram ── */
 function JoistCrossSection({ row }) {
   const isBotBar = row.chord_botType === 'bar';
-  const bars = Number(row.chord_barsPerChord) || 2;
+  const topBarCount = Math.min(Number(row.chord_barsPerChord) || 2, 4);
+  const botBarCount = isBotBar ? Math.min(Number(row.chord_botBarsPerChord) || 2, 4) : 0;
   const method = row.reinfMethod || '';
   const hasWeb = (Number(row.web_vertQty) || 0) + (Number(row.web_diagQty) || 0) > 0;
-  const vertQ = Number(row.web_vertQty) || 0;
-  const diagQ = Number(row.web_diagQty) || 0;
-
-  // Parse joist depth from type (e.g. "24K8" → 24)
   const depth = parseInt(row.joistType) || 24;
   const series = row.joistType?.match(/[A-Z]+/)?.[0] || 'K';
 
-  // SVG dimensions and scaling
-  const W = 520, H = 260, pad = 30;
-  const joistW = 320; // horizontal span of joist section
-  const jX = (W - joistW) / 2; // left edge
-  const topY = pad + 30;
-  const botY = H - pad - 30;
-  const midY = (topY + botY) / 2;
-  const chordH = 10; // chord thickness
+  // === TRUE CROSS-SECTION (perpendicular cut through joist) ===
+  const W = 360, H = 320, cX = W / 2;
+  // Scale: map joist depth (inches) to SVG pixels — use proportional scaling
+  const scale = Math.min(200 / depth, 8); // pixels per inch, capped
+  const jDepth = depth * scale; // total depth in px
+  const topCY = (H - jDepth) / 2 + 20; // top chord center Y
+  const botCY = topCY + jDepth; // bottom chord center Y
 
   // Colors
-  const steel = '#334155'; // steel-800
-  const fire = '#dc2626';  // fire-600
-  const blue = '#2563eb';  // blue-600
-  const silver = '#94a3b8'; // silver-400
-  const orange = '#ea580c'; // orange-600
+  const steel = '#334155';
+  const fire = '#dc2626';
+  const blue = '#2563eb';
+  const silver = '#94a3b8';
+  const orange = '#ea580c';
+  const green = '#16a34a';
 
-  // Top chord bars (circles)
-  const topBarR = bars >= 2 ? 6 : 8;
+  // === TOP CHORD: double angle back-to-back (L-shapes mirrored) ===
+  // Angle leg sizes (visual, not to real scale — just representative)
+  const aLeg = Math.max(12, Math.min(20, depth * 0.5)); // angle leg length
+  const aT = Math.max(3, aLeg * 0.2); // angle thickness
+  const gap = 3; // gap between back-to-back angles
+
+  // Left angle of top chord (L rotated: vertical leg up, horizontal leg to left)
+  const tcLx = cX - gap / 2; // right edge of left angle
+  const tcRx = cX + gap / 2; // left edge of right angle
+
+  // === BOTTOM CHORD: same double angle ===
+  // === WEB MEMBER: single angle shown as cross-section (small L) ===
+  const webLeg = Math.max(8, aLeg * 0.6);
+  const webT = Math.max(2, webLeg * 0.18);
+
+  // === DETERMINE REINF TYPE per method ===
+  const topType = method.includes('Bars Top') ? 'bar'
+    : method.includes('Angle') ? 'angle'
+    : method.includes('Channel') ? 'channel'
+    : method.includes('HSS') ? 'hss'
+    : method.includes('Splice') || method === 'Full Replacement' ? 'splice'
+    : 'bar'; // Custom defaults to bar
+
+  const botType = method.includes('Plate') ? 'plate'
+    : method.includes('2 Bars Bot') || method.includes('Bars Bottom') ? 'bar'
+    : method.includes('Channel') ? 'channel'
+    : method.includes('HSS') ? 'hss'
+    : method.includes('Splice') || method === 'Full Replacement' ? 'splice'
+    : isBotBar ? 'bar' : 'plate';
+
+  // === REINFORCEMENT BAR positions ===
+  const barR = Math.max(4, Math.min(7, depth * 0.2));
+  const barSpacing = barR * 3;
+
+  // Top reinf bars — only when topType === 'bar'
   const topBars = [];
-  for (let i = 0; i < Math.min(bars, 4); i++) {
-    const spacing = 18;
-    const startX = jX + joistW / 2 - ((Math.min(bars, 4) - 1) * spacing) / 2;
-    topBars.push({ cx: startX + i * spacing, cy: topY - topBarR - 2 });
-  }
-
-  // Bottom element
-  const botPlateW = isBotBar ? 0 : (Number(row.chord_botPlateW) || 4) * 3;
-  const botPlateT = isBotBar ? 0 : Math.max(3, (Number(row.chord_botPlateT) || 0.25) * 12);
-  const botBarsArr = [];
-  const botBarQty = isBotBar ? (Number(row.chord_botBarsPerChord) || 2) : 0;
-  if (isBotBar) {
-    const botBarCount = Math.min(botBarQty, 4);
-    for (let i = 0; i < botBarCount; i++) {
-      const spacing = 18;
-      const startX = jX + joistW / 2 - ((botBarCount - 1) * spacing) / 2;
-      botBarsArr.push({ cx: startX + i * spacing, cy: botY + topBarR + 4 });
+  if (topType === 'bar') {
+    for (let i = 0; i < topBarCount; i++) {
+      const startX = cX - ((topBarCount - 1) * barSpacing) / 2;
+      topBars.push({ cx: startX + i * barSpacing, cy: topCY - aLeg - barR - 3 });
     }
   }
 
-  // Web members — zigzag pattern
-  const webPanels = Math.max(vertQ + diagQ, 6);
-  const panelW = joistW / webPanels;
+  // Bottom reinf bars — only when botType === 'bar'
+  const botBars = [];
+  if (botType === 'bar') {
+    for (let i = 0; i < botBarCount; i++) {
+      const startX = cX - ((botBarCount - 1) * barSpacing) / 2;
+      botBars.push({ cx: startX + i * barSpacing, cy: botCY + aLeg + barR + 3 });
+    }
+  }
+
+  // Bottom plate dims — only when botType === 'plate'
+  const botPlateW = botType === 'plate' ? Math.max(20, (Number(row.chord_botPlateW) || 4) * 4) : 0;
+  const botPlateT = botType === 'plate' ? Math.max(3, (Number(row.chord_botPlateT) || 0.25) * 10) : 0;
+
+  // Reinforcement angle (for "Angle + Plate" top)
+  const reinfALeg = Math.max(10, aLeg * 0.75);
+  const reinfAT = Math.max(2.5, reinfALeg * 0.18);
+
+  // Channel dims (C-shape) for Channel Reinforcement
+  const chW = Math.max(10, aLeg * 0.6);
+  const chH = Math.max(18, aLeg * 1.2);
+  const chT = Math.max(2, chW * 0.2);
+  const chFl = Math.max(4, chW * 0.45); // flange depth
+
+  // HSS dims (rectangular tube) for HSS Strongback
+  const hssW = Math.max(12, aLeg * 0.7);
+  const hssH = Math.max(16, aLeg * 1.0);
+  const hssT = Math.max(2, hssW * 0.15);
+
+  // Helper: draw one L-angle cross-section (origin at corner, facing direction)
+  const AngleL = ({ x, y, leg, t, flipH, flipV, color, opacity }) => {
+    const sX = flipH ? -1 : 1;
+    const sY = flipV ? -1 : 1;
+    // L-shape: vertical leg + horizontal leg
+    return (
+      <path
+        d={`M ${x},${y}
+            l ${sX * t},0
+            l 0,${sY * (leg - t)}
+            l ${sX * (leg - t)},0
+            l 0,${sY * t}
+            l ${sX * -(leg)},0
+            Z`}
+        fill={color} opacity={opacity || 0.85} stroke={color} strokeWidth="0.5"
+      />
+    );
+  };
 
   return (
     <div className="rounded-lg border border-silver-200 bg-white p-4">
       <div className="flex items-center gap-2 mb-2">
         <svg className="h-4 w-4 text-fire-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="18" height="18" rx="2" /><line x1="3" y1="12" x2="21" y2="12" /><line x1="12" y1="3" x2="12" y2="21" /></svg>
-        <h4 className="text-sm font-bold text-steel-700">Section View</h4>
-        <span className="ml-auto text-xs text-silver-400">{row.joistType} — {row.reinfMethod}</span>
+        <h4 className="text-sm font-bold text-steel-700">Cross Section (perpendicular cut)</h4>
+        <span className="ml-auto text-xs text-silver-400">{row.joistType} — {method}</span>
       </div>
-      <svg viewBox={`0 0 ${W} ${H}`} className="w-full max-w-[520px] mx-auto" style={{ height: 'auto' }}>
-        {/* Background */}
-        <rect x="0" y="0" width={W} height={H} fill="none" />
+      <svg viewBox={`0 0 ${W} ${H}`} className="w-full max-w-[360px] mx-auto" style={{ height: 'auto' }}>
 
-        {/* Depth dimension line (left side) */}
-        <line x1={jX - 20} y1={topY} x2={jX - 20} y2={botY} stroke={silver} strokeWidth="0.8" />
-        <line x1={jX - 25} y1={topY} x2={jX - 15} y2={topY} stroke={silver} strokeWidth="0.8" />
-        <line x1={jX - 25} y1={botY} x2={jX - 15} y2={botY} stroke={silver} strokeWidth="0.8" />
-        <text x={jX - 22} y={midY + 4} textAnchor="middle" fill={silver} fontSize="9" fontFamily="monospace" transform={`rotate(-90, ${jX - 22}, ${midY})`}>{depth}" deep</text>
+        {/* CENTER LINE (dashed) Leg + 12} y={topCY - aLeg / 2 + 13} fill={silver} fontSize="7" fontFamily="monospace">2L back-to-back</text>
 
-        {/* TOP CHORD — double angle shape */}
-        <rect x={jX} y={topY - chordH / 2} width={joistW} height={chordH} rx="1.5" fill={steel} opacity="0.85" />
-        <text x={jX + joistW + 8} y={topY + 3} fill={steel} fontSize="8" fontFamily="monospace" fontWeight="bold">TOP CHORD</text>
+        {/* === BOTTOM CHORD — double angle back-to-back === */}
+        {/* Left angle: vertical leg goes DOWN, horizontal leg goes LEFT */}
+        <AngleL x={tcLx} y={botCY} leg={aLeg} t={aT} flipH={true} flipV={false} color={steel} />
+        {/* Right angle: vertical leg goes DOWN, horizontal leg goes RIGHT */}
+        <AngleL x={tcRx} y={botCY} leg={aLeg} t={aT} flipH={false} flipV={false} color={steel} />
+        <text x={cX + aLeg + 12} y={botCY + aLeg / 2 + 3} fill={steel} fontSize="8" fontFamily="monospace" fontWeight="bold">BOT CHORD</text>
+        <text x={cX + aLeg + 12} y={botCY + aLeg / 2 + 13} fill={silver} fontSize="7" fontFamily="monospace">2L back-to-back</text>
 
-        {/* BOTTOM CHORD — double angle shape */}
-        <rect x={jX} y={botY - chordH / 2} width={joistW} height={chordH} rx="1.5" fill={steel} opacity="0.85" />
-        <text x={jX + joistW + 8} y={botY + 3} fill={steel} fontSize="8" fontFamily="monospace" fontWeight="bold">BOT CHORD</text>
-
-        {/* WEB MEMBERS — V-pattern (Warren truss style) */}
-        {Array.from({ length: webPanels }, (_, i) => {
-          const x1 = jX + i * panelW;
-          const x2 = jX + (i + 0.5) * panelW;
-          const x3 = jX + (i + 1) * panelW;
-          return (
-            <g key={`web${i}`}>
-              <line x1={x1} y1={topY + chordH / 2} x2={x2} y2={botY - chordH / 2} stroke={silver} strokeWidth="1.2" strokeDasharray={hasWeb && i < vertQ ? "none" : "3,3"} opacity={hasWeb && i < vertQ + diagQ ? 0.9 : 0.3} />
-              <line x1={x2} y1={botY - chordH / 2} x2={x3} y2={topY + chordH / 2} stroke={silver} strokeWidth="1.2" strokeDasharray={hasWeb && i < diagQ ? "none" : "3,3"} opacity={hasWeb && i < vertQ + diagQ ? 0.9 : 0.3} />
-            </g>
-          );
-        })}
-
-        {/* TOP REINFORCEMENT BARS */}
-        {topBars.map((b, i) => (
-          <g key={`tb${i}`}>
-            <circle cx={b.cx} cy={b.cy} r={topBarR} fill="none" stroke={fire} strokeWidth="2" />
-            <circle cx={b.cx} cy={b.cy} r={1.5} fill={fire} />
-          </g>
-        ))}
-        {topBars.length > 0 && (
-          <text x={topBars[topBars.length - 1].cx + topBarR + 6} y={topBars[0].cy + 3} fill={fire} fontSize="8" fontFamily="monospace" fontWeight="bold">
-            {bars}× ⌀{row.chord_topBarDia}" bar
-          </text>
-        )}
-
-        {/* Weld symbols on top bars */}
-        {topBars.map((b, i) => (
-          <g key={`tw${i}`}>
-            <line x1={b.cx - 4} y1={b.cy + topBarR + 1} x2={b.cx + 4} y2={b.cy + topBarR + 1} stroke={orange} strokeWidth="1.5" />
-            <polygon points={`${b.cx - 3},${b.cy + topBarR + 1} ${b.cx},${b.cy + topBarR + 4} ${b.cx + 3},${b.cy + topBarR + 1}`} fill={orange} />
-          </g>
-        ))}
-
-        {/* BOTTOM REINFORCEMENT */}
-        {isBotBar ? (
-          <>
-            {/* Round bars on bottom */}
-            {botBarsArr.map((b, i) => (
-              <g key={`bb${i}`}>
-                <circle cx={b.cx} cy={b.cy} r={topBarR} fill="none" stroke={blue} strokeWidth="2" />
-                <circle cx={b.cx} cy={b.cy} r={1.5} fill={blue} />
-              </g>
-            ))}
-            {botBarsArr.length > 0 && (
-              <text x={botBarsArr[botBarsArr.length - 1].cx + topBarR + 6} y={botBarsArr[0].cy + 3} fill={blue} fontSize="8" fontFamily="monospace" fontWeight="bold">
-                {botBarQty}× ⌀{row.chord_botBarDia}" bar
-              </text>
-            )}
-            {/* Weld symbols */}
-            {botBarsArr.map((b, i) => (
-              <g key={`bw${i}`}>
-                <line x1={b.cx - 4} y1={b.cy - topBarR - 1} x2={b.cx + 4} y2={b.cy - topBarR - 1} stroke={orange} strokeWidth="1.5" />
-                <polygon points={`${b.cx - 3},${b.cy - topBarR - 1} ${b.cx},${b.cy - topBarR - 4} ${b.cx + 3},${b.cy - topBarR - 1}`} fill={orange} />
-              </g>
-            ))}
-          </>
-        ) : (
-          <>
-            {/* Plate on bottom */}
-            <rect x={jX + joistW / 2 - botPlateW / 2} y={botY + chordH / 2 + 2} width={botPlateW} height={botPlateT} rx="1" fill={blue} opacity="0.8" />
-            <text x={jX + joistW / 2 + botPlateW / 2 + 6} y={botY + chordH / 2 + botPlateT / 2 + 4} fill={blue} fontSize="8" fontFamily="monospace" fontWeight="bold">
-              {row.chord_botPlateSize}
-            </text>
-            {/* Weld symbols on plate */}
-            <line x1={jX + joistW / 2 - botPlateW / 2 + 3} y1={botY + chordH / 2 + 1} x2={jX + joistW / 2 - botPlateW / 2 + 9} y2={botY + chordH / 2 + 1} stroke={orange} strokeWidth="1.5" />
-            <line x1={jX + joistW / 2 + botPlateW / 2 - 9} y1={botY + chordH / 2 + 1} x2={jX + joistW / 2 + botPlateW / 2 - 3} y2={botY + chordH / 2 + 1} stroke={orange} strokeWidth="1.5" />
-          </>
-        )}
-
-        {/* Web reinforcement indicator */}
+        {/* === WEB MEMBER — single angle (between chords) === */}
         {hasWeb && (
           <g>
-            <line x1={jX + joistW / 2} y1={topY + chordH} x2={jX + joistW / 2} y2={botY - chordH} stroke={fire} strokeWidth="2.5" opacity="0.7" />
-            <circle cx={jX + joistW / 2} cy={midY} r="4" fill={fire} opacity="0.7" />
-            <text x={jX + joistW / 2 + 10} y={midY + 3} fill={fire} fontSize="8" fontFamily="monospace" fontWeight="bold">
-              WEB: {vertQ}V + {diagQ}D
-            </text>
+            <AngleL x={cX - webT / 2} y={(topCY + botCY) / 2 - webLeg / 2} leg={webLeg} t={webT} flipH={false} flipV={false} color={green} opacity={0.7} />
+            <text x={cX + webLeg + 8} y={(topCY + botCY) / 2 + 3} fill={green} fontSize="7" fontFamily="monospace" fontWeight="bold">WEB: {row.web_angleSize}</text>
           </g>
         )}
 
-        {/* Legend bar */}
-        <rect x={pad} y={H - 18} width={W - pad * 2} height="16" rx="3" fill="#f8fafc" stroke="#e2e8f0" strokeWidth="0.5" />
-        <circle cx={pad + 12} cy={H - 10} r="4" fill="none" stroke={fire} strokeWidth="1.5" />
-        <text x={pad + 20} y={H - 7} fill={silver} fontSize="7" fontFamily="monospace">Top Reinf.</text>
-        <circle cx={pad + 80} cy={H - 10} r="4" fill="none" stroke={blue} strokeWidth="1.5" />
-        <text x={pad + 88} y={H - 7} fill={silver} fontSize="7" fontFamily="monospace">Bot Reinf.</text>
-        <line x1={pad + 148} y1={H - 13} x2={pad + 158} y2={H - 7} stroke={orange} strokeWidth="1.5" />
-        <text x={pad + 163} y={H - 7} fill={silver} fontSize="7" fontFamily="monospace">Welds</text>
-        <line x1={pad + 205} y1={H - 10} x2={pad + 218} y2={H - 10} stroke={silver} strokeWidth="1.2" />
-        <text x={pad + 222} y={H - 7} fill={silver} fontSize="7" fontFamily="monospace">Web Members</text>
+        {/* === DEPTH DIMENSION LINE (left side) === */}
+        <line x1={cX - aLeg - 30} y1={topCY} x2={cX - aLeg - 30} y2={botCY} stroke={silver} strokeWidth="0.8" />
+        <line x1={cX - aLeg - 35} y1={topCY} x2={cX - aLeg - 25} y2={topCY} stroke={silver} strokeWidth="0.8" />
+        <line x1={cX - aLeg - 35} y1={botCY} x2={cX - aLeg - 25} y2={botCY} stroke={silver} strokeWidth="0.8" />
+        <text x={cX - aLeg - 32} y={(topCY + botCY) / 2 + 4} textAnchor="middle" fill={silver} fontSize="9" fontFamily="monospace" transform={`rotate(-90, ${cX - aLeg - 32}, ${(topCY + botCY) / 2})`}>{depth}"</text>
 
-        {/* Series label */}
-        <text x={W / 2} y={16} textAnchor="middle" fill={steel} fontSize="10" fontFamily="monospace" fontWeight="bold">
-          {row.joistType} — {series === 'K' ? 'Standard' : series === 'LH' ? 'Long Span' : 'Deep Long Span'} — {method}
+        {/* === TOP REINFORCEMENT — method-reactive === */}
+        {topType === 'bar' && (
+          <g>
+            {topBars.map((b, i) => (
+              <g key={`tb${i}`}>
+                <circle cx={b.cx} cy={b.cy} r={barR} fill="none" stroke={fire} strokeWidth="2" />
+                <line x1={b.cx - barR * 0.5} y1={b.cy - barR * 0.5} x2={b.cx + barR * 0.5} y2={b.cy + barR * 0.5} stroke={fire} strokeWidth="1" />
+                <line x1={b.cx + barR * 0.5} y1={b.cy - barR * 0.5} x2={b.cx - barR * 0.5} y2={b.cy + barR * 0.5} stroke={fire} strokeWidth="1" />
+              </g>
+            ))}
+            {topBars.length > 0 && (
+              <text x={topBars[topBars.length - 1].cx + barR + 6} y={topBars[0].cy + 3} fill={fire} fontSize="8" fontFamily="monospace" fontWeight="bold">
+                {topBarCount}x {row.chord_topBarDia}" bar
+              </text>
+            )}
+            {/* Weld symbols: top bars to top chord */}
+            {topBars.map((b, i) => (
+              <g key={`tw${i}`}>
+                <line x1={b.cx - 4} y1={b.cy + barR + 2} x2={b.cx + 4} y2={b.cy + barR + 2} stroke={orange} strokeWidth="1.5" />
+                <polygon points={`${b.cx - 3},${b.cy + barR + 2} ${b.cx},${b.cy + barR + 5} ${b.cx + 3},${b.cy + barR + 2}`} fill={orange} />
+              </g>
+            ))}
+          </g>
+        )}
+        {topType === 'angle' && (
+          <g>
+            {/* Reinforcement angles welded to top of top chord — L shapes flanking */}
+            <AngleL x={cX - gap / 2 - reinfALeg - 2} y={topCY - aLeg} leg={reinfALeg} t={reinfAT} flipH={false} flipV={true} color={fire} opacity={0.75} />
+            <AngleL x={cX + gap / 2 + reinfALeg + 2} y={topCY - aLeg} leg={reinfALeg} t={reinfAT} flipH={true} flipV={true} color={fire} opacity={0.75} />
+            <text x={cX + gap / 2 + reinfALeg + reinfALeg + 8} y={topCY - aLeg + reinfALeg / 2} fill={fire} fontSize="7" fontFamily="monospace" fontWeight="bold">
+              Reinf. angles
+            </text>
+            {/* Weld symbols */}
+            <polygon points={`${cX - gap / 2 - 2},${topCY - aLeg} ${cX - gap / 2 - 5},${topCY - aLeg + 4} ${cX - gap / 2 + 1},${topCY - aLeg + 4}`} fill={orange} />
+            <polygon points={`${cX + gap / 2 + 2},${topCY - aLeg} ${cX + gap / 2 + 5},${topCY - aLeg + 4} ${cX + gap / 2 - 1},${topCY - aLeg + 4}`} fill={orange} />
+          </g>
+        )}
+        {topType === 'channel' && (
+          <g>
+            {/* C-channel sistered alongside top chord — left side */}
+            <path d={`M ${cX - aLeg - 6},${topCY - chH / 2} l ${chFl},0 l 0,${chT} l ${-(chFl - chT)},0 l 0,${chH - 2 * chT} l ${chFl - chT},0 l 0,${chT} l ${-chFl},0 Z`}
+              fill={fire} opacity={0.7} stroke={fire} strokeWidth="0.5" />
+            <text x={cX - aLeg - chFl - 14} y={topCY + 3} fill={fire} fontSize="7" fontFamily="monospace" fontWeight="bold" textAnchor="end">C-Channel</text>
+            {/* Weld symbols */}
+            <polygon points={`${cX - aLeg - 6 + chFl},${topCY - 3} ${cX - aLeg - 6 + chFl + 4},${topCY} ${cX - aLeg - 6 + chFl},${topCY + 3}`} fill={orange} />
+          </g>
+        )}
+        {topType === 'hss' && (
+          <g>
+            {/* HSS tube alongside top chord — left side */}
+            <rect x={cX - aLeg - hssW - 6} y={topCY - hssH / 2} width={hssW} height={hssH} rx="2" fill="none" stroke={fire} strokeWidth="2.5" />
+            <rect x={cX - aLeg - hssW - 6 + hssT} y={topCY - hssH / 2 + hssT} width={hssW - 2 * hssT} height={hssH - 2 * hssT} rx="1" fill={fire} opacity="0.15" />
+            <text x={cX - aLeg - hssW - 12} y={topCY + 3} fill={fire} fontSize="7" fontFamily="monospace" fontWeight="bold" textAnchor="end">HSS Tube</text>
+            {/* Weld/bolt symbol */}
+            <polygon points={`${cX - aLeg - 6},${topCY - 3} ${cX - aLeg - 2},${topCY} ${cX - aLeg - 6},${topCY + 3}`} fill={orange} />
+          </g>
+        )}
+        {topType === 'splice' && (
+          <g>
+            {/* Splice plates on both sides of top chord */}
+            <rect x={cX - aLeg - 8} y={topCY - aLeg + 2} width={4} height={aLeg * 1.5} rx="0.5" fill={fire} opacity="0.8" />
+            <rect x={cX + aLeg + 4} y={topCY - aLeg + 2} width={4} height={aLeg * 1.5} rx="0.5" fill={fire} opacity="0.8" />
+            <text x={cX + aLeg + 14} y={topCY - aLeg / 2 + 3} fill={fire} fontSize="7" fontFamily="monospace" fontWeight="bold">
+              {method.includes('Bolted') ? 'Bolted' : method.includes('Welded') ? 'Welded' : 'Full'} Splice
+            </text>
+            {/* Bolt dots or weld marks */}
+            {method.includes('Bolted') ? (
+              <>
+                <circle cx={cX - aLeg - 6} cy={topCY - aLeg / 2} r="2" fill={orange} />
+                <circle cx={cX - aLeg - 6} cy={topCY} r="2" fill={orange} />
+                <circle cx={cX + aLeg + 6} cy={topCY - aLeg / 2} r="2" fill={orange} />
+                <circle cx={cX + aLeg + 6} cy={topCY} r="2" fill={orange} />
+              </>
+            ) : (
+              <>
+                <polygon points={`${cX - aLeg - 4},${topCY - 4} ${cX - aLeg - 7},${topCY} ${cX - aLeg - 1},${topCY}`} fill={orange} />
+                <polygon points={`${cX + aLeg + 8},${topCY - 4} ${cX + aLeg + 5},${topCY} ${cX + aLeg + 11},${topCY}`} fill={orange} />
+              </>
+            )}
+          </g>
+        )}
+
+        {/* === BOTTOM Rre} opacity="0.8" />
+            <rect x={cX + aLeg + 4} y={topCY - aLeg + 2} width={4} height={aLeg * 1.5} rx="0.5" fill={fire} opacity="0.8" />
+            <text x={cX + aLeg + 14} y={topCY - aLeg / 2 + 3} fill={fire} fontSize="7" fontFamily="monospace" fontWeight="bold">
+              {method.includes('Bolted') ? 'Bolted' : method.includes('Welded') ? 'Welded' : 'Full'} Splice
+            </text>
+            {/* Bolt dots or weld marks */}
+            {method.includes('Bolted') ? (
+              <>
+                <circle cx={cX - aLeg - 6} cy={topCY - aLeg / 2} r="2" fill={orange} />
+                <circle cx={cX - aLeg - 6} cy={topCY} r="2" fill={orange} />
+                <circle cx={cX + aLeg + 6} cy={topCY - aLeg / 2} r="2" fill={orange} />
+                <circle cx={cX + aLeg + 6} cy={topCY} r="2" fill={orange} />
+              </>
+            ) : (
+              <>
+                <polygon points={`${cX - aLeg - 4},${topCY - 4} ${cX - aLeg - 7},${topCY} ${cX - aLeg - 1},${topCY}`} fill={orange} />
+                <polygon points={`${cX + aLeg + 8},${topCY - 4} ${cX + aLeg + 5},${topCY} ${cX + aLeg + 11},${topCY}`} fill={orange} />
+              </>
+            )}
+          </g>
+        )}
+
+        {/* === BOTTOM REINFORCEMENT — method-reactive === */}
+        {botType === 'bar' && (
+          <g>
+            {botBars.map((b, i) => (
+              <g key={`bb${i}`}>
+                <circle cx={b.cx} cy={b.cy} r={barR} fill="none" stroke={blue} strokeWidth="2" />
+                <line x1={b.cx - barR * 0.5} y1={b.cy - barR * 0.5} x2={b.cx + barR * 0.5} y2={b.cy + barR * 0.5} stroke={blue} strokeWidth="1" />
+                <line x1={b.cx + barR * 0.5} y1={b.cy - barR * 0.5} x2={b.cx - barR * 0.5} y2={b.cy + barR * 0.5} stroke={blue} strokeWidth="1" />
+              </g>
+            ))}
+            {botBars.length > 0 && (
+              <text x={botBars[botBars.length - 1].cx + barR + 6} y={botBars[0].cy + 3} fill={blue} fontSize="8" fontFamily="monospace" fontWeight="bold">
+                {botBarCount}x {row.chord_botBarDia}" bar
+              </text>
+            )}
+            {botBars.map((b, i) => (
+              <g key={`bw${i}`}>
+                <line x1={b.cx - 4} y1={b.cy - barR - 2} x2={b.cx + 4} y2={b.cy - barR - 2} stroke={orange} strokeWidth="1.5" />
+                <polygon points={`${b.cx - 3},${b.cy - barR - 2} ${b.cx},${b.cy - barR - 5} ${b.cx + 3},${b.cy - barR - 2}`} fill={orange} />
+              </g>
+            ))}
+          </g>
+        )}
+        {botType === 'plate' && (
+          <g>
+            <rect x={cX - botPlateW / 2} y={botCY + aT + 2} width={botPlateW} height={botPlateT} rx="1" fill={blue} opacity="0.8" />
+            <text x={cX + botPlateW / 2 + 6} y={botCY + aT + botPlateT / 2 + 4} fill={blue} fontSize="7" fontFamily="monospace" fontWeight="bold">
+              {row.chord_botPlateSize}
+            </text>
+            <line x1={cX - botPlateW / 2 + 1} y1={botCY + aT + 1} x2={cX - botPlateW / 2 + 7} y2={botCY + aT + 1} stroke={orange} strokeWidth="1.5" />
+            <line x1={cX + botPlateW / 2 - 7} y1={botCY + aT + 1} x2={cX + botPlateW / 2 - 1} y2={botCY + aT + 1} stroke={orange} strokeWidth="1.5" />
+          </g>
+        )}
+        {botType === 'channel' && (
+          <g>
+            {/* C-channel sistered alongside bottom chord — right side */}
+            <path d={`M ${cX + aLeg + 6 + chFl},${botCY - chH / 2} l ${-chFl},0 l 0,${chT} l ${chFl - chT},0 l 0,${chH - 2 * chT} l ${-(chFl - chT)},0 l 0,${chT} l ${chFl},0 Z`}
+              fill={blue} opacity={0.7} stroke={blue} strokeWidth="0.5" />
+            <text x={cX + aLeg + chFl + 12} y={botCY + 3} fill={blue} fontSize="7" fontFamily="monospace" fontWeight="bold">C-Channel</text>
+            <polygon points={`${cX + aLeg + 6},${botCY - 3} ${cX + aLeg + 2},${botCY} ${cX + aLeg + 6},${botCY + 3}`} fill={orange} />
+          </g>
+        )}
+        {botType === 'hss' && (
+          <g>
+            {/* HSS tube alongside bottom chord — right side */}
+            <rect x={cX + aLeg + 6} y={botCY - hssH / 2} width={hssW} height={hssH} rx="2" fill="none" stroke={blue} strokeWidth="2.5" />
+            <rect x={cX + aLeg + 6 + hssT} y={botCY - hssH / 2 + hssT} width={hssW - 2 * hssT} height={hssH - 2 * hssT} rx="1" fill={blue} opacity="0.15" />
+            <text x={cX + aLeg + hssW + 12} y={botCY + 3} fill={blue} fontSize="7" fontFamily="monospace" fontWeight="bold">HSS Tube</text>
+            <polygon points={`${cX + aLeg + 6},${botCY - 3} ${cX + aLeg + 2},${botCY} ${cX + aLeg + 6},${botCY + 3}`} fill={orange} />
+          </g>
+        )}
+        {botType === 'splice' && (
+          <g>
+            {/* Splice plates on both sides of bottom chord */}
+            <rect x={cX - aLeg - 8} y={botCY - aLeg * 0.25} width={4} height={aLeg * 1.5} rx="0.5" fill={blue} opacity="0.8" />
+            <rect x={cX + aLeg + 4} y={botCY - aLeg * 0.25} width={4} height={aLeg * 1.5} rx="0.5" fill={blue} opacity="0.8" />
+            {method.includes('Bolted') ? (
+              <>
+                <circle cx={cX - aLeg - 6} cy={botCY} r="2" fill={orange} />
+                <circle cx={cX - aLeg - 6} cy={botCY + aLeg / 2} r="2" fill={orange} />
+                <circle cx={cX + aLeg + 6} cy={botCY} r="2" fill={orange} />
+                <circle cx={cX + aLeg + 6} cy={botCY + aLeg / 2} r="2" fill={orange} />
+              </>
+            ) : (
+              <>
+                <polygon points={`${cX - aLeg - 4},${botCY - 2} ${cX - aLeg - 7},${botCY + 2} ${cX - aLeg - 1},${botCY + 2}`} fill={orange} />
+                <polygon points={`${cX + aLeg + 8},${botCY - 2} ${cX + aLeg + 5},${botCY + 2} ${cX + aLeg + 11},${botCY + 2}`} fill={orange} />
+              </>
+            )}
+          </g>
+        )}
+
+        {/* === LEGEND — adapts to method === */}
+        <rect x="10" y={H - 22} width={W - 20} height="18" rx="3" fill="#f8fafc" stroke="#e2e8f0" strokeWidth="0.5" />
+        {topType === 'bar' ? (
+          <><circle cx="24" cy={H - 13} r="3.5" fill="none" stroke={fire} strokeWidth="1.5" /><text x="32" y={H - 10} fill={silver} fontSize="6.5" fontFamily="monospace">Top Bars</text></>
+        ) : (
+          <><rect x="20" y={H - 17} width="8" height="8" fill={fire} opacity="0.75" rx="1" /><text x="32" y={H - 10} fill={silver} fontSize="6.5" fontFamily="monospace">{topType === 'angle' ? 'Top Angles' : topType === 'channel' ? 'Top Ch.' : topType === 'hss' ? 'Top HSS' : 'Splice'}</text></>
+        )}
+        {botType === 'bar' ? (
+          <><circle cx="90" cy={H - 13} r="3.5" fill="none" stroke={blue} strokeWidth="1.5" /><text x="98" y={H - 10} fill={silver} fontSize="6.5" fontFamily="monospace">Bot Bars</text></>
+        ) : botType === 'plate' ? (
+          <><rect x="86" y={H - 15} width="10" height="4" fill={blue} opacity="0.8" rx="0.5" /><text x="100" y={H - 10} fill={silver} fontSize="6.5" fontFamily="monospace">Bot Plate</text></>
+        ) : (
+          <><rect x="86" y={H - 17} width="8" height="8" fill={blue} opacity="0.7" rx="1" /><text x="98" y={H - 10} fill={silver} fontSize="6.5" fontFamily="monospace">{botType === 'channel' ? 'Bot Ch.' : botType === 'hss' ? 'Bot HSS' : 'Splice'}</text></>
+        )}
+        <rect x="155" y={H - 17} width="8" height="8" fill={steel} opacity="0.85" rx="1" />
+        <text x="167" y={H - 10} fill={silver} fontSize="6.5" fontFamily="monospace">Chord 2L</text>
+        {hasWeb && (<><rect x="215" y={H - 17} width="8" height="8" fill={green} opacity="0.7" rx="1" /><text x="227" y={H - 10} fill={silver} fontSize="6.5" fontFamily="monospace">Web</text></>)}
+        <line x1="260" y1={H - 15} x2="268" y2={H - 10} stroke={orange} strokeWidth="1.5" />
+        <text x="273" y={H - 10} fill={silver} fontSize="6.5" fontFamily="monospace">Welds</text>
+
+        {/* Title */}
+        <text x={cX} y={14} textAnchor="middle" fill={steel} fontSize="10" fontFamily="monospace" fontWeight="bold">
+          {row.joistType} — {series === 'K' ? 'Standard' : series === 'LH' ? 'Long Span' : 'Deep Long Span'} — Section Cut
         </text>
       </svg>
     </div>
   );
 }
 
-/* ── Info Legend (collapsible) ── */
+/* ─┈ Info Legend (collapsible) ─┈ */
 function JoistInfoLegend() {
   const [open, setOpen] = useState(false);
   return (
@@ -437,7 +609,7 @@ function JoistInfoLegend() {
   );
 }
 
-/* ── Expandable JR Block Row ── */
+/* ─┈ Expandable JR Block Row ─┈ */
 function JRBlock({ row, index, onUpdate, onDelete, onDuplicate }) {
   const [expanded, setExpanded] = useState(false);
   const calc = useMemo(() => calcRow(row), [row]);
@@ -741,7 +913,7 @@ function JRBlock({ row, index, onUpdate, onDelete, onDuplicate }) {
   );
 }
 
-/* ── Main Page Component ── */
+/* ─┈ Main Page Component ─┈ */
 export default function JoistReinf() {
   const { state, dispatch } = useProject();
   const rows = state.joistReinf || [];
