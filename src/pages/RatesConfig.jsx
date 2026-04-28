@@ -108,7 +108,7 @@ const Label = ({ children }) => (
 export default function RatesConfig() {
   const { state, dispatch } = useProject();
 
-  // Collapse state — all open by default
+  // Collapse state â all open by default
   const [open, setOpen] = useState({
     project: true,
     material: true,
@@ -232,7 +232,7 @@ export default function RatesConfig() {
       {/* Page Title */}
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-white">Rates &amp; Configuration</h1>
-        <p className="text-sm text-steel-400 mt-1">Steel Estimator Pro v5.1 — Triple Weld Inc.</p>
+        <p className="text-sm text-steel-400 mt-1">Steel Estimator Pro v5.1 â Triple Weld Inc.</p>
       </div>
 
       {/* ============================================================= */}
@@ -383,6 +383,41 @@ export default function RatesConfig() {
                 rows={3}
                 className="w-full bg-blue-500/5 border border-blue-500/30 rounded px-3 py-1.5 text-sm text-white placeholder-steel-500 focus:outline-none focus:ring-1 focus:ring-blue-500/50 resize-y"
               />
+            </div>
+          </div>
+        {/* --- Company Logo Upload --- */}
+            <div className="mt-6 space-y-2 border-t border-steel-700 pt-4">
+              <Label>Company Logo</Label>
+              <p className="text-xs text-steel-500">Upload your logo (PNG, JPG, SVG). It will appear on the Quote page header.</p>
+              <div className="flex items-center gap-4">
+                {pi.companyLogo && (
+                  <div className="flex h-16 w-40 items-center justify-center rounded border border-steel-700 bg-white p-1">
+                    <img src={pi.companyLogo} alt="Logo" className="max-h-14 max-w-full object-contain" />
+                  </div>
+                )}
+                <label className="cursor-pointer rounded-lg border border-fire-500 bg-fire-500/10 px-4 py-2 text-sm font-medium text-fire-400 transition hover:bg-fire-500/20">
+                  {pi.companyLogo ? 'Change Logo' : 'Upload Logo'}
+                  <input
+                    type="file"
+                    accept="image/png,image/jpeg,image/svg+xml,image/webp"
+                    className="hidden"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (!file) return;
+                      if (file.size > 500000) { alert('Logo must be under 500 KB'); return; }
+                      const reader = new FileReader();
+                      reader.onload = (ev) => setProjectField('companyLogo', ev.target.result);
+                      reader.readAsDataURL(file);
+                    }}
+                  />
+                </label>
+                {pi.companyLogo && (
+                  <button
+                    onClick={() => setProjectField('companyLogo', null)}
+                    className="text-xs text-steel-500 hover:text-red-400"
+                  >Remove</button>
+                )}
+              </div>
             </div>
           </div>
         )}
@@ -736,7 +771,7 @@ export default function RatesConfig() {
               />
             </div>
             <div className="space-y-1">
-              <Label>Travel Time (hrs one-way) — auto-calc</Label>
+              <Label>Travel Time (hrs one-way) â auto-calc</Label>
               <div className="w-full bg-steel-800/60 border border-steel-700/50 rounded px-3 py-1.5 text-sm text-white">
                 {travelTimeCalc} hrs
               </div>
@@ -911,13 +946,13 @@ export default function RatesConfig() {
       </div>
 
       {/* ============================================================= */}
-      {/* 11. CODE LIMITS — OBC & OHSA                                  */}
+      {/* 11. CODE LIMITS â OBC & OHSA                                  */}
       {/* ============================================================= */}
       <div>
         <SectionHeader
           icon={BookOpen}
           color="text-rose-400"
-          title="11. Code Limits — OBC & OHSA"
+          title="11. Code Limits â OBC & OHSA"
           open={open.code}
           toggle={() => toggle('code')}
         />
