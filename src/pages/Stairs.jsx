@@ -283,6 +283,8 @@ export default function Stairs() {
     preset: legacy.preset || 'Service Stair',
     finish: legacyFinish,
     treadType: legacy.treadType || 'Pan Tread (Galv)',
+    bomDisabled: legacy.bomDisabled || {},
+    bomOverrides: legacy.bomOverrides || {},
     gratingTreadWidth: legacy.gratingTreadWidth || '7"',
     gratingTreadHeight: legacy.gratingTreadHeight || '1.5"',
     gratingSpacing: legacy.gratingSpacing || '19-4',
