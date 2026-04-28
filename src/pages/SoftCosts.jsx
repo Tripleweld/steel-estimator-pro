@@ -57,7 +57,7 @@ export default function SoftCosts() {
       <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
         {/* Page header */}
         <div className="mb-8">
-          <h1 className="page-title flex items-center gap-3 text-3xl font-bold text-steel-900">
+          <h1 className="page-title flex items-center gap-3 text-3xl font-bold text-white">
             <DollarSign className="h-8 w-8 text-fire-600" />
             Soft Costs
           </h1>
@@ -67,9 +67,9 @@ export default function SoftCosts() {
         </div>
 
         {/* Info alert */}
-        <div className="mb-6 flex items-start gap-3 rounded-lg border border-blue-200 bg-blue-50 px-4 py-3">
+        <div className="mb-6 flex items-start gap-3 rounded-lg border border-blue-500/30 bg-blue-500/10 px-4 py-3">
           <Info className="mt-0.5 h-5 w-5 flex-shrink-0 text-blue-500" />
-          <p className="text-sm text-blue-800">
+          <p className="text-sm text-blue-200">
             Items with unit <span className="font-mono font-semibold">%</span> calculate as a percentage
             of the project subtotal. All other units multiply Qty &times; Rate.
           </p>
@@ -77,11 +77,11 @@ export default function SoftCosts() {
 
         {/* Summary cards */}
         <div className="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <div className="rounded-xl border border-silver-200 bg-white p-5 shadow-sm">
+          <div className="rounded-xl border border-steel-700 bg-steel-800 p-5 shadow-lg shadow-black/20">
             <p className="text-xs font-medium uppercase tracking-wide text-steel-500">Flat Costs</p>
-            <p className="mt-1 text-2xl font-bold text-steel-900">{fmt(summary.flatCosts)}</p>
+            <p className="mt-1 text-2xl font-bold text-white">{fmt(summary.flatCosts)}</p>
           </div>
-          <div className="rounded-xl border border-silver-200 bg-white p-5 shadow-sm">
+          <div className="rounded-xl border border-steel-700 bg-steel-800 p-5 shadow-lg shadow-black/20">
             <p className="text-xs font-medium uppercase tracking-wide text-steel-500">Percentage Costs</p>
             <div className="mt-1">
               {summary.pctCosts.length > 0 ? (
@@ -98,7 +98,7 @@ export default function SoftCosts() {
               )}
             </div>
           </div>
-          <div className="rounded-xl border border-silver-200 bg-white p-5 shadow-sm">
+          <div className="rounded-xl border border-steel-700 bg-steel-800 p-5 shadow-lg shadow-black/20">
             <p className="text-xs font-medium uppercase tracking-wide text-steel-500">Total Soft Costs</p>
             <p className="mt-1 text-2xl font-bold text-fire-600">{fmt(summary.totalSoft)}</p>
             {summary.totalPctRate > 0 && (
@@ -107,14 +107,14 @@ export default function SoftCosts() {
               </p>
             )}
           </div>
-          <div className="rounded-xl border border-silver-200 bg-white p-5 shadow-sm">
+          <div className="rounded-xl border border-steel-700 bg-steel-800 p-5 shadow-lg shadow-black/20">
             <p className="text-xs font-medium uppercase tracking-wide text-steel-500">Line Items</p>
-            <p className="mt-1 text-2xl font-bold text-steel-900">{fmtNum(summary.lineItemCount)}</p>
+            <p className="mt-1 text-2xl font-bold text-white">{fmtNum(summary.lineItemCount)}</p>
           </div>
         </div>
 
         {/* Table */}
-        <div className="rounded-xl border border-silver-200 bg-white shadow-sm">
+        <div className="rounded-xl border border-steel-700 bg-steel-800 shadow-lg shadow-black/20">
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
@@ -145,7 +145,7 @@ export default function SoftCosts() {
                     const isPct = row.unit === '%';
                     const lt = lineTotal(row);
                     return (
-                      <tr key={row.id} className="border-t border-silver-100 even:bg-steel-50">
+                      <tr key={row.id} className="border-t border-steel-700/60 even:bg-steel-900/40">
                         <td className="px-3 py-2 font-mono text-xs text-steel-400">{idx + 1}</td>
                         <td className="px-3 py-2">
                           <input
@@ -153,7 +153,7 @@ export default function SoftCosts() {
                             value={row.item}
                             onChange={(e) => handleUpdate(row.id, 'item', e.target.value)}
                             placeholder="Cost description"
-                            className="w-full min-w-[200px] rounded border border-silver-200 bg-transparent px-2 py-1 text-sm text-steel-900 placeholder:text-steel-300 focus:border-fire-500 focus:outline-none focus:ring-1 focus:ring-fire-500"
+                            className="w-full min-w-[200px] rounded border border-steel-600 bg-steel-900/40 px-2 py-1 text-sm text-white placeholder:text-steel-400 focus:border-fire-500 focus:outline-none focus:ring-1 focus:ring-fire-500"
                           />
                         </td>
                         <td className="px-3 py-2">
@@ -163,14 +163,14 @@ export default function SoftCosts() {
                             step={isPct ? '0.1' : '1'}
                             value={row.qty}
                             onChange={(e) => handleUpdate(row.id, 'qty', parseFloat(e.target.value) || 0)}
-                            className="w-20 rounded border border-silver-200 bg-transparent px-2 py-1 text-right text-sm text-steel-900 focus:border-fire-500 focus:outline-none focus:ring-1 focus:ring-fire-500"
+                            className="w-20 rounded border border-steel-600 bg-steel-900/40 px-2 py-1 text-right text-sm text-white focus:border-fire-500 focus:outline-none focus:ring-1 focus:ring-fire-500"
                           />
                         </td>
                         <td className="px-3 py-2">
                           <select
                             value={row.unit}
                             onChange={(e) => handleUpdate(row.id, 'unit', e.target.value)}
-                            className="rounded border border-silver-200 bg-transparent px-2 py-1 text-sm text-steel-900 focus:border-fire-500 focus:outline-none focus:ring-1 focus:ring-fire-500"
+                            className="rounded border border-steel-700 bg-transparent px-2 py-1 text-sm text-white focus:border-fire-500 focus:outline-none focus:ring-1 focus:ring-fire-500"
                           >
                             {UNITS.map((u) => (
                               <option key={u} value={u}>{u}</option>
@@ -184,7 +184,7 @@ export default function SoftCosts() {
                             step={isPct ? '0.1' : '0.01'}
                             value={row.rate}
                             onChange={(e) => handleUpdate(row.id, 'rate', parseFloat(e.target.value) || 0)}
-                            className="w-28 rounded border border-silver-200 bg-transparent px-2 py-1 text-right text-sm text-steel-900 focus:border-fire-500 focus:outline-none focus:ring-1 focus:ring-fire-500"
+                            className="w-28 rounded border border-steel-600 bg-steel-900/40 px-2 py-1 text-right text-sm text-white focus:border-fire-500 focus:outline-none focus:ring-1 focus:ring-fire-500"
                           />
                         </td>
                         <td className="px-3 py-2 text-right">
@@ -194,7 +194,7 @@ export default function SoftCosts() {
                               <span className="ml-1 text-xs text-steel-400">(of subtotal)</span>
                             </span>
                           ) : (
-                            <span className="font-mono font-bold text-steel-900">{fmt(lt)}</span>
+                            <span className="font-mono font-bold text-white">{fmt(lt)}</span>
                           )}
                         </td>
                         <td className="px-3 py-2">
@@ -203,7 +203,7 @@ export default function SoftCosts() {
                             value={row.notes}
                             onChange={(e) => handleUpdate(row.id, 'notes', e.target.value)}
                             placeholder="Notes"
-                            className="w-full min-w-[120px] rounded border border-silver-200 bg-transparent px-2 py-1 text-sm text-steel-900 placeholder:text-steel-300 focus:border-fire-500 focus:outline-none focus:ring-1 focus:ring-fire-500"
+                            className="w-full min-w-[120px] rounded border border-steel-600 bg-steel-900/40 px-2 py-1 text-sm text-white placeholder:text-steel-400 focus:border-fire-500 focus:outline-none focus:ring-1 focus:ring-fire-500"
                           />
                         </td>
                         <td className="px-3 py-2">
@@ -258,7 +258,7 @@ export default function SoftCosts() {
         </div>
 
         {/* Footer */}
-        <div className="mt-10 border-t border-silver-200 pt-4 text-center text-xs text-steel-400">
+        <div className="mt-10 border-t border-steel-700 pt-4 text-center text-xs text-steel-400">
           Triple Weld Inc. &mdash; Steel Estimating Platform
         </div>
       </div>
