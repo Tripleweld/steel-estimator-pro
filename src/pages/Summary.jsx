@@ -128,9 +128,12 @@ export default function Summary() {
     const totalFabHrs = structFabHrs + miscFabHrs + railFabHrs + ladderFabHrs + joistFabHrs + stairsFabHrs;
     const totalInstHrs = structInstHrs + miscInstHrs + railInstHrs + ladderInstHrs + joistInstHrs + stairsInstHrs;
 
-    /* --- Material costs --- */
-    const structuralMaterialCost = structuralWt * steelRate;
-    const miscMaterialCost = (miscWt + stairsWt + railingsWt + ladderWt + joistReinfWt) * miscRate;
+    /* --- Material costs (with waste + connection percent uplifts, matches Quote) --- */
+    const matRatesObj = rates.material || {};
+    const wastePercent = toNum(matRatesObj.wastePercent);
+    const connectionPercent = toNum(matRatesObj.connectionPercent);
+    const structuralMaterialCost = structuralWt * steelRate * (1 + wastePercent / 100 + connectionPercent / 100);
+    const miscMaterialCost = (miscWt + stairsWt + railingsWt + ladderWt + joistReinfWt) * miscRate * (1 + wastePercent / 100);
     const totalMaterialCost = structuralMaterialCost + miscMaterialCost;
 
     /* --- Labour costs --- */
