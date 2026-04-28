@@ -3,26 +3,52 @@ import { useProject } from '../context/ProjectContext';
 import { calcStairs } from '../utils/calculations';
 import { calcEquipRentalCost } from '../context/ProjectContext';
 import {
-  FileSpreadsheet,
-  TrendingUp,
-  Weight,
-  Clock,
-  DollarSign,
-  AlertTriangle,
+  FileSpreadsheet, TrendingUp, Weight, Clock, DollarSign, AlertTriangle,
 } from 'lucide-react';
 
-const fmt = (v) =>
-  '$' +
-  Number(v || 0).toLocaleString('en-CA', {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  });
+const fmt = (v) => '$' + Number(v || 0).toLocaleString('en-CA', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const fmtNum = (v, d = 0) => Number(v || 0).toLocaleString('en-CA', { minimumFractionDigits: d, maximumFractionDigits: d });
+const toNum = (v) => { const n = Number(v); return isNaN(n) ? 0 : n; };
 
-const fmtNum = (v, d = 0) =>
-  Number(v || 0).toLocaleString('en-CA', {
-    minimumFractionDigits: d,
-    maximumFractionDigits: d,
+/* --- Plate Library (must match StructuralTakeoff) --- */
+const PLATE_WIDTHS = [4, 5, 6, 7, 8, 9, 10, 12, 16, 18];
+const PLATE_THICKNESSES = [
+  { label: '1/2', value: 0.5 },
+  { label: '5/8', value: 0.625 },
+  { label: '3/4', value: 0.75 },
+];
+const PLATE_LIBRARY = [];
+PLATE_WIDTHS.forEach(w => {
+  PLATE_THICKNESSES.forEach(t => {
+    PLATE_LIBRARY.push({
+      id: w + 'x' + t.label,
+      width: w, thickness: t.value,
+      lbsPerFt: Math.round(w * t.value * 3.4028 * 100) / 100,
+    });
   });
+});
+
+/* --- Hour helpers (match StructuralTakeoff exactly) --- */
+function getEffectiveFabPerPc(r) {
+  if (r.fabPerPcOverride != null && r.fabPerPcOverride !== '' && r.fabPerPcOverride !== 0)
+    return toNum(r.fabPerPcOverride);
+  return (toNum(r.setup) + toNum(r.cut) + toNum(r.drill) + toNum(r.feed) + toNum(r.weld) + toNum(r.grind) + toNum(r.paint)) / 60;
+}
+function getEffectiveInstPerPc(r) {
+  if (r.instPerPcOverride != null && r.instPerPcOverride !== '' && r.instPerPcOverride !== 0)
+    return toNum(r.instPerPcOverride);
+  return (toNum(r.unload) + toNum(r.rig) + toNum(r.fit) + toNum(r.bolt) + toNum(r.touchUp)) / 60;
+}
+
+/* --- Row weight helper --- */
+function getRowWeight(r) {
+  if (r.section === 'moment') {
+    const plate = PLATE_LIBRARY.find(p => p.id === r.plateSize);
+    const plbsft = plate ? plate.lbsPerFt : 0;
+    return r.wtOverride != null ? toNum(r.wtOverride) : toNum(r.plateQty) * plbsft * toNum(r.plateLengthFt);
+  }
+  return toNum(r.qty) * toNum(r.lengthFt) * toNum(r.wtPerFt);
+}
 
 const benchmarks = [
   { label: 'Simple Structural', low: 3500, high: 5500, color: 'bg-emerald-500' },
@@ -37,7 +63,8 @@ export default function Summary() {
   const rates = state.rates || {};
 
   const summary = useMemo(() => {
-    const structural = state.structural || [];
+    /* === Structural rows (flat array with .section field) === */
+    const stRows = state.structuralRows || [];
     const miscMetals = state.miscMetals || [];
     const railings = state.railings || [];
     const ladder = state.ladder || [];
@@ -47,203 +74,143 @@ export default function Summary() {
     const equipment = rates.equipment || [];
     const stairs = state.stairs || {};
 
-    // --- Weights ---
-    const structuralWt = structural.reduce(
-      (sum, r) => sum + (Number(r.qty) || 0) * (Number(r.lengthFt) || 0) * (Number(r.lbsPerFt) || 0),
-      0
-    );
-    const miscWt = miscMetals.reduce(
-      (sum, r) => sum + (Number(r.qty) || 0) * (Number(r.lengthFt) || 0) * (Number(r.lbsPerFt) || 0),
-      0
-    );
+    /* --- Rates (match StructuralTakeoff paths) --- */
+    const labourRates = rates.labourRates || {};
+    const fabRate = toNum(labourRates.fabRate) || 50;
+    const installRate = toNum(labourRates.installRate) || 55;
+    const materialRates = rates.materialRates || [];
+    const steelRateEntry = materialRates.find(m => m.item === 'Structural steel');
+    const steelRate = toNum(steelRateEntry?.rate) || 1.00;
+    const miscRateEntry = materialRates.find(m => m.item === 'Misc metals' || m.item === 'Miscellaneous metals');
+    const miscRate = toNum(miscRateEntry?.rate) || steelRate;
 
+    /* --- Structural weights & hours --- */
+    let structuralWt = 0, structFabHrs = 0, structInstHrs = 0;
+    stRows.forEach(r => {
+      const lbs = getRowWeight(r);
+      structuralWt += lbs;
+      const fabPc = getEffectiveFabPerPc(r);
+      const instPc = getEffectiveInstPerPc(r);
+      if (r.section === 'moment') {
+        structFabHrs += fabPc * (toNum(r.fabCrew) || 1);
+        structInstHrs += instPc * (toNum(r.instCrew) || 1);
+      } else {
+        structFabHrs += fabPc * toNum(r.qty);
+        structInstHrs += instPc * toNum(r.qty);
+      }
+    });
+
+    /* --- Misc Metals --- */
+    const miscWt = miscMetals.reduce((s, r) => s + toNum(r.qty) * toNum(r.lengthFt) * toNum(r.lbsPerFt), 0);
+    const miscFabHrs = miscMetals.reduce((s, r) => s + toNum(r.qty) * toNum(r.fabHrsPerPc), 0);
+    const miscInstHrs = miscMetals.reduce((s, r) => s + toNum(r.qty) * toNum(r.installHrsPerPc), 0);
+
+    /* --- Stairs --- */
     const stairsCalc = calcStairs ? calcStairs(stairs) : { totalWeight: 0, flights: 0 };
-    const stairsWt = Number(stairsCalc.totalWeight) || 0;
+    const stairsWt = toNum(stairsCalc.totalWeight);
+    const stairsFabHrs = toNum(stairsCalc.fabHrs);
+    const stairsInstHrs = toNum(stairsCalc.installHrs);
 
-    const railingsWt = railings.reduce((sum, r) => sum + (Number(r.weightLbs) || 0), 0);
-    const ladderWt = ladder.reduce((sum, r) => sum + (Number(r.weightLbs) || 0), 0);
-    const joistReinfWt = joistReinf.reduce(
-      (sum, r) => sum + (Number(r.weightLbs) || 0) * (Number(r.qty) || 1),
-      0
-    );
+    /* --- Railings, Ladder, Joist Reinf --- */
+    const railingsWt = railings.reduce((s, r) => s + toNum(r.weightLbs), 0);
+    const railFabHrs = railings.reduce((s, r) => s + toNum(r.fabHrs), 0);
+    const railInstHrs = railings.reduce((s, r) => s + toNum(r.installHrs), 0);
+    const ladderWt = ladder.reduce((s, r) => s + toNum(r.weightLbs), 0);
+    const ladderFabHrs = ladder.reduce((s, r) => s + toNum(r.fabHrs), 0);
+    const ladderInstHrs = ladder.reduce((s, r) => s + toNum(r.installHrs), 0);
+    const joistReinfWt = joistReinf.reduce((s, r) => s + toNum(r.weightLbs) * (toNum(r.qty) || 1), 0);
+    const joistFabHrs = joistReinf.reduce((s, r) => s + toNum(r.fabHrs), 0);
+    const joistInstHrs = joistReinf.reduce((s, r) => s + toNum(r.installHrs), 0);
 
+    /* --- Totals --- */
     const totalWeightLbs = structuralWt + miscWt + stairsWt + railingsWt + ladderWt + joistReinfWt;
     const totalWeightTons = totalWeightLbs / 2000;
+    const totalFabHrs = structFabHrs + miscFabHrs + railFabHrs + ladderFabHrs + joistFabHrs + stairsFabHrs;
+    const totalInstHrs = structInstHrs + miscInstHrs + railInstHrs + ladderInstHrs + joistInstHrs + stairsInstHrs;
 
-    // --- Hours ---
-    const structFabHrs = structural.reduce(
-      (sum, r) => sum + (Number(r.qty) || 0) * (Number(r.fabHrsPerPc) || 0),
-      0
-    );
-    const structInstHrs = structural.reduce(
-      (sum, r) => sum + (Number(r.qty) || 0) * (Number(r.installHrsPerPc) || 0),
-      0
-    );
-    const miscFabHrs = miscMetals.reduce(
-      (sum, r) => sum + (Number(r.qty) || 0) * (Number(r.fabHrsPerPc) || 0),
-      0
-    );
-    const miscInstHrs = miscMetals.reduce(
-      (sum, r) => sum + (Number(r.qty) || 0) * (Number(r.installHrsPerPc) || 0),
-      0
-    );
-    const railFabHrs = railings.reduce((sum, r) => sum + (Number(r.fabHrs) || 0), 0);
-    const railInstHrs = railings.reduce((sum, r) => sum + (Number(r.installHrs) || 0), 0);
-    const ladderFabHrs = ladder.reduce((sum, r) => sum + (Number(r.fabHrs) || 0), 0);
-    const ladderInstHrs = ladder.reduce((sum, r) => sum + (Number(r.installHrs) || 0), 0);
-    const joistFabHrs = joistReinf.reduce((sum, r) => sum + (Number(r.fabHrs) || 0), 0);
-    const joistInstHrs = joistReinf.reduce((sum, r) => sum + (Number(r.installHrs) || 0), 0);
-    const stairsFabHrs = Number(stairsCalc.fabHrs) || 0;
-    const stairsInstHrs = Number(stairsCalc.installHrs) || 0;
-
-    const totalFabHrs =
-      structFabHrs + miscFabHrs + railFabHrs + ladderFabHrs + joistFabHrs + stairsFabHrs;
-    const totalInstHrs =
-      structInstHrs + miscInstHrs + railInstHrs + ladderInstHrs + joistInstHrs + stairsInstHrs;
-
-    // --- Costs ---
-    const matRates = rates.material || {};
-    const wastePercent = Number(matRates.wastePercent) || 0;
-    const connectionPercent = Number(matRates.connectionPercent) || 0;
-    const steelRate = Number(matRates.steelRate) || 0;
-    const miscRate = Number(matRates.miscRate) || steelRate;
-
-    const structuralMaterialCost =
-      structuralWt * steelRate * (1 + wastePercent / 100 + connectionPercent / 100);
-    const miscMaterialCost =
-      (miscWt + stairsWt + railingsWt + ladderWt + joistReinfWt) *
-      (miscRate || steelRate) *
-      (1 + wastePercent / 100);
+    /* --- Material costs --- */
+    const structuralMaterialCost = structuralWt * steelRate;
+    const miscMaterialCost = (miscWt + stairsWt + railingsWt + ladderWt + joistReinfWt) * miscRate;
     const totalMaterialCost = structuralMaterialCost + miscMaterialCost;
 
-    const labourRates = rates.labour || {};
-    const fabRate = Number(labourRates.fabRate) || 0;
-    const installRate = Number(labourRates.installRate) || 0;
+    /* --- Labour costs --- */
     const fabLabourCost = totalFabHrs * fabRate;
     const installLabourCost = totalInstHrs * installRate;
     const totalLabourCost = fabLabourCost + installLabourCost;
 
-    const purchasedTotal = purchased.reduce(
-      (sum, r) => sum + (Number(r.qty) || 0) * (Number(r.unitCost) || 0),
-      0
-    );
+    /* --- Purchased Items (by category) --- */
+    const purchasedJoists = purchased.filter(r => r.category === 'joists').reduce((s, r) => s + toNum(r.qty) * toNum(r.unitCost), 0);
+    const purchasedDeck = purchased.filter(r => r.category === 'deck').reduce((s, r) => s + toNum(r.qty) * toNum(r.unitCost), 0);
+    const purchasedOther = purchased.filter(r => r.category !== 'joists' && r.category !== 'deck').reduce((s, r) => s + toNum(r.qty) * toNum(r.unitCost), 0);
+    const purchasedTotal = purchasedJoists + purchasedDeck + purchasedOther;
 
-    // Equipment
+    /* --- Equipment --- */
     let equipmentTotal = 0;
     equipment.forEach((eq) => {
       if (calcEquipRentalCost) {
-        equipmentTotal += Number(calcEquipRentalCost(eq)) || 0;
+        equipmentTotal += toNum(calcEquipRentalCost(eq));
       } else {
-        const rental = (Number(eq.rate) || 0) * (Number(eq.days) || 0);
-        const pickup = Number(eq.pickup) || 0;
-        const dropoff = Number(eq.dropoff) || 0;
-        equipmentTotal += rental + pickup + dropoff;
+        equipmentTotal += (toNum(eq.rate) * toNum(eq.days)) + toNum(eq.pickup) + toNum(eq.dropoff);
       }
     });
-    const equipMarkupPct = Number(rates.markup?.equipmentMarkup) || 0;
+    const equipMarkupPct = toNum(rates.markup?.equipmentMarkup);
     const equipmentWithMarkup = equipmentTotal * (1 + equipMarkupPct / 100);
 
-    // Soft Costs
-    const softCostFlat = softCosts.reduce(
-      (sum, r) => (r.type === 'flat' ? sum + (Number(r.amount) || 0) : sum),
-      0
-    );
+    /* --- Soft Costs --- */
+    const softCostFlat = softCosts.reduce((s, r) => r.type === 'flat' ? s + toNum(r.amount) : s, 0);
     const baseForPercent = totalMaterialCost + totalLabourCost + purchasedTotal + equipmentWithMarkup;
-    const softCostPercent = softCosts.reduce(
-      (sum, r) =>
-        r.type === 'percent' ? sum + (baseForPercent * (Number(r.percent) || 0)) / 100 : sum,
-      0
-    );
+    const softCostPercent = softCosts.reduce((s, r) => r.type === 'percent' ? s + (baseForPercent * toNum(r.percent)) / 100 : s, 0);
     const softCostTotal = softCostFlat + softCostPercent;
 
-    // Totals
-    const subtotal =
-      totalMaterialCost +
-      totalLabourCost +
-      purchasedTotal +
-      equipmentWithMarkup +
-      softCostTotal;
-
-    const markupPercent = Number(rates.markup?.markupPercent) || 0;
+    /* --- Totals & Markup --- */
+    const subtotal = totalMaterialCost + totalLabourCost + purchasedTotal + equipmentWithMarkup + softCostTotal;
+    const markupPercent = toNum(rates.markup?.markupPercent);
     const markupAmount = subtotal * (markupPercent / 100);
     const bidPrice = subtotal + markupAmount;
-    const hstPercent = Number(rates.markup?.hstPercent) || 13;
+    const hstPercent = toNum(rates.markup?.hstPercent) || 13;
     const hstAmount = bidPrice * (hstPercent / 100);
     const grandTotal = bidPrice + hstAmount;
 
-    // Metrics
+    /* --- Metrics --- */
     const pricePerTon = totalWeightTons > 0 ? bidPrice / totalWeightTons : 0;
     const pricePerLb = totalWeightLbs > 0 ? bidPrice / totalWeightLbs : 0;
-    const buildingArea = Number(info.buildingAreaSqft) || 0;
+    const buildingArea = toNum(info.buildingAreaSqft);
     const pricePerSqft = buildingArea > 0 ? bidPrice / buildingArea : 0;
 
     return {
-      structuralWt,
-      miscWt,
-      stairsWt,
-      railingsWt,
-      ladderWt,
-      joistReinfWt,
-      totalWeightLbs,
-      totalWeightTons,
-      stairsCalc,
-      totalFabHrs,
-      totalInstHrs,
-      structuralMaterialCost,
-      miscMaterialCost,
-      totalMaterialCost,
-      fabLabourCost,
-      installLabourCost,
-      totalLabourCost,
-      purchasedTotal,
+      structuralWt, miscWt, stairsWt, railingsWt, ladderWt, joistReinfWt,
+      totalWeightLbs, totalWeightTons, stairsCalc,
+      structFabHrs, structInstHrs, miscFabHrs, miscInstHrs,
+      totalFabHrs, totalInstHrs,
+      steelRate, miscRate, fabRate, installRate,
+      structuralMaterialCost, miscMaterialCost, totalMaterialCost,
+      fabLabourCost, installLabourCost, totalLabourCost,
+      purchasedJoists, purchasedDeck, purchasedOther, purchasedTotal,
       equipmentTotal: equipmentWithMarkup,
-      softCostFlat,
-      softCostPercent,
-      softCostTotal,
-      subtotal,
-      markupPercent,
-      markupAmount,
-      bidPrice,
-      hstPercent,
-      hstAmount,
-      grandTotal,
-      pricePerTon,
-      pricePerLb,
-      pricePerSqft,
+      softCostFlat, softCostPercent, softCostTotal,
+      subtotal, markupPercent, markupAmount, bidPrice,
+      hstPercent, hstAmount, grandTotal,
+      pricePerTon, pricePerLb, pricePerSqft,
     };
   }, [state, rates, info]);
 
   const risks = useMemo(() => {
     const flags = [];
-    if ((state.structural || []).length === 0)
-      flags.push('No structural steel rows entered.');
-    if (summary.pricePerTon > 0 && summary.pricePerTon < 3000)
-      flags.push('$/ton is below typical range — review rates or takeoff.');
-    if (summary.pricePerTon > 18000)
-      flags.push('$/ton is above typical range — verify scope.');
-    if ((Number(info.distanceKm) || 0) > 200)
-      flags.push(`Site distance is ${info.distanceKm} km — verify travel/transport costs.`);
-    if (summary.totalFabHrs === 0 && summary.totalInstHrs === 0)
-      flags.push('Zero hours recorded — labour estimates may be missing.');
-    if (summary.totalMaterialCost === 0)
-      flags.push('Material cost is $0 — check material rates.');
+    if ((state.structuralRows || []).length === 0) flags.push('No structural steel rows entered.');
+    if (summary.pricePerTon > 0 && summary.pricePerTon < 3000) flags.push('$/ton is below typical range — review rates or takeoff.');
+    if (summary.pricePerTon > 18000) flags.push('$/ton is above typical range — verify scope.');
+    if (toNum(info.distanceKm) > 200) flags.push('Site distance is ' + info.distanceKm + ' km — verify travel/transport costs.');
+    if (summary.totalFabHrs === 0 && summary.totalInstHrs === 0) flags.push('Zero hours recorded — labour estimates may be missing.');
+    if (summary.totalMaterialCost === 0) flags.push('Material cost is $0 — check material rates.');
     return flags;
   }, [summary, state, info]);
 
   const SectionCard = ({ children, className = '' }) => (
-    <div className={`rounded-xl border border-silver-200 bg-white p-5 shadow-sm ${className}`}>
-      {children}
-    </div>
+    <div className={`rounded-xl border border-silver-200 bg-white p-5 shadow-sm ${className}`}>{children}</div>
   );
 
   const SummaryRow = ({ label, value, bold, indent, border }) => (
-    <div
-      className={`flex items-center justify-between py-2 px-3 ${
-        border ? 'border-t border-silver-200' : ''
-      } ${bold ? 'font-semibold text-steel-900' : 'text-steel-700'} ${
-        indent ? 'pl-8' : ''
-      }`}
-    >
+    <div className={`flex items-center justify-between py-2 px-3 ${border ? 'border-t border-silver-200' : ''} ${bold ? 'font-semibold text-steel-900' : 'text-steel-700'} ${indent ? 'pl-8' : ''}`}>
       <span>{label}</span>
       <span className={bold ? 'text-fire-600' : ''}>{fmt(value)}</span>
     </div>
@@ -251,63 +218,36 @@ export default function Summary() {
 
   return (
     <div className="space-y-6">
-      {/* Accent stripe */}
       <div className="accent-stripe h-1.5 rounded-full bg-gradient-to-r from-fire-500 via-fire-400 to-amber-400" />
 
-      {/* Header */}
       <div className="flex items-start gap-4">
         <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-fire-500/10">
           <FileSpreadsheet className="h-6 w-6 text-fire-600" />
         </div>
         <div>
           <h1 className="page-title text-2xl font-bold text-steel-900">Project Summary</h1>
-          <p className="page-subtitle text-sm text-steel-500">
-            Complete cost rollup — material, labour, equipment, soft costs, markup
-          </p>
+          <p className="page-subtitle text-sm text-steel-500">Complete cost rollup &mdash; material, labour, equipment, soft costs, markup</p>
         </div>
       </div>
 
       {/* Project Info Banner */}
       <SectionCard>
         <div className="grid grid-cols-2 gap-x-8 gap-y-3 sm:grid-cols-3 lg:grid-cols-4">
-          <div>
-            <p className="text-xs font-medium uppercase tracking-wide text-steel-400">Project</p>
-            <p className="text-sm font-semibold text-steel-900">{info.projectName || '—'}</p>
-          </div>
-          <div>
-            <p className="text-xs font-medium uppercase tracking-wide text-steel-400">Quote #</p>
-            <p className="text-sm font-semibold text-steel-900">{info.quoteNumber || '—'}</p>
-          </div>
-          <div>
-            <p className="text-xs font-medium uppercase tracking-wide text-steel-400">Date</p>
-            <p className="text-sm font-semibold text-steel-900">{info.quoteDate || '—'}</p>
-          </div>
-          <div>
-            <p className="text-xs font-medium uppercase tracking-wide text-steel-400">Location</p>
-            <p className="text-sm font-semibold text-steel-900">{info.location || '—'}</p>
-          </div>
-          <div>
-            <p className="text-xs font-medium uppercase tracking-wide text-steel-400">GC / Client</p>
-            <p className="text-sm font-semibold text-steel-900">{info.gcClient || '—'}</p>
-          </div>
-          <div>
-            <p className="text-xs font-medium uppercase tracking-wide text-steel-400">Distance</p>
-            <p className="text-sm font-semibold text-steel-900">
-              {info.distanceKm ? `${fmtNum(info.distanceKm)} km` : '—'}
-            </p>
-          </div>
-          <div>
-            <p className="text-xs font-medium uppercase tracking-wide text-steel-400">
-              Building Area
-            </p>
-            <p className="text-sm font-semibold text-steel-900">
-              {info.buildingAreaSqft ? `${fmtNum(info.buildingAreaSqft)} sq ft` : '—'}
-            </p>
-          </div>
-          <div>
-            <p className="text-xs font-medium uppercase tracking-wide text-steel-400">Engineer</p>
-            <p className="text-sm font-semibold text-steel-900">{info.engineer || '—'}</p>
-          </div>
+          {[
+            ['Project', info.projectName],
+            ['Quote #', info.quoteNumber],
+            ['Date', info.quoteDate],
+            ['Location', info.location],
+            ['GC / Client', info.gcClient],
+            ['Distance', info.distanceKm ? fmtNum(info.distanceKm) + ' km' : null],
+            ['Building Area', info.buildingAreaSqft ? fmtNum(info.buildingAreaSqft) + ' sq ft' : null],
+            ['Engineer', info.engineer],
+          ].map(([lbl, val]) => (
+            <div key={lbl}>
+              <p className="text-xs font-medium uppercase tracking-wide text-steel-400">{lbl}</p>
+              <p className="text-sm font-semibold text-steel-900">{val || '—'}</p>
+            </div>
+          ))}
         </div>
       </SectionCard>
 
@@ -333,9 +273,7 @@ export default function Summary() {
           ))}
           <div className="flex items-center justify-between bg-steel-800 px-4 py-3 text-sm font-semibold text-white first:rounded-t-lg last:rounded-b-lg">
             <span>Total Weight</span>
-            <span>
-              {fmtNum(summary.totalWeightLbs)} lbs ({fmtNum(summary.totalWeightTons, 2)} tons)
-            </span>
+            <span>{fmtNum(summary.totalWeightLbs)} lbs ({fmtNum(summary.totalWeightTons, 2)} tons)</span>
           </div>
         </div>
       </SectionCard>
@@ -349,23 +287,15 @@ export default function Summary() {
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
           <div className="rounded-lg border border-silver-100 bg-silver-50/50 p-4 text-center">
             <p className="text-2xl font-bold text-steel-900">{fmtNum(summary.totalFabHrs, 1)}</p>
-            <p className="text-xs font-medium uppercase tracking-wide text-steel-400">
-              Fabrication Hours
-            </p>
+            <p className="text-xs font-medium uppercase tracking-wide text-steel-400">Fabrication Hours</p>
           </div>
           <div className="rounded-lg border border-silver-100 bg-silver-50/50 p-4 text-center">
             <p className="text-2xl font-bold text-steel-900">{fmtNum(summary.totalInstHrs, 1)}</p>
-            <p className="text-xs font-medium uppercase tracking-wide text-steel-400">
-              Installation Hours
-            </p>
+            <p className="text-xs font-medium uppercase tracking-wide text-steel-400">Installation Hours</p>
           </div>
           <div className="rounded-lg border border-fire-200 bg-fire-50/50 p-4 text-center">
-            <p className="text-2xl font-bold text-fire-600">
-              {fmtNum(summary.totalFabHrs + summary.totalInstHrs, 1)}
-            </p>
-            <p className="text-xs font-medium uppercase tracking-wide text-fire-500">
-              Total Hours
-            </p>
+            <p className="text-2xl font-bold text-fire-600">{fmtNum(summary.totalFabHrs + summary.totalInstHrs, 1)}</p>
+            <p className="text-xs font-medium uppercase tracking-wide text-fire-500">Total Hours</p>
           </div>
         </div>
       </SectionCard>
@@ -377,54 +307,38 @@ export default function Summary() {
           <h2 className="text-lg font-semibold text-steel-900">Cost Breakdown</h2>
         </div>
         <div className="divide-y divide-silver-100 rounded-lg border border-silver-100">
-          {/* A. Material */}
           <SummaryRow label="A. Material" value={summary.totalMaterialCost} bold />
-          <SummaryRow label="Structural Material" value={summary.structuralMaterialCost} indent />
-          <SummaryRow label="Misc / Other Material" value={summary.miscMaterialCost} indent />
+          <SummaryRow label={'Structural Material (@' + fmt(summary.steelRate) + '/lb)'} value={summary.structuralMaterialCost} indent />
+          <SummaryRow label={'Misc / Other Material (@' + fmt(summary.miscRate) + '/lb)'} value={summary.miscMaterialCost} indent />
 
-          {/* B. Fabrication Labour */}
-          <SummaryRow label="B. Fabrication Labour" value={summary.fabLabourCost} bold border />
+          <SummaryRow label={'B. Fabrication Labour (' + fmtNum(summary.totalFabHrs, 1) + ' hrs @ ' + fmt(summary.fabRate) + '/hr)'} value={summary.fabLabourCost} bold border />
+          <SummaryRow label={'C. Installation Labour (' + fmtNum(summary.totalInstHrs, 1) + ' hrs @ ' + fmt(summary.installRate) + '/hr)'} value={summary.installLabourCost} bold border />
 
-          {/* C. Installation Labour */}
-          <SummaryRow label="C. Installation Labour" value={summary.installLabourCost} bold border />
-
-          {/* D. Purchased Items */}
           <SummaryRow label="D. Purchased Items" value={summary.purchasedTotal} bold border />
+          {summary.purchasedJoists > 0 && <SummaryRow label="Joists" value={summary.purchasedJoists} indent />}
+          {summary.purchasedDeck > 0 && <SummaryRow label="Steel Deck" value={summary.purchasedDeck} indent />}
+          {summary.purchasedOther > 0 && <SummaryRow label="Other" value={summary.purchasedOther} indent />}
 
-          {/* E. Equipment */}
           <SummaryRow label="E. Equipment" value={summary.equipmentTotal} bold border />
 
-          {/* F. Soft Costs */}
           <SummaryRow label="F. Soft Costs" value={summary.softCostTotal} bold border />
           <SummaryRow label="Flat Costs" value={summary.softCostFlat} indent />
           <SummaryRow label="Percentage-based Costs" value={summary.softCostPercent} indent />
 
-          {/* G. Subtotal */}
           <div className="flex items-center justify-between border-t-2 border-steel-300 bg-silver-50 px-3 py-3">
             <span className="font-bold text-steel-900">G. Subtotal</span>
             <span className="font-bold text-steel-900">{fmt(summary.subtotal)}</span>
           </div>
 
-          {/* H. Markup */}
-          <SummaryRow
-            label={`H. Markup (${fmtNum(summary.markupPercent, 1)}%)`}
-            value={summary.markupAmount}
-            bold
-          />
+          <SummaryRow label={'H. Markup (' + fmtNum(summary.markupPercent, 1) + '%)'} value={summary.markupAmount} bold />
 
-          {/* I. Bid Price */}
           <div className="flex items-center justify-between border-t-2 border-fire-300 bg-fire-50 px-3 py-3">
             <span className="text-lg font-bold text-fire-700">I. Bid Price</span>
             <span className="text-lg font-bold text-fire-700">{fmt(summary.bidPrice)}</span>
           </div>
 
-          {/* J. HST */}
-          <SummaryRow
-            label={`J. HST (${fmtNum(summary.hstPercent, 1)}%)`}
-            value={summary.hstAmount}
-          />
+          <SummaryRow label={'J. HST (' + fmtNum(summary.hstPercent, 1) + '%)'} value={summary.hstAmount} />
 
-          {/* K. Grand Total */}
           <div className="flex items-center justify-between rounded-b-lg bg-steel-800 px-3 py-4">
             <span className="text-lg font-bold text-white">K. Grand Total</span>
             <span className="text-lg font-bold text-fire-400">{fmt(summary.grandTotal)}</span>
@@ -439,30 +353,16 @@ export default function Summary() {
           <h2 className="text-lg font-semibold text-steel-900">Key Metrics</h2>
         </div>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-          <div className="rounded-lg border border-silver-100 bg-silver-50/50 p-4 text-center">
-            <p className="text-2xl font-bold text-steel-900">
-              {summary.pricePerTon > 0 ? fmt(summary.pricePerTon) : '—'}
-            </p>
-            <p className="text-xs font-medium uppercase tracking-wide text-steel-400">
-              $ / Ton
-            </p>
-          </div>
-          <div className="rounded-lg border border-silver-100 bg-silver-50/50 p-4 text-center">
-            <p className="text-2xl font-bold text-steel-900">
-              {summary.pricePerLb > 0 ? fmt(summary.pricePerLb) : '—'}
-            </p>
-            <p className="text-xs font-medium uppercase tracking-wide text-steel-400">
-              $ / lb
-            </p>
-          </div>
-          <div className="rounded-lg border border-silver-100 bg-silver-50/50 p-4 text-center">
-            <p className="text-2xl font-bold text-steel-900">
-              {summary.pricePerSqft > 0 ? fmt(summary.pricePerSqft) : '—'}
-            </p>
-            <p className="text-xs font-medium uppercase tracking-wide text-steel-400">
-              $ / sq ft
-            </p>
-          </div>
+          {[
+            [summary.pricePerTon, '$ / Ton'],
+            [summary.pricePerLb, '$ / lb'],
+            [summary.pricePerSqft, '$ / sq ft'],
+          ].map(([val, lbl]) => (
+            <div key={lbl} className="rounded-lg border border-silver-100 bg-silver-50/50 p-4 text-center">
+              <p className="text-2xl font-bold text-steel-900">{val > 0 ? fmt(val) : '—'}</p>
+              <p className="text-xs font-medium uppercase tracking-wide text-steel-400">{lbl}</p>
+            </div>
+          ))}
         </div>
       </SectionCard>
 
@@ -474,51 +374,30 @@ export default function Summary() {
             <h2 className="text-lg font-semibold text-steel-900">Benchmark Comparison</h2>
           </div>
           <p className="mb-4 text-sm text-steel-500">
-            Your bid price per ton:{' '}
-            <span className="font-semibold text-fire-600">{fmt(summary.pricePerTon)}</span>
+            Your bid price per ton: <span className="font-semibold text-fire-600">{fmt(summary.pricePerTon)}</span>
           </p>
           <div className="space-y-3">
             {benchmarks.map((b) => {
-              const rangeWidth = b.high - b.low;
-              const scaleMin = 2000;
-              const scaleMax = 20000;
-              const totalScale = scaleMax - scaleMin;
+              const scaleMin = 2000, scaleMax = 20000, totalScale = scaleMax - scaleMin;
               const leftPct = ((b.low - scaleMin) / totalScale) * 100;
-              const widthPct = (rangeWidth / totalScale) * 100;
+              const widthPct = ((b.high - b.low) / totalScale) * 100;
               const markerPct = ((summary.pricePerTon - scaleMin) / totalScale) * 100;
-              const inRange =
-                summary.pricePerTon >= b.low && summary.pricePerTon <= b.high;
-
+              const inRange = summary.pricePerTon >= b.low && summary.pricePerTon <= b.high;
               return (
                 <div key={b.label}>
                   <div className="mb-1 flex items-center justify-between text-xs">
-                    <span className={`font-medium ${inRange ? 'text-fire-600' : 'text-steel-500'}`}>
-                      {b.label}
-                    </span>
-                    <span className="text-steel-400">
-                      {fmt(b.low)} — {fmt(b.high)}
-                    </span>
+                    <span className={`font-medium ${inRange ? 'text-fire-600' : 'text-steel-500'}`}>{b.label}</span>
+                    <span className="text-steel-400">{fmt(b.low)} — {fmt(b.high)}</span>
                   </div>
                   <div className="relative h-4 w-full rounded-full bg-silver-100">
-                    <div
-                      className={`absolute top-0 h-full rounded-full ${b.color} opacity-30`}
-                      style={{ left: `${leftPct}%`, width: `${widthPct}%` }}
-                    />
-                    {inRange && (
-                      <div
-                        className="absolute top-0 h-full w-1 rounded-full bg-fire-600"
-                        style={{ left: `${Math.min(Math.max(markerPct, 0), 100)}%` }}
-                        title={fmt(summary.pricePerTon)}
-                      />
-                    )}
+                    <div className={`absolute top-0 h-full rounded-full ${b.color} opacity-30`} style={{ left: leftPct + '%', width: widthPct + '%' }} />
+                    {inRange && <div className="absolute top-0 h-full w-1 rounded-full bg-fire-600" style={{ left: Math.min(Math.max(markerPct, 0), 100) + '%' }} title={fmt(summary.pricePerTon)} />}
                   </div>
                 </div>
               );
             })}
           </div>
-          <p className="mt-3 text-xs text-steel-400">
-            Vertical bar shows where this project falls within each range.
-          </p>
+          <p className="mt-3 text-xs text-steel-400">Vertical bar shows where this project falls within each range.</p>
         </SectionCard>
       )}
 
@@ -540,10 +419,8 @@ export default function Summary() {
         </SectionCard>
       )}
 
-      {/* Footer */}
       <div className="border-t border-silver-200 pt-4 text-center text-xs text-steel-400">
-        Triple Weld Inc. &mdash; Project Summary &mdash; Generated{' '}
-        {new Date().toLocaleDateString('en-CA')}
+        Triple Weld Inc. &mdash; Project Summary &mdash; Generated {new Date().toLocaleDateString('en-CA')}
       </div>
     </div>
   );
