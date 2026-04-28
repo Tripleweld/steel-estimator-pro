@@ -265,6 +265,39 @@ export default function RatesConfig() {
         </div>
       </div>
 
+      
+      {/* --- Company Info for Quote Header --- */}
+      <div className="mt-4 space-y-3 border-t border-steel-700 pt-4">
+        <Label>Quote Header Info</Label>
+        <p className="text-xs text-steel-500">These fields appear on the Quote / Proposal header when printing.</p>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <div>
+            <label className="block text-xs text-steel-400 mb-1">Company Name</label>
+            <BlueInput value={pi.companyName || ''} onChange={e => setProjectField('companyName', e.target.value)} placeholder="TRIPLE WELD INC." />
+          </div>
+          <div>
+            <label className="block text-xs text-steel-400 mb-1">Tagline / Certification</label>
+            <BlueInput value={pi.companyTagline || ''} onChange={e => setProjectField('companyTagline', e.target.value)} placeholder="CWB Certified Steel Fabrication & Erection" />
+          </div>
+          <div>
+            <label className="block text-xs text-steel-400 mb-1">Address</label>
+            <BlueInput value={pi.companyAddress || ''} onChange={e => setProjectField('companyAddress', e.target.value)} placeholder="123 Industrial Rd, Unit 4, Anytown, ON" />
+          </div>
+          <div>
+            <label className="block text-xs text-steel-400 mb-1">Phone</label>
+            <BlueInput value={pi.companyPhone || ''} onChange={e => setProjectField('companyPhone', e.target.value)} placeholder="(555) 123-4567" />
+          </div>
+          <div>
+            <label className="block text-xs text-steel-400 mb-1">Email</label>
+            <BlueInput value={pi.companyEmail || ''} onChange={e => setProjectField('companyEmail', e.target.value)} placeholder="info@tripleweld.com" />
+          </div>
+          <div>
+            <label className="block text-xs text-steel-400 mb-1">Website</label>
+            <BlueInput value={pi.companyWebsite || ''} onChange={e => setProjectField('companyWebsite', e.target.value)} placeholder="www.tripleweld.com" />
+          </div>
+        </div>
+      </div>
+
       {/* ============================================================= */}
       {/* 1. PROJECT INFORMATION                                        */}
       {/* ============================================================= */}
