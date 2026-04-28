@@ -92,6 +92,9 @@ const COLUMN_OPTIONS = [
 const PRESET_OPTIONS = ['Service Stair', 'Architectural', 'Heavy Duty', 'Egress Only']
 const FINISH_OPTIONS = ['Shop Primed', 'Galvanized']
 const TREAD_TYPE_OPTIONS = ['Pan Tread (Galv)', 'Pan Tread (Mild)', 'Checker Plate', 'Grating', 'Channel Grating Diamond (Galv)', 'Channel Grating Round (Galv)']
+const CG_DIAMOND_WIDTHS = ['4-3/4"', '7"', '9-1/2"', '11-3/4"']
+const CG_ROUND_WIDTHS = ['5"', '7"', '10"', '12"']
+const CG_HEIGHTS = ['1.5"', '2"']
 const METHOD_OPTIONS = ['Detailed', 'Simple']
 
 const COMPLEXITY_MAP = {
@@ -276,6 +279,8 @@ export default function Stairs() {
     preset: legacy.preset || 'Service Stair',
     finish: legacyFinish,
     treadType: legacy.treadType || 'Pan Tread (Galv)',
+    gratingTreadWidth: legacy.gratingTreadWidth || '7"',
+    gratingTreadHeight: legacy.gratingTreadHeight || '1.5"',
     stringerSection: legacy.stringerSection || 'C230x30',
     columnSection: legacy.columnSection || 'HSS 76x76x4.8',
     mark: legacy.mark || 'S-1',
@@ -534,6 +539,26 @@ export default function Stairs() {
               <FieldLabel>Tread Type</FieldLabel>
               <Select value={s.treadType} onChange={(v) => set('treadType', v)} options={TREAD_TYPE_OPTIONS} />
             </div>
+            {s.treadType && s.treadType.startsWith('Channel Grating') && (
+              <>
+                <div>
+                  <FieldLabel>CG Tread Width (run)</FieldLabel>
+                  <Select
+                    value={s.gratingTreadWidth}
+                    onChange={(v) => set('gratingTreadWidth', v)}
+                    options={s.treadType.includes('Diamond') ? CG_DIAMOND_WIDTHS : CG_ROUND_WIDTHS}
+                  />
+                </div>
+                <div>
+                  <FieldLabel>CG Tread Height</FieldLabel>
+                  <Select
+                    value={s.gratingTreadHeight}
+                    onChange={(v) => set('gratingTreadHeight', v)}
+                    options={CG_HEIGHTS}
+                  />
+                </div>
+              </>
+            )}
             <div>
               <FieldLabel>Stringer Section</FieldLabel>
               <Select value={s.stringerSection} onChange={(v) => set('stringerSection', v)} options={STRINGER_OPTIONS} />
@@ -771,7 +796,7 @@ export default function Stairs() {
               </thead>
               <tbody className="divide-y divide-silver-100">
                 <tr className="even:bg-steel-50">
-                  <td className="px-4 py-2.5 font-medium text-steel-700">{s.treadType}</td>
+                  <td className="px-4 py-2.5 font-medium text-steel-700">{s.treadType}{s.treadType && s.treadType.startsWith('Channel Grating') ? ` — ${s.gratingTreadWidth} × ${s.gratingTreadHeight}` : ''}</td>
                   <td className="px-4 py-2.5 text-right font-mono text-steel-600">
                     {s.treadType === 'Grating'
                       ? `${fmtNum((geom.width * geom.run) / 92903 * treadQty, 2)} sqft`
