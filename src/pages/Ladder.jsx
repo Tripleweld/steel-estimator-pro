@@ -136,7 +136,7 @@ function NumInput({ value, onChange, step = 'any', className = '', disabled = fa
       disabled={disabled}
       value={value ?? ''}
       onChange={(e) => onChange(e.target.value)}
-      className={`w-full rounded-lg border border-silver-200 bg-silver-50 px-3 py-2 text-sm font-mono text-steel-800 outline-none transition focus:border-fire-500 focus:ring-1 focus:ring-fire-500 disabled:bg-silver-100 disabled:text-silver-400 ${className}`}
+      className={`w-full rounded-lg border border-steel-700 bg-steel-950 text-white px-3 py-2 text-sm font-mono text-white outline-none transition focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/50 disabled:bg-steel-800/40 disabled:text-steel-500 ${className}`}
     />
   )
 }
@@ -147,7 +147,7 @@ function TextInput({ value, onChange, className = '' }) {
       type="text"
       value={value ?? ''}
       onChange={(e) => onChange(e.target.value)}
-      className={`w-full rounded-lg border border-silver-200 bg-silver-50 px-3 py-2 text-sm text-steel-800 outline-none transition focus:border-fire-500 focus:ring-1 focus:ring-fire-500 ${className}`}
+      className={`w-full rounded-lg border border-steel-700 bg-steel-950 text-white px-3 py-2 text-sm text-white outline-none transition focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/50 ${className}`}
     />
   )
 }
@@ -157,7 +157,7 @@ function Select({ value, onChange, options, className = '' }) {
     <select
       value={value}
       onChange={(e) => onChange(e.target.value)}
-      className={`w-full rounded-lg border border-silver-200 bg-silver-50 px-3 py-2 text-sm text-steel-800 outline-none transition focus:border-fire-500 focus:ring-1 focus:ring-fire-500 ${className}`}
+      className={`w-full rounded-lg border border-steel-700 bg-steel-950 text-white px-3 py-2 text-sm text-white outline-none transition focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/50 ${className}`}
     >
       {options.map((o) => (
         <option key={o} value={o}>{o}</option>
@@ -174,12 +174,12 @@ function FieldLabel({ children }) {
 
 function SectionCard({ icon: Icon, title, subtitle, children }) {
   return (
-    <div className="mb-6 rounded-xl border border-silver-200 bg-white p-5 shadow-sm">
+    <div className="mb-6 rounded-xl border border-steel-700 bg-steel-900/40 p-5 shadow-sm">
       <div className="mb-4 flex items-center gap-2">
-        {Icon && <Icon className="h-5 w-5 text-fire-600" />}
+        {Icon && <Icon className="h-5 w-5 text-fire-400" />}
         <div>
-          <h2 className="text-sm font-bold uppercase tracking-wider text-steel-800">{title}</h2>
-          {subtitle && <p className="text-xs text-silver-500">{subtitle}</p>}
+          <h2 className="text-sm font-bold uppercase tracking-wider text-white">{title}</h2>
+          {subtitle && <p className="text-xs text-steel-400">{subtitle}</p>}
         </div>
       </div>
       {children}
@@ -333,8 +333,8 @@ function LadderSketch({ type, config, cageRequired }) {
       </svg>
       <p className="mt-2 text-center text-xs font-semibold text-steel-700">
         {type}
-        {config !== 'Standard' && <span className="text-silver-500"> · {config}</span>}
-        {cageRequired && <span className="text-fire-600"> · caged</span>}
+        {config !== 'Standard' && <span className="text-steel-400"> · {config}</span>}
+        {cageRequired && <span className="text-fire-400"> · caged</span>}
       </p>
     </div>
   )
@@ -555,13 +555,13 @@ export default function Ladder() {
   const inRange = (v, lo, hi) => v >= lo && v <= hi
 
   return (
-    <div className="min-h-screen bg-silver-50">
+    <div className="min-h-screen bg-steel-950 text-white">
       <div className="accent-stripe" />
       <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
 
         {/* Header */}
         <div className="mb-8 flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-fire-500 text-white">
+          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-fire-950/400 text-white">
             <Calculator className="h-5 w-5" />
           </div>
           <div>
@@ -605,8 +605,8 @@ export default function Ladder() {
               </div>
             </div>
             {/* Sketch takes 1/3 */}
-            <div className="rounded-lg border border-silver-200 bg-silver-50 p-4">
-              <p className="mb-2 text-center text-[10px] font-semibold uppercase tracking-wider text-silver-500">Visual reference</p>
+            <div className="rounded-lg border border-steel-700 bg-steel-950 text-white p-4">
+              <p className="mb-2 text-center text-[10px] font-semibold uppercase tracking-wider text-steel-400">Visual reference</p>
               <LadderSketch type={s.type} config={s.config} cageRequired={geom.cageRequired} />
             </div>
           </div>
@@ -692,8 +692,8 @@ export default function Ladder() {
                   <div className="flex items-center gap-3">
                     <Icon className={`h-5 w-5 flex-shrink-0 ${iconColor}`} />
                     <div>
-                      <p className="text-sm font-semibold text-steel-800">{c.label}</p>
-                      <p className="text-xs text-silver-500">{c.requirement}</p>
+                      <p className="text-sm font-semibold text-white">{c.label}</p>
+                      <p className="text-xs text-steel-400">{c.requirement}</p>
                     </div>
                   </div>
                   <div className="flex items-center gap-3">
@@ -742,15 +742,15 @@ export default function Ladder() {
               </tbody>
               <tfoot>
                 <tr className="border-t-2 border-steel-800">
-                  <td colSpan={5} className="px-3 py-3 text-right text-xs font-bold uppercase tracking-wider text-steel-800">
+                  <td colSpan={5} className="px-3 py-3 text-right text-xs font-bold uppercase tracking-wider text-white">
                     Subtotal (incl. waste {fmtNum(wasteAllowance * 100, 0)}%)
                   </td>
-                  <td className="px-3 py-3 text-right font-mono text-xs text-steel-800"></td>
-                  <td className="px-3 py-3 text-right font-mono text-sm font-bold text-steel-800">
+                  <td className="px-3 py-3 text-right font-mono text-xs text-white"></td>
+                  <td className="px-3 py-3 text-right font-mono text-sm font-bold text-white">
                     {fmtNum(totalLbsWithWaste, 1)} lbs
                   </td>
-                  <td className="px-3 py-3 text-right font-mono text-sm text-steel-800">{fmtNum(totalHoles)}</td>
-                  <td className="px-3 py-3 text-right font-mono text-base font-bold text-fire-600">
+                  <td className="px-3 py-3 text-right font-mono text-sm text-white">{fmtNum(totalHoles)}</td>
+                  <td className="px-3 py-3 text-right font-mono text-base font-bold text-fire-400">
                     {fmt(totalMaterialCost)}
                   </td>
                 </tr>
@@ -767,11 +767,11 @@ export default function Ladder() {
               <Select value={s.method} onChange={(v) => set('method', v)} options={METHOD_OPTIONS} />
             </div>
             <div>
-              <FieldLabel>Fab crew (# people) <span className="text-silver-400">[default {defFabCrew}]</span></FieldLabel>
+              <FieldLabel>Fab crew (# people) <span className="text-steel-500">[default {defFabCrew}]</span></FieldLabel>
               <NumInput value={s.fabCrew ?? defFabCrew} onChange={(v) => set('fabCrew', v)} step="1" />
             </div>
             <div>
-              <FieldLabel>Install crew (# people) <span className="text-silver-400">[default {defInstCrew}]</span></FieldLabel>
+              <FieldLabel>Install crew (# people) <span className="text-steel-500">[default {defInstCrew}]</span></FieldLabel>
               <NumInput value={s.instCrew ?? defInstCrew} onChange={(v) => set('instCrew', v)} step="1" />
             </div>
           </div>
@@ -794,7 +794,7 @@ export default function Ladder() {
                   </td>
                   <td className="px-4 py-2.5 text-right font-mono text-steel-600">{fmtNum(fabHrsFinal, 1)}</td>
                   <td className="px-4 py-2.5 text-right font-mono text-steel-600">{fmt(fabRate)}/hr</td>
-                  <td className="px-4 py-2.5 text-right font-mono font-semibold text-steel-800">{fmt(fabLabourCost)}</td>
+                  <td className="px-4 py-2.5 text-right font-mono font-semibold text-white">{fmt(fabLabourCost)}</td>
                 </tr>
                 <tr className="even:bg-steel-50">
                   <td className="px-4 py-2.5 font-medium text-steel-700">Field install (crew {instCrew} ×{instComplexity.toFixed(2)})</td>
@@ -803,15 +803,15 @@ export default function Ladder() {
                   </td>
                   <td className="px-4 py-2.5 text-right font-mono text-steel-600">{fmtNum(instHrsFinal, 1)}</td>
                   <td className="px-4 py-2.5 text-right font-mono text-steel-600">{fmt(installRate)}/hr</td>
-                  <td className="px-4 py-2.5 text-right font-mono font-semibold text-steel-800">{fmt(instLabourCost)}</td>
+                  <td className="px-4 py-2.5 text-right font-mono font-semibold text-white">{fmt(instLabourCost)}</td>
                 </tr>
               </tbody>
               <tfoot>
                 <tr className="border-t-2 border-steel-800">
-                  <td colSpan={4} className="px-4 py-3 text-right text-sm font-bold uppercase tracking-wider text-steel-800">
+                  <td colSpan={4} className="px-4 py-3 text-right text-sm font-bold uppercase tracking-wider text-white">
                     Labour subtotal
                   </td>
-                  <td className="px-4 py-3 text-right font-mono text-base font-bold text-fire-600">{fmt(labourTotal)}</td>
+                  <td className="px-4 py-3 text-right font-mono text-base font-bold text-fire-400">{fmt(labourTotal)}</td>
                 </tr>
               </tfoot>
             </table>
@@ -825,23 +825,23 @@ export default function Ladder() {
               <tbody className="divide-y divide-silver-100">
                 <tr className="even:bg-steel-50">
                   <td className="px-4 py-2.5 font-medium text-steel-700">Material + Waste</td>
-                  <td className="px-4 py-2.5 text-right font-mono text-steel-800">{fmt(totalMaterialCost)}</td>
+                  <td className="px-4 py-2.5 text-right font-mono text-white">{fmt(totalMaterialCost)}</td>
                 </tr>
                 <tr className="even:bg-steel-50">
                   <td className="px-4 py-2.5 font-medium text-steel-700">Galvanizing {s.finish === 'Galvanized' ? '' : '(n/a)'}</td>
-                  <td className="px-4 py-2.5 text-right font-mono text-steel-800">{fmt(galvCost)}</td>
+                  <td className="px-4 py-2.5 text-right font-mono text-white">{fmt(galvCost)}</td>
                 </tr>
                 <tr className="even:bg-steel-50">
                   <td className="px-4 py-2.5 font-medium text-steel-700">Labour</td>
-                  <td className="px-4 py-2.5 text-right font-mono text-steel-800">{fmt(labourTotal)}</td>
+                  <td className="px-4 py-2.5 text-right font-mono text-white">{fmt(labourTotal)}</td>
                 </tr>
               </tbody>
               <tfoot>
                 <tr className="border-t-2 border-steel-800">
-                  <td className="px-4 py-3 text-right text-sm font-bold uppercase tracking-wider text-steel-800">
+                  <td className="px-4 py-3 text-right text-sm font-bold uppercase tracking-wider text-white">
                     GRAND TOTAL
                   </td>
-                  <td className="px-4 py-3 text-right font-mono text-lg font-bold text-fire-600">{fmt(grandTotal)}</td>
+                  <td className="px-4 py-3 text-right font-mono text-lg font-bold text-fire-400">{fmt(grandTotal)}</td>
                 </tr>
               </tfoot>
             </table>
@@ -870,8 +870,8 @@ export default function Ladder() {
                   }`}
                 >
                   <p className="text-xs font-semibold uppercase tracking-wide text-steel-600">{b.label}</p>
-                  <p className="mt-1 text-2xl font-bold font-mono text-steel-800">{fmt(b.value)}</p>
-                  <p className="mt-1 text-xs text-silver-500">Range: {fmt(b.lo)} – {fmt(b.hi)}</p>
+                  <p className="mt-1 text-2xl font-bold font-mono text-white">{fmt(b.value)}</p>
+                  <p className="mt-1 text-xs text-steel-400">Range: {fmt(b.lo)} – {fmt(b.hi)}</p>
                   <span
                     className={`mt-2 inline-block rounded-full px-2.5 py-0.5 text-xs font-bold ${
                       ok ? 'bg-green-200 text-green-800' : low ? 'bg-amber-200 text-amber-800' : 'bg-red-200 text-red-800'
@@ -888,7 +888,7 @@ export default function Ladder() {
         {/* ─── 8. FAB TIME BREAKDOWN ─── */}
         <SectionCard icon={Wrench} title="Fab Time Breakdown" subtitle="Hours per piece by activity (input in MINUTES, blue = editable)">
           <details>
-            <summary className="cursor-pointer select-none text-sm font-semibold text-fire-600 hover:text-fire-700">
+            <summary className="cursor-pointer select-none text-sm font-semibold text-fire-400 hover:text-fire-300">
               Show / edit fab breakdown
             </summary>
             <div className="mt-3 overflow-x-auto">
@@ -919,16 +919,16 @@ export default function Ladder() {
                         </td>
                       ))}
                       <td className="px-2 py-1 text-right font-mono text-steel-700">{fmtNum(c.hrsPerPc, 2)}</td>
-                      <td className="px-2 py-1 text-right font-mono font-semibold text-steel-800">{fmtNum(c.totalHrs, 2)}</td>
+                      <td className="px-2 py-1 text-right font-mono font-semibold text-white">{fmtNum(c.totalHrs, 2)}</td>
                     </tr>
                   ))}
                 </tbody>
                 <tfoot>
                   <tr className="border-t-2 border-steel-800">
-                    <td colSpan={2 + FAB_SUBSTEPS.length + 1} className="px-2 py-2 text-right text-xs font-bold uppercase tracking-wider text-steel-800">
+                    <td colSpan={2 + FAB_SUBSTEPS.length + 1} className="px-2 py-2 text-right text-xs font-bold uppercase tracking-wider text-white">
                       Fab breakdown total
                     </td>
-                    <td className="px-2 py-2 text-right font-mono text-sm font-bold text-fire-600">
+                    <td className="px-2 py-2 text-right font-mono text-sm font-bold text-fire-400">
                       {fmtNum(fabHrsDetailed, 2)} hrs
                     </td>
                   </tr>
@@ -941,7 +941,7 @@ export default function Ladder() {
         {/* ─── 9. INSTALL TIME BREAKDOWN ─── */}
         <SectionCard icon={Hammer} title="Install Time Breakdown" subtitle="Hours per piece by activity (input in MINUTES, blue = editable)">
           <details>
-            <summary className="cursor-pointer select-none text-sm font-semibold text-fire-600 hover:text-fire-700">
+            <summary className="cursor-pointer select-none text-sm font-semibold text-fire-400 hover:text-fire-300">
               Show / edit install breakdown
             </summary>
             <div className="mt-3 overflow-x-auto">
@@ -972,16 +972,16 @@ export default function Ladder() {
                         </td>
                       ))}
                       <td className="px-2 py-1 text-right font-mono text-steel-700">{fmtNum(c.hrsPerPc, 2)}</td>
-                      <td className="px-2 py-1 text-right font-mono font-semibold text-steel-800">{fmtNum(c.totalHrs, 2)}</td>
+                      <td className="px-2 py-1 text-right font-mono font-semibold text-white">{fmtNum(c.totalHrs, 2)}</td>
                     </tr>
                   ))}
                 </tbody>
                 <tfoot>
                   <tr className="border-t-2 border-steel-800">
-                    <td colSpan={2 + INST_SUBSTEPS.length + 1} className="px-2 py-2 text-right text-xs font-bold uppercase tracking-wider text-steel-800">
+                    <td colSpan={2 + INST_SUBSTEPS.length + 1} className="px-2 py-2 text-right text-xs font-bold uppercase tracking-wider text-white">
                       Install breakdown total
                     </td>
-                    <td className="px-2 py-2 text-right font-mono text-sm font-bold text-fire-600">
+                    <td className="px-2 py-2 text-right font-mono text-sm font-bold text-fire-400">
                       {fmtNum(instHrsDetailed, 2)} hrs
                     </td>
                   </tr>
@@ -992,8 +992,8 @@ export default function Ladder() {
         </SectionCard>
 
         {/* Footer */}
-        <div className="mt-10 border-t border-silver-200 pt-6 text-center">
-          <p className="text-xs text-silver-400">Triple Weld Inc. · Steel Estimator Pro · Ladder v2 (Excel v5.1 match)</p>
+        <div className="mt-10 border-t border-steel-700 pt-6 text-center">
+          <p className="text-xs text-steel-500">Triple Weld Inc. · Steel Estimator Pro · Ladder v2 (Excel v5.1 match)</p>
         </div>
       </div>
     </div>
