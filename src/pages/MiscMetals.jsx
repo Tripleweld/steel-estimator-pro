@@ -393,92 +393,132 @@ function StandardItemTable({ section, miscRates, rows, dispatch }) {
 
 // ─── Aggregation Section (read-only summary from other calculators) ───
 function AggregationSection({ state }) {
-  const stairsC = state.stairsComputed || {}
-  const ladderC = state.ladderComputed || {}
+  const stairs = state.stairs || []
+  const ladder = state.ladder || []
   const railings = state.railings || []
-  // Note: joistReinf is included in Structural Takeoff, not summed here
+  const labourRates = state.rates?.labourRates || {}
+  const fabRate = labourRates.fabRate || 50
+  const installRate = labourRates.installRate || 55
+  const matRates = state.rates?.materialRates || []
+  const getMatRate = (item) => matRates.find(m => m.item === item)?.rate || 1
 
-  const stairs = {
-    label: 'Stairs',
-    qty: stairsC.totalLbs > 0 ? '1 set' : '—',
-    lbs: stairsC.totalLbs || 0,
-    matCost: stairsC.materialCost || 0,
-    grandTotal: stairsC.grandTotal || 0,
-    fabHrs: stairsC.fabHrs || 0,
-    instHrs: stairsC.instHrs || 0,
-    link: '/stairs',
-  }
-  const ladder = {
-    label: 'Ladder',
-    qty: ladderC.totalLbs > 0 ? '1 ladder' : '—',
-    lbs: ladderC.totalLbs || 0,
-    matCost: ladderC.materialCost || 0,
-    grandTotal: ladderC.grandTotal || 0,
-    fabHrs: ladderC.fabHrs || 0,
-    instHrs: ladderC.instHrs || 0,
-    link: '/ladder',
-  }
-  const rl = {
-    label: 'Railings',
-    qty: railings.length > 0 ? `${railings.length} runs` : '—',
-    lbs: railings.reduce((s, r) => s + Number(r.weightLbs || 0), 0),
-    matCost: 0,
-    grandTotal: 0,
-    fabHrs: railings.reduce((s, r) => s + Number(r.fabHrs || 0), 0),
-    instHrs: railings.reduce((s, r) => s + Number(r.instHrs || 0), 0),
-    link: '/railings',
-  }
-  // Joist Reinforcement excluded — accounted for in Structural Takeoff
-  const rows = [stairs, ladder, rl]
-  const totalLbs = rows.reduce((s, r) => s + r.lbs, 0)
-  const totalGrand = rows.reduce((s, r) => s + r.grandTotal, 0)
-  const totalFab = rows.reduce((s, r) => s + r.fabHrs, 0)
-  const totalInst = rows.reduce((s, r) => s + r.instHrs, 0)
+  // Build itemized list
+  const items = []
+  stairs.forEach((s, i) => {
+    const tc = s.totalsCommit || {}
+    items.push({
+      key: `stair-${s.id}`,
+      label: `Stair ${i + 1}${s.mark ? ` — ${s.mark}` : ''}`,
+      kind: 'Stair',
+      material: Number(tc.material) || 0,
+      fab: Number(tc.fab) || 0,
+      install: Number(tc.install) || 0,
+      total: Number(tc.total) || 0,
+    })
+  })
+  ladder.forEach((l, i) => {
+    const tc = l.totalsCommit || {}
+    items.push({
+      key: `ladder-${l.id}`,
+      label: `Ladder ${i + 1}${l.location ? ` — ${l.location}` : (l.mark ? ` — ${l.mark}` : '')}`,
+      kind: 'Ladder',
+      material: Number(tc.material) || 0,
+      fab: Number(tc.fab) || 0,
+      install: Number(tc.install) || 0,
+      total: Number(tc.total) || 0,
+    })
+  })
+  railings.forEach((r, i) => {
+    const matRate = getMatRate(r.material)
+    const material = (Number(r.weightLbs) || 0) * matRate
+    const fab = (Number(r.fabHrs) || 0) * fabRate
+    const install = (Number(r.instHrs) || 0) * installRate
+    const total = material + fab + install
+    items.push({
+      key: `rail-${r.id}`,
+      label: `Railing ${i + 1}${r.location ? ` — ${r.location}` : (r.mark ? ` — ${r.mark}` : '')}`,
+      kind: 'Railing',
+      material, fab, install, total,
+    })
+  })
+
+  const gt = items.reduce((acc, it) => {
+    acc.material += it.material
+    acc.fab += it.fab
+    acc.install += it.install
+    acc.total += it.total
+    return acc
+  }, { material: 0, fab: 0, install: 0, total: 0 })
+
+  const kindBadge = (k) => k === 'Stair'
+    ? 'bg-fire-900/40 text-fire-300'
+    : k === 'Ladder'
+      ? 'bg-blue-900/40 text-blue-300'
+      : 'bg-purple-900/40 text-purple-300'
 
   return (
-    <SectionCard icon={Calculator} title="Aggregation from calculators" subtitle="Auto-pulled from Stairs, Ladder, Railings — read-only" color="text-blue-400">
-      <div className="overflow-x-auto">
-        <table className="w-full text-xs">
-          <thead>
-            <tr className="border-b border-steel-700/50 text-steel-400 uppercase text-[10px] tracking-wider">
-              <th className="px-2 py-2 text-left font-semibold">Source</th>
-              <th className="px-2 py-2 text-left font-semibold">Qty</th>
-              <th className="px-2 py-2 text-right font-semibold">Total lbs</th>
-              <th className="px-2 py-2 text-right font-semibold">Fab hrs</th>
-              <th className="px-2 py-2 text-right font-semibold">Install hrs</th>
-              <th className="px-2 py-2 text-right font-semibold">Grand $</th>
-              <th className="px-2 py-2 text-center font-semibold w-12"></th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-steel-700/30">
-            {rows.map((r) => (
-              <tr key={r.label} className={r.lbs > 0 ? '' : 'opacity-40'}>
-                <td className="px-2 py-2 font-medium text-steel-200">{r.label}</td>
-                <td className="px-2 py-2 text-steel-400">{r.qty}</td>
-                <td className="px-2 py-2 text-right font-mono text-steel-200">{fmtNum(r.lbs, 1)}</td>
-                <td className="px-2 py-2 text-right font-mono text-steel-300">{fmtNum(r.fabHrs, 1)}</td>
-                <td className="px-2 py-2 text-right font-mono text-steel-300">{fmtNum(r.instHrs, 1)}</td>
-                <td className="px-2 py-2 text-right font-mono font-semibold text-steel-100">{fmt(r.grandTotal)}</td>
-                <td className="px-2 py-2 text-center">
-                  <Link to={r.link} className="inline-flex items-center gap-1 rounded p-1 text-steel-400 hover:bg-blue-500/10 hover:text-blue-400" title={`Edit ${r.label}`}>
-                    <ExternalLink className="h-3.5 w-3.5" />
-                  </Link>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-          <tfoot>
-            <tr className="border-t-2 border-steel-700/50">
-              <td colSpan={2} className="px-2 py-2 text-right text-xs font-bold uppercase tracking-wider text-steel-200">Calculators subtotal</td>
-              <td className="px-2 py-2 text-right font-mono text-sm font-bold text-steel-100">{fmtNum(totalLbs, 1)} lbs</td>
-              <td className="px-2 py-2 text-right font-mono text-xs font-bold text-steel-200">{fmtNum(totalFab, 1)}</td>
-              <td className="px-2 py-2 text-right font-mono text-xs font-bold text-steel-200">{fmtNum(totalInst, 1)}</td>
-              <td className="px-2 py-2 text-right font-mono text-sm font-bold text-fire-400">{fmt(totalGrand)}</td>
-              <td></td>
-            </tr>
-          </tfoot>
-        </table>
-      </div>
+    <SectionCard
+      icon={Calculator}
+      title="From Calculators — Stairs / Ladders / Railings"
+      subtitle="Itemized breakdown auto-pulled from each calculator entry — read-only"
+    >
+      {items.length === 0 ? (
+        <div className="rounded-lg border border-dashed border-steel-600 bg-steel-900/40 p-6 text-center text-steel-400 text-sm">
+          No items yet — add stairs, ladders, or railings via their calculators.
+        </div>
+      ) : (
+        <div className="space-y-2">
+          {items.map(it => (
+            <div key={it.key} className="rounded-lg border border-steel-700 bg-steel-800 px-4 py-3 flex items-center gap-3">
+              <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider w-16 text-center ${kindBadge(it.kind)}`}>{it.kind}</span>
+              <span className="text-steel-200 text-sm font-medium flex-1 truncate">{it.label}</span>
+              <div className="flex items-center gap-3 text-xs font-mono">
+                <div className="text-right w-20">
+                  <div className="text-steel-500 text-[10px] uppercase tracking-wider">Material</div>
+                  <div className="text-steel-200">${Math.round(it.material).toLocaleString()}</div>
+                </div>
+                <div className="text-right w-20">
+                  <div className="text-steel-500 text-[10px] uppercase tracking-wider">Fab</div>
+                  <div className="text-steel-200">${Math.round(it.fab).toLocaleString()}</div>
+                </div>
+                <div className="text-right w-20">
+                  <div className="text-steel-500 text-[10px] uppercase tracking-wider">Install</div>
+                  <div className="text-steel-200">${Math.round(it.install).toLocaleString()}</div>
+                </div>
+                <div className="text-right border-l border-steel-700 pl-3 w-24">
+                  <div className="text-fire-500 text-[10px] uppercase tracking-wider font-bold">Total</div>
+                  <div className="text-fire-400 font-bold">${Math.round(it.total).toLocaleString()}</div>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+      {items.length > 0 && (
+        <div className="mt-4 rounded-xl border border-fire-500/30 bg-fire-950/20 p-5">
+          <div className="text-xs font-bold uppercase tracking-wider text-fire-400 mb-3">
+            Grand Total — All Items ({items.length})
+          </div>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+            <div>
+              <div className="text-[10px] text-steel-400 uppercase tracking-wider">Total Material</div>
+              <div className="text-lg font-bold font-mono text-steel-100">${Math.round(gt.material).toLocaleString()}</div>
+            </div>
+            <div>
+              <div className="text-[10px] text-steel-400 uppercase tracking-wider">Total Fabrication</div>
+              <div className="text-lg font-bold font-mono text-steel-100">${Math.round(gt.fab).toLocaleString()}</div>
+            </div>
+            <div>
+              <div className="text-[10px] text-steel-400 uppercase tracking-wider">Total Install</div>
+              <div className="text-lg font-bold font-mono text-steel-100">${Math.round(gt.install).toLocaleString()}</div>
+            </div>
+            <div className="border-l border-fire-500/30 pl-4">
+              <div className="text-[10px] text-fire-400 uppercase tracking-wider font-bold">Grand Total</div>
+              <div className="text-2xl font-bold font-mono text-fire-400">${Math.round(gt.total).toLocaleString()}</div>
+            </div>
+          </div>
+        </div>
+      )}
     </SectionCard>
   )
 }
