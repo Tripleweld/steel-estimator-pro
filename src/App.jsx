@@ -17,6 +17,10 @@ import Quote from './pages/Quote'
 import UserManual from './pages/UserManual'
 import PMDashboard from './pages/PMDashboard'
 import PMSchedule from './pages/PMSchedule'
+import PMChangeOrders from './pages/PMChangeOrders'
+import PMFieldReports from './pages/PMFieldReports'
+import PMTracking from './pages/PMTracking'
+import PMShopDrawings from './pages/PMShopDrawings'
 import FabInstallStandards from './pages/FabInstallStandards'
 import AiTakeoff from './pages/AiTakeoff'
 import NewProject from './pages/NewProject'
@@ -47,6 +51,10 @@ export default function App() {
             <Route path="/manual" element={<UserManual />} />
         <Route path="/pm/dashboard" element={<PMDashboard />} />
         <Route path="/pm/sov" element={<PMSchedule />} />
+        <Route path="/pm/change-orders" element={<PMChangeOrders />} />
+        <Route path="/pm/field-reports" element={<PMFieldReports />} />
+        <Route path="/pm/tracking" element={<PMTracking />} />
+        <Route path="/pm/shop-drawings" element={<PMShopDrawings />} />
       </Routes>
     </Layout>
     </PasswordGate>
