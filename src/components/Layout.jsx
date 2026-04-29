@@ -27,6 +27,7 @@ import {
   HardHat,
   Radar,
   Users,
+  Sliders,
   FolderPlus,
   FolderOpen } from 'lucide-react'
 import { useState } from 'react'
@@ -66,6 +67,7 @@ const navItems = [
   { divider: true, label: 'TENDERRADAR' },
   { path: '/tenders/inbox', label: 'Inbox', icon: Radar },
   { path: '/tenders/gc-directory', label: 'GC Directory', icon: Users },
+  { path: '/tenders/scorecard', label: 'Scorecard', icon: Sliders },
   { divider: true, label: 'HELP' },
   { path: '/manual', label: 'User Manual', icon: BookOpen },
 ]
