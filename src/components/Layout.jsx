@@ -25,6 +25,7 @@ import {
   TrendingUp,
   ClipboardList,
   HardHat,
+  Radar,
   FolderPlus,
   FolderOpen } from 'lucide-react'
 import { useState } from 'react'
@@ -61,6 +62,8 @@ const navItems = [
   { path: '/pm/tracking', label: 'Project Tracking', icon: TrendingUp, requiresStatus: 'awarded' },
   { path: '/pm/field-reports', label: 'Field Reports', icon: ClipboardList, requiresStatus: 'awarded' },
   { path: '/pm/shop-drawings', label: 'Shop Drawings', icon: HardHat, requiresStatus: 'awarded' },
+  { divider: true, label: 'TENDERRADAR' },
+  { path: '/tenders/inbox', label: 'Inbox', icon: Radar },
   { divider: true, label: 'HELP' },
   { path: '/manual', label: 'User Manual', icon: BookOpen },
 ]
