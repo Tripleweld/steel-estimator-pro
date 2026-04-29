@@ -160,7 +160,7 @@ async function callGeminiVision(apiKey, model, base64Image, prompt) {
           { inline_data: { mime_type: 'image/jpeg', data: base64Image } }
         ]
       }],
-      generationConfig: { temperature: 0.1, maxOutputTokens: 8192 }
+      generationConfig: { temperature: 0.1, maxOutputTokens: 65536 }
     })
   })
   if (!resp.ok) {
@@ -169,10 +169,23 @@ async function callGeminiVision(apiKey, model, base64Image, prompt) {
   }
   const data = await resp.json()
   const text = data.candidates?.[0]?.content?.parts?.[0]?.text || ''
-  // Extract JSON from response (may be wrapped in ```json blocks)
-  const jsonMatch = text.match(/\{[\s\S]*\}/)
-  if (!jsonMatch) throw new Error('No JSON found in AI response')
-  return JSON.parse(jsonMatch[0])
+  // Extract and repair JSON from response
+  const cleaned = repairJSON(text)
+  if (!cleaned) throw new Error('No JSON found in AI response')
+  try {
+    return JSON.parse(cleaned)
+  } catch (e) {
+    // Try truncating to last complete object/array
+    let truncated = cleaned
+    while (truncated.length > 10) {
+      // Find last complete closing brace
+      const lastBrace = truncated.lastIndexOf('}')
+      if (lastBrace === -1) break
+      const attempt = truncated.substring(0, lastBrace + 1)
+      try { return JSON.parse(attempt) } catch (_) { truncated = truncated.substring(0, lastBrace) }
+    }
+    throw new Error('JSON parse failed after repair: ' + e.message)
+  }
 }
 
 /* ------------------ MAIN COMPONENT ------------------ */
@@ -455,7 +468,7 @@ export default function AiTakeoff() {
             <span className="text-xs bg-fire-500/20 text-fire-400 px-2 py-0.5 rounded-full font-medium">BETA</span>
           </div>
           <p className="text-sm text-steel-400 mt-1">
-            Upload structural drawings & specs â AI extracts quantities automatically
+            Upload structural drawings & specs Ã¢ÂÂ AI extracts quantities automatically
           </p>
 
       {!apiKey && (
