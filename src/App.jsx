@@ -22,6 +22,7 @@ import PMFieldReports from './pages/PMFieldReports'
 import PMTracking from './pages/PMTracking'
 import PMShopDrawings from './pages/PMShopDrawings'
 import TenderInbox from './pages/TenderInbox'
+import GCDirectory from './pages/GCDirectory'
 import FabInstallStandards from './pages/FabInstallStandards'
 import AiTakeoff from './pages/AiTakeoff'
 import NewProject from './pages/NewProject'
@@ -57,6 +58,7 @@ export default function App() {
         <Route path="/pm/tracking" element={<PMTracking />} />
         <Route path="/pm/shop-drawings" element={<PMShopDrawings />} />
         <Route path="/tenders/inbox" element={<TenderInbox />} />
+        <Route path="/tenders/gc-directory" element={<GCDirectory />} />
       </Routes>
     </Layout>
     </PasswordGate>
