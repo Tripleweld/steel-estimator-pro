@@ -2,10 +2,10 @@ import { useState, useCallback, useRef } from 'react'
 import { useProject } from '../context/ProjectContext'
 import { Upload, FileText, Zap, AlertTriangle, CheckCircle, Loader2, Settings, Brain, Eye, Download, Trash2, ChevronDown, ChevronUp } from 'lucide-react'
 
-/* ââ helpers âââââââââââââââââââââââââââââââââââââââââââââââââââ */
+/* --------------------- helpers --------------------- */
 const toNum = v => { const n = Number(v); return isNaN(n) ? 0 : n; }
 
-/* ââ AI Provider configs ââââââââââââââââââââââââââââââââââââââââ */
+/* --------------- AI Provider configs --------------- */
 const PROVIDERS = {
   gemini: { name: 'Gemini 1.5 Flash (Free)', model: 'gemini-1.5-flash', urlBase: 'https://generativelanguage.googleapis.com/v1beta/models/' },
   gemini_pro: { name: 'Gemini 1.5 Pro', model: 'gemini-1.5-pro', urlBase: 'https://generativelanguage.googleapis.com/v1beta/models/' },
@@ -13,7 +13,7 @@ const PROVIDERS = {
   gpt4o: { name: 'GPT-4o', model: 'gpt-4o', urlBase: 'https://api.openai.com/v1/chat/completions' },
 }
 
-/* ââ STEEL EXPERT PROMPT ââââââââââââââââââââââââââââââââââââââââ */
+/* --------------- STEEL EXPERT PROMPT --------------- */
 const STEEL_EXPERT_PROMPT = `You are a Senior Steel Estimator for Triple Weld Inc., a CWB-certified structural and miscellaneous steel fabricator in Etobicoke, Ontario. You have analyzed 500+ completed steel projects across the GTA and Ontario. Your task is to extract EVERY steel member from structural drawings with the precision of a 20-year veteran estimator.
 
 IDENTITY & CONTEXT:
@@ -101,7 +101,7 @@ FINAL INSTRUCTIONS:
 - Cross-reference plans with sections and details
 - Return ONLY valid JSON, no markdown, no explanation text`
 
-/* ââ Markup overlay prompt ââââââââââââââââââââââââââââââââââââââ */
+/* -------------- Markup overlay prompt -------------- */
 const MARKUP_PROMPT = `You previously analyzed this structural drawing and identified steel members. Now I need you to identify the SPATIAL LOCATION of each member on this drawing for markup purposes.
 
 For each member you identified, provide approximate bounding box coordinates as percentages of the page dimensions (0-100 for both x and y, where 0,0 is top-left).
@@ -118,7 +118,7 @@ Return JSON:
   ]
 }`
 
-/* ââ PDF to images using pdf.js âââââââââââââââââââââââââââââââââ */
+/* ------------ PDF to images using pdf.js ------------ */
 const PDF_JS_CDN = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js'
 const PDF_JS_WORKER = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js'
 
@@ -147,7 +147,7 @@ async function pdfPageToBase64(pdfDoc, pageNum, scale = 2.0) {
   return canvas.toDataURL('image/jpeg', 0.85).split(',')[1]
 }
 
-/* ââ Gemini API call ââââââââââââââââââââââââââââââââââââââââââââ */
+/* ----------------- Gemini API call ----------------- */
 async function callGeminiVision(apiKey, model, base64Image, prompt) {
   const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`
   const resp = await fetch(url, {
@@ -175,7 +175,7 @@ async function callGeminiVision(apiKey, model, base64Image, prompt) {
   return JSON.parse(jsonMatch[0])
 }
 
-/* ââ MAIN COMPONENT ââââââââââââââââââââââââââââââââââââââââââââ */
+/* ------------------ MAIN COMPONENT ------------------ */
 export default function AiTakeoff() {
   const { state, dispatch, setProjectField } = useProject()
   const fileInputRef = useRef(null)
@@ -414,7 +414,7 @@ export default function AiTakeoff() {
   const onDragOver = (e) => { e.preventDefault(); setDragOver(true) }
   const onDragLeave = () => setDragOver(false)
 
-  /* ââ Confidence color ââââââââââââââââââââââââââââââââââââââââ */
+  /* ----------------- Confidence color ----------------- */
   const confColor = (c) => {
     if (c >= 0.9) return 'text-green-400'
     if (c >= 0.7) return 'text-yellow-400'
@@ -437,7 +437,7 @@ export default function AiTakeoff() {
             <span className="text-xs bg-fire-500/20 text-fire-400 px-2 py-0.5 rounded-full font-medium">BETA</span>
           </div>
           <p className="text-sm text-steel-400 mt-1">
-            Upload structural drawings & specs â AI extracts quantities automatically
+            Upload structural drawings & specs → AI extracts quantities automatically
           </p>
 
       {!apiKey && (
@@ -500,7 +500,7 @@ export default function AiTakeoff() {
           </div>
           {provider.startsWith('gemini') && (
             <p className="text-xs text-steel-500">
-              Get your free API key at <span className="text-fire-400">ai.google.dev/aistudio</span> â 1,500 free requests/day
+              Get your free API key at <span className="text-fire-400">ai.google.dev/aistudio</span> --- 1,500 free requests/day
             </p>
           )}
         </div>
@@ -528,7 +528,7 @@ export default function AiTakeoff() {
         />
         <Upload className={`w-12 h-12 mx-auto mb-3 ${dragOver ? 'text-fire-500' : 'text-steel-500'}`} />
         <p className="text-lg font-semibold text-steel-300">
-          {files.length ? `${files.length} PDF(s) loaded â ${pages.length} pages` : 'Drop PDF drawings here'}
+          {files.length ? `${files.length} PDF(s) loaded --- ${pages.length} pages` : 'Drop PDF drawings here'}
         </p>
         <p className="text-sm text-steel-500 mt-1">
           Structural drawings, framing plans, beam schedules, specs (Division 5)
@@ -711,7 +711,7 @@ export default function AiTakeoff() {
               </h4>
               <ul className="space-y-1">
                 {mergedResult.warnings.map((w, i) => (
-                  <li key={i} className="text-xs text-yellow-300">â¢ {w}</li>
+                  <li key={i} className="text-xs text-yellow-300">--- {w}</li>
                 ))}
               </ul>
             </div>
