@@ -1,8 +1,8 @@
-import React, { useMemo, useRef } from 'react';
+import React, { useMemo, useRef, useState } from 'react';
 import { useProject } from '../context/ProjectContext';
 import { calcStairs } from '../utils/calculations';
 import { calcEquipRentalCost } from '../context/ProjectContext';
-import { FileText, Printer, Download } from 'lucide-react';
+import { FileText, Printer, Download, Pencil, Check, X, Plus, Trash2, RotateCcw } from 'lucide-react';
 
 const fmt = (v) =>
   '$' +
@@ -18,7 +18,10 @@ const fmtNum = (v, d = 0) =>
   });
 
 export default function Quote() {
-  const { state } = useProject();
+  const { state, dispatch } = useProject();
+  const [editingSoW, setEditingSoW] = useState(false);
+  const scopeOverrides = state.quoteScopeOverrides || {};
+  const customScope = state.quoteScopeCustom || [];
   const info = state.projectInfo || {};
   const rates = state.rates || {};
   const quoteRef = useRef(null);
@@ -177,7 +180,7 @@ export default function Quote() {
     const matRates = state.rates?.materialRates || [];
     const lookupMat = (item) => (matRates.find(m => m.item === item)?.rate) || 1;
 
-    // STRUCTURAL TAKEOFF — group by section
+    // STRUCTURAL TAKEOFF â group by section
     const SECT_LABELS = {
       columns: 'Columns', beams: 'Beams', momentConnections: 'Moment Connections',
       moment: 'Moment Connections', roofOpeningFrames: 'Roof Opening Frames',
@@ -208,18 +211,18 @@ export default function Quote() {
       structGroups[key] = (structGroups[key] || 0) + total;
     });
     Object.entries(structGroups).forEach(([k, v]) => {
-      if (v > 0) rows.push({ label: 'Structural Takeoff — ' + (SECT_LABELS[k] || k), total: v });
+      if (v > 0) rows.push({ label: 'Structural Takeoff â ' + (SECT_LABELS[k] || k), total: v });
     });
 
-    // MISC METALS — calculator items
+    // MISC METALS â calculator items
     const stairsTot = stairs.reduce((s, x) => s + Number(x.totalsCommit?.total || 0), 0);
-    if (stairsTot > 0) rows.push({ label: 'Misc Metals — Stairs', total: stairsTot });
+    if (stairsTot > 0) rows.push({ label: 'Misc Metals â Stairs', total: stairsTot });
     const ladderTot = ladder.reduce((s, x) => s + Number(x.totalsCommit?.total || 0), 0);
-    if (ladderTot > 0) rows.push({ label: 'Misc Metals — Ladders', total: ladderTot });
+    if (ladderTot > 0) rows.push({ label: 'Misc Metals â Ladders', total: ladderTot });
     const railingsTot = railings.reduce((s, x) => s + Number(x.totalsCommit?.total || 0), 0);
-    if (railingsTot > 0) rows.push({ label: 'Misc Metals — Railings', total: railingsTot });
+    if (railingsTot > 0) rows.push({ label: 'Misc Metals â Railings', total: railingsTot });
 
-    // MISC METALS — Standard items per section
+    // MISC METALS â Standard items per section
     const MM_LABELS = {
       bollards: 'Bollards', cornerGuardsSS: 'Corner Guards (SS)', cornerGuardsMS: 'Corner Guards (MS)',
       embedPlates: 'Embed Plates', lintels: 'Lintels', edgeAngles: 'Edge Angles',
@@ -235,13 +238,13 @@ export default function Quote() {
         const rate = (row.rateOverride != null && row.rateOverride !== '') ? Number(row.rateOverride) : findMiscRate(row.section || row.item || row.type);
         return s + (Number(row.qty) || 0) * rate;
       }, 0);
-      if (secTotal > 0) rows.push({ label: 'Misc Metals — ' + label, total: secTotal });
+      if (secTotal > 0) rows.push({ label: 'Misc Metals â ' + label, total: secTotal });
     });
 
     // EQUIPMENT (use already-computed equipmentTotal from summary)
     if (summary.equipmentTotal > 0) rows.push({ label: 'Equipment', total: summary.equipmentTotal });
 
-    // PURCHASED ITEMS — exclude joist/deck (already in Structural)
+    // PURCHASED ITEMS â exclude joist/deck (already in Structural)
     const purchased = state.purchased || [];
     const purchExcl = purchased.filter(p => {
       const cat = String(p.category || p.item || '').toLowerCase();
@@ -250,7 +253,7 @@ export default function Quote() {
     const purchTotal = purchExcl.reduce((s, p) => s + (Number(p.total) || (Number(p.qty || 0) * Number(p.unitCost || 0))), 0);
     if (purchTotal > 0) rows.push({ label: 'Purchased Items', total: purchTotal });
 
-    // SOFT COSTS — single row, description = comma list of non-zero items
+    // SOFT COSTS â single row, description = comma list of non-zero items
     const softCosts = state.softCosts || [];
     const softNonZero = softCosts.filter(c => {
       if (c.unit === '%') return Number(c.rate) > 0;
@@ -387,14 +390,14 @@ export default function Quote() {
               <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-steel-400">
                 Project
               </p>
-              <p className="text-sm font-bold text-steel-900">{info.projectName || '—'}</p>
-              <p className="text-sm text-steel-600">{info.location || '—'}</p>
+              <p className="text-sm font-bold text-steel-900">{info.projectName || 'â'}</p>
+              <p className="text-sm text-steel-600">{info.location || 'â'}</p>
             </div>
             <div className="rounded-lg border border-silver-100 bg-silver-50/50 p-4">
               <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-steel-400">
                 Client / General Contractor
               </p>
-              <p className="text-sm font-bold text-steel-900">{info.gcClient || '—'}</p>
+              <p className="text-sm font-bold text-steel-900">{info.gcClient || 'â'}</p>
               {info.engineer && (
                 <p className="text-sm text-steel-600">Engineer: {info.engineer}</p>
               )}
@@ -406,47 +409,124 @@ export default function Quote() {
 
           {/* Scope of Work */}
           <div className="mb-8">
-            <h3 className="mb-3 text-base font-bold uppercase tracking-wide text-steel-900">
-              Scope of Work
-            </h3>
+            <div className="mb-3 flex items-center justify-between">
+              <h3 className="text-base font-bold uppercase tracking-wide text-steel-900">
+                Scope of Work
+              </h3>
+              <button
+                type="button"
+                onClick={() => setEditingSoW(v => !v)}
+                className="print:hidden inline-flex items-center gap-1 rounded border border-steel-300 bg-white px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide text-steel-600 hover:bg-steel-50 hover:text-steel-900 transition"
+              >
+                {editingSoW ? <Check size={12} /> : <Pencil size={12} />}
+                {editingSoW ? 'Done' : 'Edit'}
+              </button>
+            </div>
             <p className="mb-3 text-sm text-steel-600">
               Triple Weld Inc. is pleased to provide the following quotation for structural steel
               fabrication and erection services:
             </p>
-            <ul className="list-inside list-disc space-y-1.5 text-sm text-steel-700">
-              {summary.hasStructural && (
-                <li>
-                  Supply and install approx. {fmtNum(summary.totalWeightTons, 1)} tons of
-                  structural steel
-                </li>
-              )}
-              {summary.hasMisc && (
-                <li>Fabricate and install miscellaneous metals</li>
-              )}
-              {summary.hasStairs && (
-                <li>
-                  Fabricate and install {summary.stairsFlights} stair flight
-                  {summary.stairsFlights !== 1 ? 's' : ''} with associated landings
-                </li>
-              )}
-              {summary.hasRailings && (
-                <li>
-                  Supply and install {fmtNum(summary.totalRailingFt)} lin.ft of railings
-                </li>
-              )}
-              {summary.hasLadder && <li>Supply and install fixed ladders</li>}
-              {summary.hasJoistReinf && (
-                <li>Provide and install joist reinforcing</li>
-              )}
-              {summary.hasPurchased && (
-                <li>Supply purchased / third-party items as specified</li>
-              )}
-              <li>All shop drawings and engineering as required</li>
-              <li>Delivery to site and unloading</li>
-              <li>
-                Touch-up painting of field connections (shop primer on all fabricated steel)
-              </li>
-            </ul>
+            {(() => {
+              const fmtNum = (v, d = 0) => Number(v || 0).toLocaleString('en-US', { minimumFractionDigits: d, maximumFractionDigits: d });
+              const defaultLines = [
+                { key: 'structural', defaultVisible: !!summary.hasStructural, defaultText: `Supply and install approx. ${fmtNum(summary.totalWeightTons, 1)} tons of structural steel` },
+                { key: 'misc', defaultVisible: !!summary.hasMisc, defaultText: 'Fabricate and install miscellaneous metals' },
+                { key: 'stairs', defaultVisible: !!summary.hasStairs, defaultText: `Fabricate and install ${summary.stairsFlights || 0} stair flight${(summary.stairsFlights || 0) !== 1 ? 's' : ''} with associated landings` },
+                { key: 'railings', defaultVisible: !!summary.hasRailings, defaultText: `Supply and install ${fmtNum(summary.totalRailingFt)} lin.ft of railings` },
+                { key: 'ladder', defaultVisible: !!summary.hasLadder, defaultText: 'Supply and install fixed ladders' },
+                { key: 'joistReinf', defaultVisible: !!summary.hasJoistReinf, defaultText: 'Provide and install joist reinforcing' },
+                { key: 'purchased', defaultVisible: !!summary.hasPurchased, defaultText: 'Supply purchased / third-party items as specified' },
+                { key: 'drawings', defaultVisible: true, defaultText: 'All shop drawings and engineering as required' },
+                { key: 'delivery', defaultVisible: true, defaultText: 'Delivery to site and unloading' },
+                { key: 'painting', defaultVisible: true, defaultText: 'Touch-up painting of field connections (shop primer on all fabricated steel)' },
+              ];
+
+              const visibleRender = defaultLines
+                .map(line => {
+                  const ov = scopeOverrides[line.key] || {};
+                  const visible = ov.visible !== undefined ? ov.visible : line.defaultVisible;
+                  const text = ov.text !== undefined ? ov.text : line.defaultText;
+                  return { ...line, visible, text, isOverridden: ov.text !== undefined || ov.visible !== undefined };
+                })
+                .filter(l => l.visible);
+
+              if (!editingSoW) {
+                return (
+                  <ul className="list-inside list-disc space-y-1.5 text-sm text-steel-700">
+                    {visibleRender.map(line => (<li key={line.key}>{line.text}</li>))}
+                    {customScope.map(cl => (<li key={cl.id}>{cl.text}</li>))}
+                  </ul>
+                );
+              }
+
+              return (
+                <div className="space-y-2 print:hidden">
+                  {defaultLines.map(line => {
+                    const ov = scopeOverrides[line.key] || {};
+                    const visible = ov.visible !== undefined ? ov.visible : line.defaultVisible;
+                    const text = ov.text !== undefined ? ov.text : line.defaultText;
+                    const isOverridden = ov.text !== undefined || ov.visible !== undefined;
+                    return (
+                      <div key={line.key} className={`flex items-start gap-2 rounded border px-2 py-1.5 ${visible ? 'border-steel-200 bg-white' : 'border-steel-200 bg-steel-50 opacity-60'}`}>
+                        <button
+                          type="button"
+                          title={visible ? 'Hide line' : 'Show line'}
+                          onClick={() => dispatch({ type: 'UPDATE_QUOTE_SCOPE_LINE', key: line.key, patch: { visible: !visible } })}
+                          className={`mt-1 inline-flex h-4 w-4 flex-shrink-0 items-center justify-center rounded border ${visible ? 'border-fire-500 bg-fire-500' : 'border-steel-300 bg-white'}`}
+                        >
+                          {visible && <Check size={11} className="text-white" />}
+                        </button>
+                        <textarea
+                          value={text}
+                          onChange={(e) => dispatch({ type: 'UPDATE_QUOTE_SCOPE_LINE', key: line.key, patch: { text: e.target.value } })}
+                          rows={1}
+                          className="flex-1 resize-none rounded border border-transparent bg-transparent px-1 py-0.5 text-sm text-steel-800 outline-none focus:border-fire-300 focus:bg-white"
+                        />
+                        {isOverridden && (
+                          <button
+                            type="button"
+                            title="Reset to default"
+                            onClick={() => dispatch({ type: 'RESET_QUOTE_SCOPE_LINE', key: line.key })}
+                            className="mt-0.5 rounded p-1 text-steel-400 hover:bg-steel-100 hover:text-steel-700"
+                          >
+                            <RotateCcw size={12} />
+                          </button>
+                        )}
+                      </div>
+                    );
+                  })}
+
+                  {customScope.map(cl => (
+                    <div key={cl.id} className="flex items-start gap-2 rounded border border-fire-200 bg-fire-50/30 px-2 py-1.5">
+                      <span className="mt-1 inline-block rounded bg-fire-500 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide text-white">Custom</span>
+                      <textarea
+                        value={cl.text}
+                        onChange={(e) => dispatch({ type: 'UPDATE_QUOTE_SCOPE_CUSTOM', id: cl.id, text: e.target.value })}
+                        rows={1}
+                        placeholder="Custom scope line..."
+                        className="flex-1 resize-none rounded border border-transparent bg-transparent px-1 py-0.5 text-sm text-steel-800 outline-none focus:border-fire-300 focus:bg-white"
+                      />
+                      <button
+                        type="button"
+                        title="Delete"
+                        onClick={() => dispatch({ type: 'DELETE_QUOTE_SCOPE_CUSTOM', id: cl.id })}
+                        className="mt-0.5 rounded p-1 text-red-400 hover:bg-red-50 hover:text-red-600"
+                      >
+                        <Trash2 size={12} />
+                      </button>
+                    </div>
+                  ))}
+
+                  <button
+                    type="button"
+                    onClick={() => dispatch({ type: 'ADD_QUOTE_SCOPE_CUSTOM', text: '' })}
+                    className="inline-flex items-center gap-1 rounded border border-dashed border-fire-400 bg-white px-3 py-1.5 text-xs font-semibold text-fire-600 hover:bg-fire-50"
+                  >
+                    <Plus size={13} /> Add custom line
+                  </button>
+                </div>
+              );
+            })()}
           </div>
 
           {/* Pricing Table */}
