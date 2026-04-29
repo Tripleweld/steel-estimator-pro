@@ -235,6 +235,7 @@ export default function AiTakeoff() {
       }
       setPages(allPages)
     } catch (err) {
+      console.error('AI_TAKEOFF_ERROR page ' + (page ? page.pageNum : '?') + ':', err.message, err)
       setError('Error loading PDF: ' + err.message)
     }
   }, [])
@@ -263,7 +264,9 @@ export default function AiTakeoff() {
 
       try {
         // Convert page to high-res image
+        console.log('AI_TAKEOFF: processing page', page.pageNum, 'pdfDoc:', !!page.pdfDoc)
         const base64 = await pdfPageToBase64(page.pdfDoc, page.pageNum, 2.0)
+        console.log('AI_TAKEOFF: base64 length:', base64 ? base64.length : 'NULL')
 
         // Call AI
         let result
