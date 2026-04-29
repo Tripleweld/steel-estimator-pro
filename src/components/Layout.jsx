@@ -21,6 +21,10 @@ import {
   BookOpen,
   Brain,
   Briefcase,
+  FileEdit,
+  TrendingUp,
+  ClipboardList,
+  HardHat,
   FolderPlus,
   FolderOpen } from 'lucide-react'
 import { useState } from 'react'
@@ -53,6 +57,10 @@ const navItems = [
   { divider: true, label: 'PROJECT MANAGEMENT', requiresStatus: 'awarded' },
   { path: '/pm/dashboard', label: 'PM Dashboard', icon: Briefcase, requiresStatus: 'awarded' },
   { path: '/pm/sov', label: 'Schedule of Values', icon: FileText, requiresStatus: 'awarded' },
+  { path: '/pm/change-orders', label: 'Change Orders', icon: FileEdit, requiresStatus: 'awarded' },
+  { path: '/pm/tracking', label: 'Project Tracking', icon: TrendingUp, requiresStatus: 'awarded' },
+  { path: '/pm/field-reports', label: 'Field Reports', icon: ClipboardList, requiresStatus: 'awarded' },
+  { path: '/pm/shop-drawings', label: 'Shop Drawings', icon: HardHat, requiresStatus: 'awarded' },
   { divider: true, label: 'HELP' },
   { path: '/manual', label: 'User Manual', icon: BookOpen },
 ]
