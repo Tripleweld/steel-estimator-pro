@@ -14,6 +14,7 @@ import SoftCosts from './pages/SoftCosts'
 import Summary from './pages/Summary'
 import Quote from './pages/Quote'
 import UserManual from './pages/UserManual'
+import PMDashboard from './pages/PMDashboard'
 import FabInstallStandards from './pages/FabInstallStandards'
 import AiTakeoff from './pages/AiTakeoff'
 import NewProject from './pages/NewProject'
@@ -41,6 +42,7 @@ export default function App() {
         <Route path="/new-project" element={<NewProject />} />
         <Route path="/projects" element={<ExistingProjects />} />
             <Route path="/manual" element={<UserManual />} />
+        <Route path="/pm/dashboard" element={<PMDashboard />} />
       </Routes>
     </Layout>
   )
