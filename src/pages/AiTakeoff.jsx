@@ -1,6 +1,7 @@
 import { useState, useCallback, useRef } from 'react'
 import { useProject } from '../context/ProjectContext'
-import { Upload, FileText, Zap, AlertTriangle, CheckCircle, Loader2, Settings, Brain, Eye, Download, Trash2, ChevronDown, ChevronUp } from 'lucide-react'
+import { Upload, FileText, Zap, AlertTriangle, CheckCircle, Loader2, Settings, Brain, Eye, Download, Trash2, ChevronDown, ChevronUp, FileSpreadsheet, ArrowRight } from 'lucide-react'
+import { Link } from 'react-router-dom'
 
 /* --------------------- helpers --------------------- */
 const toNum = v => { const n = Number(v); return isNaN(n) ? 0 : n; }
@@ -551,6 +552,12 @@ export default function AiTakeoff() {
 
   return (
     <div className="min-h-screen bg-steel-950 text-white p-6 space-y-6 max-w-7xl mx-auto">
+        <div className="bg-blue-900/20 border border-blue-700/50 rounded p-3 flex items-start gap-3 mb-2">
+          <FileSpreadsheet size={20} className="text-blue-400 flex-shrink-0 mt-0.5" />
+          <div className="text-sm text-blue-100 flex-1">
+            <strong>AI Takeoff is unreliable?</strong> Try the new <Link to="/excel-takeoff" className="underline hover:text-blue-300 font-semibold">Excel Takeoff <ArrowRight size={12} className="inline" /></Link>: deterministic xlsx import. Have Claude in Cowork generate the Excel from drawings, then upload here.
+          </div>
+        </div>
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
