@@ -208,7 +208,7 @@ async function callGeminiVision(apiKey, model, base64Image, prompt) {
   }
 }
 
-/* Ã¢ÂÂÃ¢ÂÂ OpenAI GPT-4o Vision API call Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ */
+/* ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ OpenAI GPT-4o Vision API call ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ */
 async function callOpenAIVision(apiKey, model, base64Image, prompt) {
   const url = 'https://api.openai.com/v1/chat/completions'
   const MAX_RETRIES = 3
@@ -231,8 +231,7 @@ async function callOpenAIVision(apiKey, model, base64Image, prompt) {
           ]
         }],
         max_tokens: 16384,
-        temperature: 0.1,
-        response_format: { type: 'json_object' }
+        temperature: 0.1
       })
     })
     if (!resp.ok) {
@@ -244,7 +243,9 @@ async function callOpenAIVision(apiKey, model, base64Image, prompt) {
       throw new Error('OpenAI API error ' + resp.status + ': ' + errText)
     }
     const d = await resp.json()
-    const text = d.choices?.[0]?.message?.content || ''
+    const msg = d.choices?.[0]?.message
+    console.log('AI_TAKEOFF GPT4O MSG:', JSON.stringify({content: msg?.content?.substring(0,300), refusal: msg?.refusal, role: msg?.role, finish: d.choices?.[0]?.finish_reason}))
+    const text = msg?.content || ''
     const cleaned = repairJSON(text, 'OpenAI')
     if (!cleaned) throw new Error('No JSON found in OpenAI response. Raw: ' + text?.substring(0, 200))
     try {
