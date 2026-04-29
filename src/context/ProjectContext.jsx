@@ -269,6 +269,10 @@ const defaultState = {
   quoteScopeOverrides: {},
   quoteScopeCustom: [],
   miscMetalsCustom: [],
+  quoteExclOverrides: {},
+  quoteExclCustom: [],
+  quoteTermsOverrides: {},
+  quoteTermsCustom: [],
   isDirty: false,
 }
 
@@ -747,6 +751,33 @@ function projectReducer(state, action) {
       return { ...state, miscMetalsCustom: (state.miscMetalsCustom || []).map(_it => _it.id === action.id ? { ..._it, ...action.patch } : _it), isDirty: true };
     case 'DELETE_MM_CUSTOM_ITEM':
       return { ...state, miscMetalsCustom: (state.miscMetalsCustom || []).filter(_it => _it.id !== action.id), isDirty: true };
+
+    case 'UPDATE_QUOTE_EXCL_LINE':
+      return { ...state, quoteExclOverrides: { ...(state.quoteExclOverrides || {}), [action.key]: { ...((state.quoteExclOverrides || {})[action.key] || {}), ...action.patch } }, isDirty: true };
+    case 'RESET_QUOTE_EXCL_LINE': {
+      const _o = { ...(state.quoteExclOverrides || {}) };
+      delete _o[action.key];
+      return { ...state, quoteExclOverrides: _o, isDirty: true };
+    }
+    case 'ADD_QUOTE_EXCL_CUSTOM':
+      return { ...state, quoteExclCustom: [...(state.quoteExclCustom || []), { id: 'qec-' + Date.now() + '-' + Math.floor(Math.random()*1000), text: action.text || '' }], isDirty: true };
+    case 'UPDATE_QUOTE_EXCL_CUSTOM':
+      return { ...state, quoteExclCustom: (state.quoteExclCustom || []).map(_l => _l.id === action.id ? { ..._l, text: action.text } : _l), isDirty: true };
+    case 'DELETE_QUOTE_EXCL_CUSTOM':
+      return { ...state, quoteExclCustom: (state.quoteExclCustom || []).filter(_l => _l.id !== action.id), isDirty: true };
+    case 'UPDATE_QUOTE_TERMS_LINE':
+      return { ...state, quoteTermsOverrides: { ...(state.quoteTermsOverrides || {}), [action.key]: { ...((state.quoteTermsOverrides || {})[action.key] || {}), ...action.patch } }, isDirty: true };
+    case 'RESET_QUOTE_TERMS_LINE': {
+      const _o = { ...(state.quoteTermsOverrides || {}) };
+      delete _o[action.key];
+      return { ...state, quoteTermsOverrides: _o, isDirty: true };
+    }
+    case 'ADD_QUOTE_TERMS_CUSTOM':
+      return { ...state, quoteTermsCustom: [...(state.quoteTermsCustom || []), { id: 'qtc-' + Date.now() + '-' + Math.floor(Math.random()*1000), text: action.text || '' }], isDirty: true };
+    case 'UPDATE_QUOTE_TERMS_CUSTOM':
+      return { ...state, quoteTermsCustom: (state.quoteTermsCustom || []).map(_l => _l.id === action.id ? { ..._l, text: action.text } : _l), isDirty: true };
+    case 'DELETE_QUOTE_TERMS_CUSTOM':
+      return { ...state, quoteTermsCustom: (state.quoteTermsCustom || []).filter(_l => _l.id !== action.id), isDirty: true };
 
     default:
       return state
