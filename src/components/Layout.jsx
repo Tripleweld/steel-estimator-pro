@@ -57,6 +57,7 @@ const navItems = [
   { path: '/quote', label: 'Quote', icon: FileText },
   { divider: true, label: 'AI' },
   { path: '/ai-takeoff', label: 'AI Takeoff', icon: Brain },
+  { path: '/excel-takeoff', label: 'Excel Takeoff', icon: FileSpreadsheet },
   { divider: true, label: 'PROJECT MANAGEMENT' },
   { path: '/pm/dashboard', label: 'PM Dashboard', icon: Briefcase },
   { path: '/pm/sov', label: 'Schedule of Values', icon: FileText, requiresStatus: 'awarded' },
