@@ -20,6 +20,7 @@ import {
   Save,
   BookOpen,
   Brain,
+  Briefcase,
   FolderPlus,
   FolderOpen } from 'lucide-react'
 import { useState } from 'react'
@@ -49,6 +50,8 @@ const navItems = [
   { path: '/quote', label: 'Quote', icon: FileText },
   { divider: true, label: 'AI' },
   { path: '/ai-takeoff', label: 'AI Takeoff', icon: Brain },
+  { divider: true, label: 'PROJECT MANAGEMENT', requiresStatus: 'awarded' },
+  { path: '/pm/dashboard', label: 'PM Dashboard', icon: Briefcase, requiresStatus: 'awarded' },
   { divider: true, label: 'HELP' },
   { path: '/manual', label: 'User Manual', icon: BookOpen },
 ]
@@ -104,7 +107,12 @@ export default function Layout({ children }) {
 
         {/* Navigation */}
         <nav className="flex-1 overflow-y-auto px-2 pb-3">
-          {navItems.map((item, i) => {
+          {navItems.filter(item => {
+            if (!item.requiresStatus) return true;
+            const s = state.projectInfo?.status || 'bidding';
+            const order = ['bidding', 'awarded', 'inProgress', 'closed'];
+            return order.indexOf(s) >= order.indexOf(item.requiresStatus);
+          }).map((item, i) => {
             if (item.divider) {
               if (collapsed)
                 return (
