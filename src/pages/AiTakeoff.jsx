@@ -471,7 +471,7 @@ export default function AiTakeoff() {
             <span className="text-xs bg-fire-500/20 text-fire-400 px-2 py-0.5 rounded-full font-medium">BETA</span>
           </div>
           <p className="text-sm text-steel-400 mt-1">
-            Upload structural drawings & specs ÃÂ¢ÃÂÃÂ AI extracts quantities automatically
+            Upload structural drawings & specs \u2192 AI extracts quantities automatically
           </p>
 
       {!apiKey && (
