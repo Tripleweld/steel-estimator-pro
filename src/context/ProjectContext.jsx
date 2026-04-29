@@ -60,11 +60,11 @@ const defaultTravelFreight = {
 
 /* Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂ P.Eng & Shop Drawings Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂ */
 const defaultEngDrawings = {
-  drafterRate: 65,
-  drawingHours: 160,
-  shopDrawingCost: 10400,
-  pengStamp: 6000,
-  siteVisitsQty: 3,
+  drafterRate: 0,
+  drawingHours: 0,
+  shopDrawingCost: 0,
+  pengStamp: 0,
+  siteVisitsQty: 0,
   siteVisitCostEach: 0,
 }
 
@@ -224,7 +224,7 @@ const defaultState = {
   joistReinf: [],
   purchased: [],
   softCosts: [
-    { id: 1, item: 'Shop Drawings / Detailing', qty: 160, unit: 'hrs', rate: 65, notes: '' },
+    { id: 1, item: 'Shop Drawings / Detailing', qty: 0, unit: 'hrs', rate: 0, notes: '' },
     { id: 2, item: 'Engineering Review', qty: 1, unit: 'ls', rate: 6000, notes: 'P.Eng stamp' },
     { id: 3, item: 'Crane Mobilization', qty: 1, unit: 'ls', rate: 3500, notes: '' },
     { id: 4, item: 'Equipment Rental', qty: 1, unit: 'ls', rate: 0, notes: 'See Equipment tab' },
