@@ -21,6 +21,7 @@ import PMChangeOrders from './pages/PMChangeOrders'
 import PMFieldReports from './pages/PMFieldReports'
 import PMTracking from './pages/PMTracking'
 import PMShopDrawings from './pages/PMShopDrawings'
+import TenderInbox from './pages/TenderInbox'
 import FabInstallStandards from './pages/FabInstallStandards'
 import AiTakeoff from './pages/AiTakeoff'
 import NewProject from './pages/NewProject'
@@ -55,6 +56,7 @@ export default function App() {
         <Route path="/pm/field-reports" element={<PMFieldReports />} />
         <Route path="/pm/tracking" element={<PMTracking />} />
         <Route path="/pm/shop-drawings" element={<PMShopDrawings />} />
+        <Route path="/tenders/inbox" element={<TenderInbox />} />
       </Routes>
     </Layout>
     </PasswordGate>
