@@ -16,6 +16,8 @@ import Quote from './pages/Quote'
 import UserManual from './pages/UserManual'
 import FabInstallStandards from './pages/FabInstallStandards'
 import AiTakeoff from './pages/AiTakeoff'
+import NewProject from './pages/NewProject'
+import ExistingProjects from './pages/ExistingProjects'
 
 export default function App() {
   return (
@@ -36,6 +38,8 @@ export default function App() {
         <Route path="/summary" element={<Summary />} />
         <Route path="/quote" element={<Quote />} />
         <Route path="/ai-takeoff" element={<AiTakeoff />} />
+        <Route path="/new-project" element={<NewProject />} />
+        <Route path="/projects" element={<ExistingProjects />} />
             <Route path="/manual" element={<UserManual />} />
       </Routes>
     </Layout>
