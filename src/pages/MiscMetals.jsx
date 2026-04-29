@@ -6,13 +6,13 @@ import {
 } from 'lucide-react'
 import { useProject } from '../context/ProjectContext'
 
-/* ────────────────────────────────────────────────────────────────────────────
-   MISC METALS — Phase 1 (Aggregation + Tier 1 standard items)
+/* ââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
+   MISC METALS â Phase 1 (Aggregation + Tier 1 standard items)
    Tier 1 sections: Bollards, Corner Guards SS, Corner Guards MS, Embed Plates
    Custom Takeoff (Structural-style) coming in Phase 4
-   ──────────────────────────────────────────────────────────────────────────── */
+   ââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ */
 
-// ─── Helpers ───
+// âââ Helpers âââ
 const fmt = (v) =>
   typeof v === 'number' && !isNaN(v) && isFinite(v)
     ? v.toLocaleString('en-CA', { style: 'currency', currency: 'CAD' })
@@ -27,7 +27,7 @@ const toNum = (v) => {
   return isNaN(n) ? 0 : n
 }
 
-// ─── Tiny UI components (dark theme, same pattern as Stairs/Ladder) ───
+// âââ Tiny UI components (dark theme, same pattern as Stairs/Ladder) âââ
 function NumInput({ value, onChange, step = 'any', className = '', disabled = false, placeholder = '' }) {
   return (
     <input
@@ -83,7 +83,7 @@ function SectionCard({ icon: Icon, title, subtitle, children, color = 'text-fire
   )
 }
 
-// ─── Section configs for the 4 Tier-1 standard items ───
+// âââ Section configs for the 4 Tier-1 standard items âââ
 // Each section defines: title, icon, sectionKey, columns, rateKey lookup, unit
 const TIER1_SECTIONS = [
   {
@@ -108,7 +108,7 @@ const TIER1_SECTIONS = [
   },
   {
     key: 'cornerGuardsSS',
-    title: 'Corner Guards — Stainless Steel',
+    title: 'Corner Guards â Stainless Steel',
     icon: Shield,
     color: 'text-cyan-400',
     columns: [
@@ -122,7 +122,7 @@ const TIER1_SECTIONS = [
   },
   {
     key: 'cornerGuardsMS',
-    title: 'Corner Guards — Mild Steel (angle)',
+    title: 'Corner Guards â Mild Steel (angle)',
     icon: Shield,
     color: 'text-amber-500',
     columns: [
@@ -261,7 +261,7 @@ const TIER1_SECTIONS = [
   },
 ]
 
-// ─── Generic StandardItemTable ───
+// âââ Generic StandardItemTable âââ
 // Renders: table with config'd columns + Rate (default + override) + Total $ + Notes + Delete
 function StandardItemTable({ section, miscRates, rows, dispatch }) {
   const findRate = (item) => {
@@ -270,7 +270,7 @@ function StandardItemTable({ section, miscRates, rows, dispatch }) {
     return found ? Number(found.rate) || 0 : 0
   }
 
-  // Compute total for one row (default rate or override × multiplier from config)
+  // Compute total for one row (default rate or override Ã multiplier from config)
   const rowCalc = (row) => {
     const rateKey = section.rateLookup(row)
     const defaultRate = findRate(rateKey)
@@ -299,7 +299,7 @@ function StandardItemTable({ section, miscRates, rows, dispatch }) {
   return (
     <SectionCard icon={section.icon} title={section.title} color={section.color}>
       {rows.length === 0 ? (
-        <p className="text-sm text-steel-400 italic mb-3">No items yet — click "Add Row" below to start.</p>
+        <p className="text-sm text-steel-400 italic mb-3">No items yet â click "Add Row" below to start.</p>
       ) : (
         <div className="overflow-x-auto mb-3">
           <table className="w-full text-xs">
@@ -353,7 +353,7 @@ function StandardItemTable({ section, miscRates, rows, dispatch }) {
                       <TextInput
                         value={row.notes ?? ''}
                         onChange={(v) => updateRow(row.id, 'notes', v)}
-                        placeholder="—"
+                        placeholder="â"
                       />
                     </td>
                     <td className="px-1 py-1 text-center">
@@ -391,7 +391,7 @@ function StandardItemTable({ section, miscRates, rows, dispatch }) {
   )
 }
 
-// ─── Aggregation Section (read-only summary from other calculators) ───
+// âââ Aggregation Section (read-only summary from other calculators) âââ
 function AggregationSection({ state }) {
   const stairs = state.stairs || []
   const ladder = state.ladder || []
@@ -416,7 +416,7 @@ function AggregationSection({ state }) {
     const total = Number(tc.total) || (material + fab + install)
     items.push({
       key: `stair-${s.id}`,
-      label: `Stair ${i + 1}${s.mark ? ` — ${s.mark}` : ''}`,
+      label: `Stair ${i + 1}${s.mark ? ` â ${s.mark}` : ''}`,
       kind: 'Stair',
       material, fab, install, total,
     })
@@ -433,13 +433,13 @@ function AggregationSection({ state }) {
     const total = Number(tc.total) || (material + fab + install)
     items.push({
       key: `ladder-${l.id}`,
-      label: `Ladder ${i + 1}${l.location ? ` — ${l.location}` : (l.mark ? ` — ${l.mark}` : '')}`,
+      label: `Ladder ${i + 1}${l.location ? ` â ${l.location}` : (l.mark ? ` â ${l.mark}` : '')}`,
       kind: 'Ladder',
       material, fab, install, total,
     })
   })
   railings.forEach((r, i) => {
-    // Prefer totalsCommit (full Railings calc) — fall back to crude estimate from raw fields
+    // Prefer totalsCommit (full Railings calc) â fall back to crude estimate from raw fields
     const tc = r.totalsCommit
     let material, fab, install, total
     if (tc && (tc.total || tc.material || tc.fab || tc.install)) {
@@ -456,7 +456,7 @@ function AggregationSection({ state }) {
     }
     items.push({
       key: `rail-${r.id}`,
-      label: `Railing ${i + 1}${r.location ? ` — ${r.location}` : (r.mark ? ` — ${r.mark}` : '')}`,
+      label: `Railing ${i + 1}${r.location ? ` â ${r.location}` : (r.mark ? ` â ${r.mark}` : '')}`,
       kind: 'Railing',
       material, fab, install, total,
     })
@@ -479,12 +479,12 @@ function AggregationSection({ state }) {
   return (
     <SectionCard
       icon={Calculator}
-      title="From Calculators — Stairs / Ladders / Railings"
-      subtitle="Itemized breakdown auto-pulled from each calculator entry — read-only"
+      title="From Calculators â Stairs / Ladders / Railings"
+      subtitle="Itemized breakdown auto-pulled from each calculator entry â read-only"
     >
       {items.length === 0 ? (
         <div className="rounded-lg border border-dashed border-steel-600 bg-steel-900/40 p-6 text-center text-steel-400 text-sm">
-          No items yet — add stairs, ladders, or railings via their calculators.
+          No items yet â add stairs, ladders, or railings via their calculators.
         </div>
       ) : (
         <div className="space-y-2">
@@ -517,7 +517,7 @@ function AggregationSection({ state }) {
       {items.length > 0 && (
         <div className="mt-4 rounded-xl border border-fire-500/30 bg-fire-950/20 p-5">
           <div className="text-xs font-bold uppercase tracking-wider text-fire-400 mb-3">
-            Grand Total — All Items ({items.length})
+            Grand Total â All Items ({items.length})
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
             <div>
@@ -543,7 +543,7 @@ function AggregationSection({ state }) {
   )
 }
 
-/* ──────────────────────────────────────────────────────────────────────────── */
+/* ââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ */
 export default function MiscMetals() {
   const { state, dispatch } = useProject()
   const miscRates = state.rates?.miscMetalsRates || []
@@ -595,7 +595,13 @@ export default function MiscMetals() {
     [standard, miscRates]
   )
 
-  const grandTotal = calcsTotal + standardTotal
+  const customItems = state.miscMetalsCustom || []
+  const customTotal = useMemo(
+    () => customItems.reduce((s, it) => s + (Number(it.qty) || 0) * (Number(it.rate) || 0), 0),
+    [customItems]
+  )
+
+  const grandTotal = calcsTotal + standardTotal + customTotal
 
   return (
     <div className="min-h-screen bg-steel-950 text-white">
@@ -616,10 +622,10 @@ export default function MiscMetals() {
           </div>
         </div>
 
-        {/* ─── 1. Aggregation ─── */}
+        {/* âââ 1. Aggregation âââ */}
         <AggregationSection state={state} />
 
-        {/* ─── 2-5. Tier 1 standard items ─── */}
+        {/* âââ 2-5. Tier 1 standard items âââ */}
         {TIER1_SECTIONS.map((section) => (
           <StandardItemTable
             key={section.key}
@@ -630,8 +636,117 @@ export default function MiscMetals() {
           />
         ))}
 
-        {/* ─── Misc Metals Grand Total (sums all sections) ─── */}
-        <SectionCard icon={Building2} title="Misc Metals — Grand Total" subtitle="Calculator items + standard items (Tier 1 / 2 / 3)" color="text-green-400">
+        {/* Custom Items Section (user-added beyond Tier 1 catalog) */}
+        <SectionCard icon={Plus} title="Custom Items" subtitle="Additional miscellaneous metals beyond the Tier 1 catalog" color="text-fire-400">
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-steel-700 text-xs uppercase tracking-wider text-steel-400">
+                  <th className="px-2 py-2 text-left font-semibold">Item / Description</th>
+                  <th className="px-2 py-2 text-right font-semibold">Qty</th>
+                  <th className="px-2 py-2 text-left font-semibold">Unit</th>
+                  <th className="px-2 py-2 text-right font-semibold">Rate ($)</th>
+                  <th className="px-2 py-2 text-left font-semibold">Notes</th>
+                  <th className="px-2 py-2 text-right font-semibold">Total</th>
+                  <th className="px-2 py-2"></th>
+                </tr>
+              </thead>
+              <tbody>
+                {customItems.length === 0 && (
+                  <tr>
+                    <td colSpan={7} className="px-2 py-3 text-center text-steel-500 text-xs italic">
+                      No custom items yet. Click below to add.
+                    </td>
+                  </tr>
+                )}
+                {customItems.map(it => {
+                  const lineTotal = (Number(it.qty) || 0) * (Number(it.rate) || 0)
+                  return (
+                    <tr key={it.id} className="border-b border-steel-800 hover:bg-steel-900/30">
+                      <td className="px-2 py-1.5">
+                        <input
+                          type="text"
+                          value={it.name || ''}
+                          onChange={(e) => dispatch({ type: 'UPDATE_MM_CUSTOM_ITEM', id: it.id, patch: { name: e.target.value } })}
+                          placeholder="e.g., Custom bracket"
+                          className="w-full rounded border border-steel-700 bg-steel-900 px-2 py-1 text-sm text-white outline-none focus:border-fire-400"
+                        />
+                      </td>
+                      <td className="px-2 py-1.5">
+                        <input
+                          type="number"
+                          step="0.01"
+                          value={it.qty || ''}
+                          onChange={(e) => dispatch({ type: 'UPDATE_MM_CUSTOM_ITEM', id: it.id, patch: { qty: e.target.value } })}
+                          className="w-20 rounded border border-steel-700 bg-steel-900 px-2 py-1 text-right text-sm text-white outline-none focus:border-fire-400"
+                        />
+                      </td>
+                      <td className="px-2 py-1.5">
+                        <input
+                          type="text"
+                          value={it.unit || ''}
+                          onChange={(e) => dispatch({ type: 'UPDATE_MM_CUSTOM_ITEM', id: it.id, patch: { unit: e.target.value } })}
+                          placeholder="ea / lf / sf"
+                          className="w-20 rounded border border-steel-700 bg-steel-900 px-2 py-1 text-sm text-white outline-none focus:border-fire-400"
+                        />
+                      </td>
+                      <td className="px-2 py-1.5">
+                        <input
+                          type="number"
+                          step="0.01"
+                          value={it.rate || ''}
+                          onChange={(e) => dispatch({ type: 'UPDATE_MM_CUSTOM_ITEM', id: it.id, patch: { rate: e.target.value } })}
+                          className="w-24 rounded border border-steel-700 bg-steel-900 px-2 py-1 text-right text-sm text-white outline-none focus:border-fire-400"
+                        />
+                      </td>
+                      <td className="px-2 py-1.5">
+                        <input
+                          type="text"
+                          value={it.notes || ''}
+                          onChange={(e) => dispatch({ type: 'UPDATE_MM_CUSTOM_ITEM', id: it.id, patch: { notes: e.target.value } })}
+                          placeholder="optional"
+                          className="w-full rounded border border-steel-700 bg-steel-900 px-2 py-1 text-sm text-white outline-none focus:border-fire-400"
+                        />
+                      </td>
+                      <td className="px-2 py-1.5 text-right text-sm font-semibold text-fire-300 tabular-nums">
+                        ${Math.round(lineTotal).toLocaleString()}
+                      </td>
+                      <td className="px-2 py-1.5">
+                        <button
+                          type="button"
+                          onClick={() => dispatch({ type: 'DELETE_MM_CUSTOM_ITEM', id: it.id })}
+                          className="rounded p-1.5 text-red-400 hover:bg-red-950/30 hover:text-red-300"
+                          title="Delete"
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      </td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+              {customItems.length > 0 && (
+                <tfoot>
+                  <tr className="border-t-2 border-fire-500/30">
+                    <td colSpan={5} className="px-2 py-2 text-right text-xs font-semibold uppercase tracking-wider text-steel-400">Custom Subtotal</td>
+                    <td className="px-2 py-2 text-right text-sm font-bold text-fire-300 tabular-nums">${Math.round(customTotal).toLocaleString()}</td>
+                    <td></td>
+                  </tr>
+                </tfoot>
+              )}
+            </table>
+          </div>
+          <button
+            type="button"
+            onClick={() => dispatch({ type: 'ADD_MM_CUSTOM_ITEM' })}
+            className="mt-3 inline-flex items-center gap-1.5 rounded border border-dashed border-fire-400/50 bg-fire-500/5 px-3 py-1.5 text-xs font-semibold text-fire-300 hover:bg-fire-500/10 hover:border-fire-400"
+          >
+            <Plus size={13} /> Add custom item
+          </button>
+        </SectionCard>
+
+        {/* âââ Misc Metals Grand Total (sums all sections) âââ */}
+        <SectionCard icon={Building2} title="Misc Metals â Grand Total" subtitle="Calculator items + standard items (Tier 1 / 2 / 3) + custom items" color="text-green-400">
           <div className="rounded-xl border border-green-500/30 bg-green-950/20 p-5">
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 mb-4">
               <div>
@@ -655,7 +770,7 @@ export default function MiscMetals() {
 
         {/* Footer */}
         <div className="mt-10 border-t border-steel-700/40 pt-6 text-center">
-          <p className="text-xs text-steel-500">Triple Weld Inc. · Steel Estimator Pro · Misc Metals (Phase 1)</p>
+          <p className="text-xs text-steel-500">Triple Weld Inc. Â· Steel Estimator Pro Â· Misc Metals (Phase 1)</p>
         </div>
       </div>
     </div>
