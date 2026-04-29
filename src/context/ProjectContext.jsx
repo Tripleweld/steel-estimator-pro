@@ -200,6 +200,8 @@ const defaultProjectInfo = {
   drawingSet: '',
   drawingDate: '',
   buildingAreaSqft: 0,
+  status: 'bidding', // bidding | awarded | inProgress | closed
+  awardedAt: null,
 }
 
 const defaultState = {
@@ -234,6 +236,13 @@ const defaultState = {
     { id: 8, item: 'Small Tools & Consumables', qty: 0, unit: 'ls', rate: 1200, notes: '' },
     { id: 9, item: 'Contingency', qty: 0, unit: '%', rate: 5, notes: '% of subtotal' },
   ],
+  projectManagement: {
+    sov: { lines: [], retentionPercent: 10, billsToDate: 0 },
+    tracking: { categories: [] },
+    changeOrders: [],
+    fieldReports: [],
+    shopDrawings: { pieces: [], lastSync: null },
+  },
   isDirty: false,
 }
 
