@@ -208,7 +208,7 @@ async function callGeminiVision(apiKey, model, base64Image, prompt) {
   }
 }
 
-/* ââ OpenAI GPT-4o Vision API call âââââââââââââââââââââââââââââ */
+/* Ã¢ÂÂÃ¢ÂÂ OpenAI GPT-4o Vision API call Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ */
 async function callOpenAIVision(apiKey, model, base64Image, prompt) {
   const url = 'https://api.openai.com/v1/chat/completions'
   const MAX_RETRIES = 3
@@ -231,7 +231,8 @@ async function callOpenAIVision(apiKey, model, base64Image, prompt) {
           ]
         }],
         max_tokens: 16384,
-        temperature: 0.1
+        temperature: 0.1,
+        response_format: { type: 'json_object' }
       })
     })
     if (!resp.ok) {
@@ -351,7 +352,8 @@ export default function AiTakeoff() {
       try {
         // Convert page to high-res image
         console.log('AI_TAKEOFF: rendering page', page.pageNum, 'to image, pdfDoc:', !!page.pdfDoc)
-        const base64 = await pdfPageToBase64(page.pdfDoc, page.pageNum, 2.0)
+        const imgScale = provider === 'gpt4o' ? 1.0 : 2.0
+        const base64 = await pdfPageToBase64(page.pdfDoc, page.pageNum, imgScale)
         console.log('AI_TAKEOFF: page', page.pageNum, 'rendered, base64 length:', base64?.length)
         console.log('AI_TAKEOFF: base64 length:', base64 ? base64.length : 'NULL')
 
@@ -359,7 +361,7 @@ export default function AiTakeoff() {
         let result
         if (provider === 'gpt4o') {
           console.log('AI_TAKEOFF: calling GPT-4o for page', page.pageNum)
-          result = await callOpenAIVision(apiKey, PROVIDERS[provider].model, base64, STEEL_EXPERT_PROMPT)
+          result = await callOpenAIVision(apiKey, PROVIDERS[provider].model, base64, 'IMPORTANT: You MUST respond with ONLY a valid JSON object. No explanations, no markdown, just raw JSON.\n\n' + STEEL_EXPERT_PROMPT)
           console.log('AI_TAKEOFF: page', page.pageNum, 'GPT-4o result:', result?.structuralMembers?.length, 'members')
         } else if (provider.startsWith('gemini')) {
           const model = PROVIDERS[provider].model
