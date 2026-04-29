@@ -1,5 +1,6 @@
 import { Routes, Route } from 'react-router-dom'
 import Layout from './components/Layout'
+import PasswordGate from './components/PasswordGate'
 import Dashboard from './pages/Dashboard'
 import RatesConfig from './pages/RatesConfig'
 import StructuralTakeoff from './pages/StructuralTakeoff'
@@ -22,6 +23,7 @@ import ExistingProjects from './pages/ExistingProjects'
 
 export default function App() {
   return (
+    <PasswordGate>
     <Layout>
       <Routes>
         <Route path="/" element={<Dashboard />} />
@@ -45,5 +47,6 @@ export default function App() {
         <Route path="/pm/dashboard" element={<PMDashboard />} />
       </Routes>
     </Layout>
+    </PasswordGate>
   )
 }
