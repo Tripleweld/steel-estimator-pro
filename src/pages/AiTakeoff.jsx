@@ -150,41 +150,44 @@ async function pdfPageToBase64(pdfDoc, pageNum, scale = 2.0) {
 /* ----------------- Gemini API call ----------------- */
 async function callGeminiVision(apiKey, model, base64Image, prompt) {
   const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`
-  const resp = await fetch(url, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      contents: [{
-        parts: [
-          { text: prompt },
-          { inline_data: { mime_type: 'image/jpeg', data: base64Image } }
-        ]
-      }],
-      generationConfig: { temperature: 0.1, maxOutputTokens: 65536 }
-    })
+  const reqBody = JSON.stringify({
+    contents: [{ parts: [
+      { text: prompt },
+      { inline_data: { mime_type: 'image/jpeg', data: base64Image } }
+    ]}],
+    generationConfig: { temperature: 0.1, maxOutputTokens: 65536 }
   })
-  if (!resp.ok) {
-    const err = await resp.text()
-    throw new Error(`Gemini API error ${resp.status}: ${err}`)
-  }
-  const data = await resp.json()
-  const text = data.candidates?.[0]?.content?.parts?.[0]?.text || ''
-  // Extract and repair JSON from response
-  const cleaned = repairJSON(text)
-  if (!cleaned) throw new Error('No JSON found in AI response')
-  try {
-    return JSON.parse(cleaned)
-  } catch (e) {
-    // Try truncating to last complete object/array
-    let truncated = cleaned
-    while (truncated.length > 10) {
-      // Find last complete closing brace
-      const lastBrace = truncated.lastIndexOf('}')
-      if (lastBrace === -1) break
-      const attempt = truncated.substring(0, lastBrace + 1)
-      try { return JSON.parse(attempt) } catch (_) { truncated = truncated.substring(0, lastBrace) }
+  const MAX_RETRIES = 3
+  for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+    if (attempt > 0) {
+      const wait = 3000 * attempt
+      console.log('AI_TAKEOFF: retry', attempt, 'in', wait/1000, 's...')
+      await new Promise(r => setTimeout(r, wait))
     }
-    throw new Error('JSON parse failed after repair: ' + e.message)
+    const resp = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: reqBody })
+    if (!resp.ok) {
+      const errText = await resp.text()
+      if ((resp.status === 503 || resp.status === 429) && attempt < MAX_RETRIES) {
+        console.warn('AI_TAKEOFF:', resp.status, '- will retry')
+        continue
+      }
+      throw new Error(`Gemini API error ${resp.status}: ${errText}`)
+    }
+    const d = await resp.json()
+    const text = d.candidates?.[0]?.content?.parts?.[0]?.text || ''
+    const cleaned = repairJSON(text)
+    if (!cleaned) throw new Error('No JSON found in AI response')
+    try {
+      return JSON.parse(cleaned)
+    } catch (e) {
+      let tr = cleaned
+      while (tr.length > 10) {
+        const lb = tr.lastIndexOf('}')
+        if (lb === -1) break
+        try { return JSON.parse(tr.substring(0, lb + 1)) } catch (_) { tr = tr.substring(0, lb) }
+      }
+      throw new Error('JSON parse failed: ' + e.message)
+    }
   }
 }
 
@@ -468,7 +471,7 @@ export default function AiTakeoff() {
             <span className="text-xs bg-fire-500/20 text-fire-400 px-2 py-0.5 rounded-full font-medium">BETA</span>
           </div>
           <p className="text-sm text-steel-400 mt-1">
-            Upload structural drawings & specs Ã¢ÂÂ AI extracts quantities automatically
+            Upload structural drawings & specs ÃÂ¢ÃÂÃÂ AI extracts quantities automatically
           </p>
 
       {!apiKey && (
