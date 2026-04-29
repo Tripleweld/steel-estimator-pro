@@ -19,10 +19,16 @@ import {
   ChevronRight,
   Save,
   BookOpen,
-  Brain } from 'lucide-react'
+  Brain,
+  FolderPlus,
+  FolderOpen } from 'lucide-react'
 import { useState } from 'react'
 
 const navItems = [
+  { divider: true, label: 'PROJECTS' },
+  { path: '/new-project', label: 'New Project', icon: FolderPlus },
+  { path: '/projects', label: 'Existing Projects', icon: FolderOpen },
+  { divider: true, label: 'ESTIMATING' },
   { path: '/', label: 'Dashboard', icon: LayoutDashboard },
   { divider: true, label: 'SETUP' },
   { path: '/rates', label: 'Rates & Config', icon: Settings },
