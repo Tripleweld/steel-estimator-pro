@@ -8,7 +8,7 @@ function generateQuoteNumber() {
   return `TW01-${seq}-${yr}`
 }
 
-/* ÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂ Material Rates ÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂ */
+/* ÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ Material Rates ÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ */
 const defaultMaterialRates = [
   { id: 1, item: 'Structural steel', rate: 1.00, unit: '$/lb' },
   { id: 2, item: 'Galvanized steel', rate: 1.20, unit: '$/lb' },
@@ -21,7 +21,7 @@ const defaultMaterialRates = [
   { id: 9, item: 'Powder Coat', rate: 1.50, unit: '$/lb' },
 ]
 
-/* ÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂ Labour Rates ÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂ */
+/* ÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ Labour Rates ÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ */
 const defaultLabourRates = {
   fabRate: 50,
   fabCrew: 2,
@@ -30,7 +30,7 @@ const defaultLabourRates = {
   travelRate: 55,
 }
 
-/* ÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂ Safety Factors ÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂ */
+/* ÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ Safety Factors ÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ */
 const defaultSafetyFactors = {
   fabLocal: 0.10,
   fabRemote: 0.15,
@@ -39,7 +39,7 @@ const defaultSafetyFactors = {
   projectType: 'Remote',   // 'Local' or 'Remote'
 }
 
-/* ÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂ Markup & Tax ÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂ */
+/* ÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ Markup & Tax ÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ */
 const defaultMarkup = {
   markupPercent: 15,
   hstPercent: 13,
@@ -48,7 +48,7 @@ const defaultMarkup = {
   connectionHardware: 5,
 }
 
-/* ÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂ Travel & Freight ÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂ */
+/* ÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ Travel & Freight ÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ */
 const defaultTravelFreight = {
   freightRatePerKm: 3.50,
   numberOfDeliveries: 2,
@@ -58,7 +58,7 @@ const defaultTravelFreight = {
   perDiemPerDay: 75,
 }
 
-/* ÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂ P.Eng & Shop Drawings ÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂ */
+/* ÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ P.Eng & Shop Drawings ÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ */
 const defaultEngDrawings = {
   drafterRate: 0,
   drawingHours: 0,
@@ -68,7 +68,7 @@ const defaultEngDrawings = {
   siteVisitCostEach: 0,
 }
 
-/* ÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂ Equipment Rental Catalog ÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂ */
+/* ÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ Equipment Rental Catalog ÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ */
 const defaultEquipment = [
   // Cranes
   { id: 1, category: 'CRANES', item: 'Mobile Crane 35T', dayRate: 1500, weekRate: 6500, monthRate: 22000, period: 'Day', qty: 0, pickup: 200, dropoff: 200 },
@@ -115,7 +115,7 @@ const defaultEquipment = [
   { id: 35, category: 'RIGGING & MISC', item: 'Fall Arrest System (complete)', dayRate: 40, weekRate: 200, monthRate: 650, period: 'Month', qty: 0, pickup: 200, dropoff: 200 },
 ]
 
-/* ÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂ Misc Metals Rates ÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂ */
+/* ÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ Misc Metals Rates ÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ */
 const defaultMiscMetalsRates = [
   { id: 1, item: 'Pan tread (galvanized)', rate: 75, unit: '$/tread' },
   { id: 2, item: 'Pan tread (mild)', rate: 55, unit: '$/tread' },
@@ -156,7 +156,7 @@ const defaultMiscMetalsRates = [
   { id: 37, item: 'Architectural / signage (lump)', rate: 0, unit: 'lump $' },
 ]
 
-/* ÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂ Code Limits (OBC / OHSA) ÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂ */
+/* ÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ Code Limits (OBC / OHSA) ÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ */
 const defaultCodeLimits = [
   { id: 1, item: 'Post spacing max (rails)', value: 6, unit: 'ft (1.83m)', reference: 'OBC' },
   { id: 2, item: 'Riser max (stair)', value: 180, unit: 'mm', reference: 'OBC 3.4' },
@@ -171,7 +171,7 @@ const defaultCodeLimits = [
   { id: 11, item: 'Scissor lift day rate', value: 300, unit: '$/day', reference: '' },
 ]
 
-/* ÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂ Default Rates Bundle ÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂ */
+/* ÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ Default Rates Bundle ÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ */
 const defaultRates = {
   materialRates: defaultMaterialRates,
   labourRates: defaultLabourRates,
@@ -243,16 +243,39 @@ const defaultState = {
     fieldReports: [],
     shopDrawings: { pieces: [], lastSync: null },
   },
+
+  tenderRadar: {
+    tenders: [],
+    gcDirectory: [
+    { id: 'gc-1', name: 'Seaforth Building Group', platform: 'BuilderTrend', contactPattern: 'seaforthbuildinggroup@buildertrend.com', relationshipTier: 'Strong', paymentBehavior: 'Unknown', daysToPayAvg: 0, bidShoppingHistory: false, notes: '', tendersCount: 0, winsCount: 0 },
+    { id: 'gc-2', name: 'Seaforth Ltd.', platform: 'Direct email', contactPattern: 'estimating@seaforthltd.com', relationshipTier: 'Strong', paymentBehavior: 'Unknown', daysToPayAvg: 0, bidShoppingHistory: false, notes: '', tendersCount: 0, winsCount: 0 },
+    { id: 'gc-3', name: 'StuCor Construction', platform: 'Invitely', contactPattern: 'prime.stucor@invitely.com', relationshipTier: 'Strong', paymentBehavior: 'Unknown', daysToPayAvg: 0, bidShoppingHistory: false, notes: '', tendersCount: 0, winsCount: 0 },
+    { id: 'gc-4', name: 'JPace Contracting', platform: 'Direct email', contactPattern: 'ebaranova@jpacecontracting.ca', relationshipTier: 'Strong', paymentBehavior: 'Unknown', daysToPayAvg: 0, bidShoppingHistory: false, notes: '', tendersCount: 0, winsCount: 0 },
+    { id: 'gc-5', name: 'Moro Group', platform: 'Direct email', contactPattern: 'estimating@morogroup.ca', relationshipTier: 'Neutral', paymentBehavior: 'Unknown', daysToPayAvg: 0, bidShoppingHistory: false, notes: '', tendersCount: 0, winsCount: 0 },
+    { id: 'gc-6', name: 'HN Construction', platform: 'Direct email', contactPattern: 'ayacoub@hncon.ca', relationshipTier: 'Strong', paymentBehavior: 'Unknown', daysToPayAvg: 0, bidShoppingHistory: false, notes: '', tendersCount: 0, winsCount: 0 },
+    { id: 'gc-7', name: 'Golden Gate Contracting', platform: 'Direct email', contactPattern: 'estimation@ggcontracting.ca', relationshipTier: 'Neutral', paymentBehavior: 'Unknown', daysToPayAvg: 0, bidShoppingHistory: false, notes: '', tendersCount: 0, winsCount: 0 },
+    { id: 'gc-8', name: 'Quad Pro Construction', platform: 'Platform', contactPattern: 'Dennis Nam', relationshipTier: 'Neutral', paymentBehavior: 'Unknown', daysToPayAvg: 0, bidShoppingHistory: false, notes: '', tendersCount: 0, winsCount: 0 },
+    { id: 'gc-9', name: 'Complete Building Systems (STAHLE)', platform: 'Platform', contactPattern: 'Dalaa Al Mhazam', relationshipTier: 'Neutral', paymentBehavior: 'Unknown', daysToPayAvg: 0, bidShoppingHistory: false, notes: '', tendersCount: 0, winsCount: 0 },
+    { id: 'gc-10', name: 'Frontier Group of Companies', platform: 'Platform', contactPattern: 'Kushal Patel', relationshipTier: 'Neutral', paymentBehavior: 'Unknown', daysToPayAvg: 0, bidShoppingHistory: false, notes: '', tendersCount: 0, winsCount: 0 },
+    { id: 'gc-11', name: 'Mirabelli Corp', platform: 'Direct email', contactPattern: 'edimar.castro@mirabellicorp.com', relationshipTier: 'Strong', paymentBehavior: 'Unknown', daysToPayAvg: 0, bidShoppingHistory: false, notes: '', tendersCount: 0, winsCount: 0 },
+    { id: 'gc-12', name: 'Corebuild Construction', platform: 'Platform', contactPattern: 'Nimesh Shah', relationshipTier: 'Neutral', paymentBehavior: 'Unknown', daysToPayAvg: 0, bidShoppingHistory: false, notes: '', tendersCount: 0, winsCount: 0 },
+    { id: 'gc-13', name: 'Harbridge & Cross', platform: 'Direct email', contactPattern: 'Rick Aubin', relationshipTier: 'Neutral', paymentBehavior: 'Unknown', daysToPayAvg: 0, bidShoppingHistory: false, notes: '', tendersCount: 0, winsCount: 0 },
+    { id: 'gc-14', name: 'Icon Restoration Services', platform: 'Platform', contactPattern: 'Jayson Docusin', relationshipTier: 'Neutral', paymentBehavior: 'Unknown', daysToPayAvg: 0, bidShoppingHistory: false, notes: '', tendersCount: 0, winsCount: 0 },
+    { id: 'gc-15', name: 'Quinan Construction', platform: 'SmartBuildBids', contactPattern: 'quinan@smrtbldbids.app', relationshipTier: 'Neutral', paymentBehavior: 'Unknown', daysToPayAvg: 0, bidShoppingHistory: false, notes: '', tendersCount: 0, winsCount: 0 },
+    { id: 'gc-16', name: 'Norlon', platform: 'Direct email', contactPattern: 'mpilecki@norlon.ca', relationshipTier: 'Neutral', paymentBehavior: 'Unknown', daysToPayAvg: 0, bidShoppingHistory: false, notes: '', tendersCount: 0, winsCount: 0 }
+    ],
+    config: { marginFloorPct: 5, goThreshold: 70, maybeThreshold: 45, downturnMode: true },
+  },
   isDirty: false,
 }
 
-/* ÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂ Helper: compute equipment rental cost for a row ÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂ */
+/* ÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ Helper: compute equipment rental cost for a row ÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ */
 function calcEquipRentalCost(row) {
   const rateMap = { Day: row.dayRate, Week: row.weekRate, Month: row.monthRate }
   return (rateMap[row.period] || 0) * (row.qty || 0)
 }
 
-/* ÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂ Reducer ÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂ */
+/* ÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ Reducer ÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ */
 function projectReducer(state, action) {
   switch (action.type) {
     case 'SET_PROJECT_INFO':
@@ -323,7 +346,7 @@ function projectReducer(state, action) {
     case 'SET_PRODUCTIVITY':
       return { ...state, rates: { ...state.rates, productivityDefaults: { ...state.rates.productivityDefaults, ...action.payload } }, isDirty: true }
 
-    /* ÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂ Structural takeoff ÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂ */
+    /* ÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ Structural takeoff ÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ */
     case 'SET_STRUCTURAL':
       return { ...state, structural: action.payload, isDirty: true }
 
@@ -355,7 +378,7 @@ function projectReducer(state, action) {
     case 'DELETE_STRUCTURAL_ROW':
       return { ...state, structural: state.structural.filter(r => r.id !== action.payload), isDirty: true }
 
-    /* ÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂ Misc metals ÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂ */
+    /* ÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ Misc metals ÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ */
     case 'SET_MISC_METALS':
       return { ...state, miscMetals: action.payload, isDirty: true }
 
@@ -386,7 +409,7 @@ function projectReducer(state, action) {
     case 'DELETE_MISC_METAL_ROW':
       return { ...state, miscMetals: state.miscMetals.filter(r => r.id !== action.payload), isDirty: true }
 
-    /* ÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂ Stairs ÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂ */
+    /* ÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ Stairs ÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ */
     case 'SET_STAIRS': {
       // Backward compat: if state.stairs is array, merge into row by id (or first row)
       let stairs = state.stairs;
@@ -418,7 +441,7 @@ function projectReducer(state, action) {
       return { ...state, stairs: stairs.filter(r => r.id !== action.payload), isDirty: true };
     }
 
-    /* ÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂ Railings ÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂ */
+    /* ÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ Railings ÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ */
     case 'ADD_RAILING_ROW': {
       const newId = Date.now()
       return { ...state, railings: [...state.railings, { id: newId, location: '', type: 'Guard', heightMm: 1070, lengthFt: 0, posts: 0, material: 'Structural steel', weightLbs: 0, fabHrs: 0, instHrs: 0, notes: '' }], isDirty: true }
@@ -430,7 +453,7 @@ function projectReducer(state, action) {
     case 'DELETE_RAILING_ROW':
       return { ...state, railings: state.railings.filter(r => r.id !== action.payload), isDirty: true }
 
-    /* ÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂ Ladder ÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂ */
+    /* ÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ Ladder ÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ */
     case 'ADD_LADDER_ROW': {
       const newId = Date.now()
       return { ...state, ladder: [...state.ladder, { id: newId, location: '', type: 'Fixed Ladder', heightFt: 0, hasCage: false, material: 'Structural steel', weightLbs: 0, fabHrs: 0, instHrs: 0, notes: '' }], isDirty: true }
@@ -442,7 +465,7 @@ function projectReducer(state, action) {
     case 'DELETE_LADDER_ROW':
       return { ...state, ladder: state.ladder.filter(r => r.id !== action.payload), isDirty: true }
 
-    /* ÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂ Joist Reinforcement ÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂ */
+    /* ÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ Joist Reinforcement ÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ */
     case 'ADD_JOIST_REINF_ROW': {
       return { ...state, joistReinf: [...state.joistReinf, action.payload], isDirty: true }
     }
@@ -453,7 +476,7 @@ function projectReducer(state, action) {
     case 'DELETE_JOIST_REINF_ROW':
       return { ...state, joistReinf: state.joistReinf.filter(r => r.id !== action.payload), isDirty: true }
 
-    /* ÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂ Purchased items ÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂ */
+    /* ÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ Purchased items ÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ */
     case 'SET_PURCHASED':
       return { ...state, purchased: action.payload, isDirty: true }
 
@@ -468,7 +491,7 @@ function projectReducer(state, action) {
     case 'DELETE_PURCHASED_ROW':
       return { ...state, purchased: state.purchased.filter(r => r.id !== action.payload), isDirty: true }
 
-    /* ÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂ Soft costs ÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂ */
+    /* ÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ Soft costs ÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ */
     case 'SET_SOFT_COSTS':
       return { ...state, softCosts: action.payload, isDirty: true }
     case 'UPDATE_SOFT_COST': {
@@ -482,7 +505,7 @@ function projectReducer(state, action) {
     case 'DELETE_SOFT_COST':
       return { ...state, softCosts: state.softCosts.filter(r => r.id !== action.payload), isDirty: true }
 
-    /* ÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂ Reset ÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂ */
+    /* ÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ Reset ÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ */
     case 'ENSURE_MATERIAL_RATES': {
       const existing = state.rates.materialRates.map(r => r.item);
       let nextId = state.rates.materialRates.reduce((m, r) => Math.max(m, r.id || 0), 0);
@@ -668,12 +691,46 @@ function projectReducer(state, action) {
       return {...state,projectManagement:{...pm,shopDrawings:{...cur,pieces:list}},isDirty:true};
     }
 
+    /* TenderRadar */
+    case 'ADD_TENDER': {
+      const tr = state.tenderRadar || { tenders: [], gcDirectory: [], config: {} };
+      return { ...state, tenderRadar: { ...tr, tenders: [...(tr.tenders||[]), action.payload] }, isDirty: true };
+    }
+    case 'UPDATE_TENDER': {
+      const tr = state.tenderRadar || { tenders: [], gcDirectory: [], config: {} };
+      const list = (tr.tenders||[]).map(t => t.id === action.payload.id ? { ...t, ...action.payload.changes } : t);
+      return { ...state, tenderRadar: { ...tr, tenders: list }, isDirty: true };
+    }
+    case 'DELETE_TENDER': {
+      const tr = state.tenderRadar || { tenders: [], gcDirectory: [], config: {} };
+      const list = (tr.tenders||[]).filter(t => t.id !== action.payload.id);
+      return { ...state, tenderRadar: { ...tr, tenders: list }, isDirty: true };
+    }
+    case 'ADD_GC': {
+      const tr = state.tenderRadar || { tenders: [], gcDirectory: [], config: {} };
+      return { ...state, tenderRadar: { ...tr, gcDirectory: [...(tr.gcDirectory||[]), action.payload] }, isDirty: true };
+    }
+    case 'UPDATE_GC': {
+      const tr = state.tenderRadar || { tenders: [], gcDirectory: [], config: {} };
+      const list = (tr.gcDirectory||[]).map(g => g.id === action.payload.id ? { ...g, ...action.payload.changes } : g);
+      return { ...state, tenderRadar: { ...tr, gcDirectory: list }, isDirty: true };
+    }
+    case 'DELETE_GC': {
+      const tr = state.tenderRadar || { tenders: [], gcDirectory: [], config: {} };
+      const list = (tr.gcDirectory||[]).filter(g => g.id !== action.payload.id);
+      return { ...state, tenderRadar: { ...tr, gcDirectory: list }, isDirty: true };
+    }
+    case 'SET_TR_CONFIG': {
+      const tr = state.tenderRadar || { tenders: [], gcDirectory: [], config: {} };
+      return { ...state, tenderRadar: { ...tr, config: { ...(tr.config||{}), ...action.payload } }, isDirty: true };
+    }
+
     default:
       return state
   }
 }
 
-/* Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂ localStorage Persistence Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂ */
+/* ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ localStorage Persistence ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ */
 const STORAGE_KEY = 'tw-estimator-state';
 
 function loadState() {
