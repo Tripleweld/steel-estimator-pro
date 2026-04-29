@@ -264,15 +264,18 @@ export default function AiTakeoff() {
 
       try {
         // Convert page to high-res image
-        console.log('AI_TAKEOFF: processing page', page.pageNum, 'pdfDoc:', !!page.pdfDoc)
+        console.log('AI_TAKEOFF: rendering page', page.pageNum, 'to image, pdfDoc:', !!page.pdfDoc)
         const base64 = await pdfPageToBase64(page.pdfDoc, page.pageNum, 2.0)
+        console.log('AI_TAKEOFF: page', page.pageNum, 'rendered, base64 length:', base64?.length)
         console.log('AI_TAKEOFF: base64 length:', base64 ? base64.length : 'NULL')
 
         // Call AI
         let result
         if (provider === 'gemini' || provider === 'gemini_pro') {
           const model = PROVIDERS[provider].model
+          console.log('AI_TAKEOFF: calling', model, 'for page', page.pageNum)
           result = await callGeminiVision(apiKey, model, base64, STEEL_EXPERT_PROMPT)
+          console.log('AI_TAKEOFF: page', page.pageNum, 'result:', result?.structuralMembers?.length, 'members')
         }
         // TODO: Add Claude and GPT-4o providers
 
@@ -295,8 +298,20 @@ export default function AiTakeoff() {
     setProcessing(false)
     setCurrentPage(null)
 
+    // Show error summary if any pages failed
+    const failedPages = pageResults.filter(p => p.status === 'error')
+    const succeededPages = pageResults.filter(p => p.result)
+    if (failedPages.length > 0) {
+      const firstErr = failedPages[0].error || 'Unknown error'
+      if (succeededPages.length === 0) {
+        setError('All ' + failedPages.length + ' page(s) failed. Error: ' + firstErr)
+      } else {
+        setError(failedPages.length + ' of ' + pageResults.length + ' pages failed. Error: ' + firstErr)
+      }
+    }
+
     // Merge results from all pages
-    const merged = mergeResults(pageResults.filter(p => p.result))
+    const merged = mergeResults(succeededPages)
     setMergedResult(merged)
     setShowResults(true)
   }
@@ -440,7 +455,7 @@ export default function AiTakeoff() {
             <span className="text-xs bg-fire-500/20 text-fire-400 px-2 py-0.5 rounded-full font-medium">BETA</span>
           </div>
           <p className="text-sm text-steel-400 mt-1">
-            Upload structural drawings & specs → AI extracts quantities automatically
+            Upload structural drawings & specs â AI extracts quantities automatically
           </p>
 
       {!apiKey && (
