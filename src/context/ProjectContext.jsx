@@ -8,7 +8,7 @@ function generateQuoteNumber() {
   return `TW01-${seq}-${yr}`
 }
 
-/* Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂ Material Rates Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂ */
+/* ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ Material Rates ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ */
 const defaultMaterialRates = [
   { id: 1, item: 'Structural steel', rate: 1.00, unit: '$/lb' },
   { id: 2, item: 'Galvanized steel', rate: 1.20, unit: '$/lb' },
@@ -21,7 +21,7 @@ const defaultMaterialRates = [
   { id: 9, item: 'Powder Coat', rate: 1.50, unit: '$/lb' },
 ]
 
-/* Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂ Labour Rates Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂ */
+/* ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ Labour Rates ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ */
 const defaultLabourRates = {
   fabRate: 50,
   fabCrew: 2,
@@ -30,7 +30,7 @@ const defaultLabourRates = {
   travelRate: 55,
 }
 
-/* Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂ Safety Factors Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂ */
+/* ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ Safety Factors ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ */
 const defaultSafetyFactors = {
   fabLocal: 0.10,
   fabRemote: 0.15,
@@ -39,7 +39,7 @@ const defaultSafetyFactors = {
   projectType: 'Remote',   // 'Local' or 'Remote'
 }
 
-/* Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂ Markup & Tax Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂ */
+/* ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ Markup & Tax ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ */
 const defaultMarkup = {
   markupPercent: 15,
   hstPercent: 13,
@@ -48,7 +48,7 @@ const defaultMarkup = {
   connectionHardware: 5,
 }
 
-/* Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂ Travel & Freight Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂ */
+/* ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ Travel & Freight ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ */
 const defaultTravelFreight = {
   freightRatePerKm: 3.50,
   numberOfDeliveries: 2,
@@ -58,7 +58,7 @@ const defaultTravelFreight = {
   perDiemPerDay: 75,
 }
 
-/* Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂ P.Eng & Shop Drawings Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂ */
+/* ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ P.Eng & Shop Drawings ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ */
 const defaultEngDrawings = {
   drafterRate: 0,
   drawingHours: 0,
@@ -68,7 +68,7 @@ const defaultEngDrawings = {
   siteVisitCostEach: 0,
 }
 
-/* Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂ Equipment Rental Catalog Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂ */
+/* ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ Equipment Rental Catalog ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ */
 const defaultEquipment = [
   // Cranes
   { id: 1, category: 'CRANES', item: 'Mobile Crane 35T', dayRate: 1500, weekRate: 6500, monthRate: 22000, period: 'Day', qty: 0, pickup: 200, dropoff: 200 },
@@ -115,7 +115,7 @@ const defaultEquipment = [
   { id: 35, category: 'RIGGING & MISC', item: 'Fall Arrest System (complete)', dayRate: 40, weekRate: 200, monthRate: 650, period: 'Month', qty: 0, pickup: 200, dropoff: 200 },
 ]
 
-/* Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂ Misc Metals Rates Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂ */
+/* ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ Misc Metals Rates ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ */
 const defaultMiscMetalsRates = [
   { id: 1, item: 'Pan tread (galvanized)', rate: 75, unit: '$/tread' },
   { id: 2, item: 'Pan tread (mild)', rate: 55, unit: '$/tread' },
@@ -156,7 +156,7 @@ const defaultMiscMetalsRates = [
   { id: 37, item: 'Architectural / signage (lump)', rate: 0, unit: 'lump $' },
 ]
 
-/* Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂ Code Limits (OBC / OHSA) Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂ */
+/* ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ Code Limits (OBC / OHSA) ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ */
 const defaultCodeLimits = [
   { id: 1, item: 'Post spacing max (rails)', value: 6, unit: 'ft (1.83m)', reference: 'OBC' },
   { id: 2, item: 'Riser max (stair)', value: 180, unit: 'mm', reference: 'OBC 3.4' },
@@ -171,7 +171,7 @@ const defaultCodeLimits = [
   { id: 11, item: 'Scissor lift day rate', value: 300, unit: '$/day', reference: '' },
 ]
 
-/* Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂ Default Rates Bundle Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂ */
+/* ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ Default Rates Bundle ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ */
 const defaultRates = {
   materialRates: defaultMaterialRates,
   labourRates: defaultLabourRates,
@@ -246,13 +246,13 @@ const defaultState = {
   isDirty: false,
 }
 
-/* Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂ Helper: compute equipment rental cost for a row Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂ */
+/* ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ Helper: compute equipment rental cost for a row ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ */
 function calcEquipRentalCost(row) {
   const rateMap = { Day: row.dayRate, Week: row.weekRate, Month: row.monthRate }
   return (rateMap[row.period] || 0) * (row.qty || 0)
 }
 
-/* Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂ Reducer Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂ */
+/* ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ Reducer ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ */
 function projectReducer(state, action) {
   switch (action.type) {
     case 'SET_PROJECT_INFO':
@@ -323,7 +323,7 @@ function projectReducer(state, action) {
     case 'SET_PRODUCTIVITY':
       return { ...state, rates: { ...state.rates, productivityDefaults: { ...state.rates.productivityDefaults, ...action.payload } }, isDirty: true }
 
-    /* Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂ Structural takeoff Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂ */
+    /* ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ Structural takeoff ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ */
     case 'SET_STRUCTURAL':
       return { ...state, structural: action.payload, isDirty: true }
 
@@ -355,7 +355,7 @@ function projectReducer(state, action) {
     case 'DELETE_STRUCTURAL_ROW':
       return { ...state, structural: state.structural.filter(r => r.id !== action.payload), isDirty: true }
 
-    /* Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂ Misc metals Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂ */
+    /* ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ Misc metals ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ */
     case 'SET_MISC_METALS':
       return { ...state, miscMetals: action.payload, isDirty: true }
 
@@ -386,7 +386,7 @@ function projectReducer(state, action) {
     case 'DELETE_MISC_METAL_ROW':
       return { ...state, miscMetals: state.miscMetals.filter(r => r.id !== action.payload), isDirty: true }
 
-    /* Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂ Stairs Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂ */
+    /* ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ Stairs ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ */
     case 'SET_STAIRS': {
       // Backward compat: if state.stairs is array, merge into row by id (or first row)
       let stairs = state.stairs;
@@ -418,7 +418,7 @@ function projectReducer(state, action) {
       return { ...state, stairs: stairs.filter(r => r.id !== action.payload), isDirty: true };
     }
 
-    /* Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂ Railings Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂ */
+    /* ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ Railings ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ */
     case 'ADD_RAILING_ROW': {
       const newId = Date.now()
       return { ...state, railings: [...state.railings, { id: newId, location: '', type: 'Guard', heightMm: 1070, lengthFt: 0, posts: 0, material: 'Structural steel', weightLbs: 0, fabHrs: 0, instHrs: 0, notes: '' }], isDirty: true }
@@ -430,7 +430,7 @@ function projectReducer(state, action) {
     case 'DELETE_RAILING_ROW':
       return { ...state, railings: state.railings.filter(r => r.id !== action.payload), isDirty: true }
 
-    /* Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂ Ladder Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂ */
+    /* ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ Ladder ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ */
     case 'ADD_LADDER_ROW': {
       const newId = Date.now()
       return { ...state, ladder: [...state.ladder, { id: newId, location: '', type: 'Fixed Ladder', heightFt: 0, hasCage: false, material: 'Structural steel', weightLbs: 0, fabHrs: 0, instHrs: 0, notes: '' }], isDirty: true }
@@ -442,7 +442,7 @@ function projectReducer(state, action) {
     case 'DELETE_LADDER_ROW':
       return { ...state, ladder: state.ladder.filter(r => r.id !== action.payload), isDirty: true }
 
-    /* Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂ Joist Reinforcement Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂ */
+    /* ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ Joist Reinforcement ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ */
     case 'ADD_JOIST_REINF_ROW': {
       return { ...state, joistReinf: [...state.joistReinf, action.payload], isDirty: true }
     }
@@ -453,7 +453,7 @@ function projectReducer(state, action) {
     case 'DELETE_JOIST_REINF_ROW':
       return { ...state, joistReinf: state.joistReinf.filter(r => r.id !== action.payload), isDirty: true }
 
-    /* Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂ Purchased items Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂ */
+    /* ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ Purchased items ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ */
     case 'SET_PURCHASED':
       return { ...state, purchased: action.payload, isDirty: true }
 
@@ -468,7 +468,7 @@ function projectReducer(state, action) {
     case 'DELETE_PURCHASED_ROW':
       return { ...state, purchased: state.purchased.filter(r => r.id !== action.payload), isDirty: true }
 
-    /* Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂ Soft costs Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂ */
+    /* ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ Soft costs ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ */
     case 'SET_SOFT_COSTS':
       return { ...state, softCosts: action.payload, isDirty: true }
     case 'UPDATE_SOFT_COST': {
@@ -482,7 +482,7 @@ function projectReducer(state, action) {
     case 'DELETE_SOFT_COST':
       return { ...state, softCosts: state.softCosts.filter(r => r.id !== action.payload), isDirty: true }
 
-    /* Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂ Reset Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂ */
+    /* ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ Reset ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ */
     case 'ENSURE_MATERIAL_RATES': {
       const existing = state.rates.materialRates.map(r => r.item);
       let nextId = state.rates.materialRates.reduce((m, r) => Math.max(m, r.id || 0), 0);
@@ -570,12 +570,43 @@ function projectReducer(state, action) {
       return { ...state, installStandardCustom: (state.installStandardCustom || []).map((r) => r.id === action.payload.id ? { ...r, ...action.payload.changes } : r) }
     case 'DELETE_INSTALL_CUSTOM':
       return { ...state, installStandardCustom: (state.installStandardCustom || []).filter((r) => r.id !== action.payload.id) }
+
+    /* Project Management - SOV */
+    case 'SET_SOV_LINES': {
+      const pm=state.projectManagement||{};
+      const sov={...(pm.sov||{lines:[],retentionPercent:10,billsToDate:0}),lines:action.payload.lines};
+      return {...state,projectManagement:{...pm,sov},isDirty:true};
+    }
+    case 'ADD_SOV_LINE': {
+      const pm=state.projectManagement||{};
+      const cur=pm.sov||{lines:[],retentionPercent:10,billsToDate:0};
+      const sov={...cur,lines:[...(cur.lines||[]),action.payload]};
+      return {...state,projectManagement:{...pm,sov},isDirty:true};
+    }
+    case 'UPDATE_SOV_LINE': {
+      const pm=state.projectManagement||{};
+      const cur=pm.sov||{lines:[],retentionPercent:10,billsToDate:0};
+      const lines=(cur.lines||[]).map(ln=>ln.id===action.payload.id?{...ln,...action.payload.changes}:ln);
+      return {...state,projectManagement:{...pm,sov:{...cur,lines}},isDirty:true};
+    }
+    case 'DELETE_SOV_LINE': {
+      const pm=state.projectManagement||{};
+      const cur=pm.sov||{lines:[],retentionPercent:10,billsToDate:0};
+      const lines=(cur.lines||[]).filter(ln=>ln.id!==action.payload.id);
+      return {...state,projectManagement:{...pm,sov:{...cur,lines}},isDirty:true};
+    }
+    case 'SET_SOV_RETENTION': {
+      const pm=state.projectManagement||{};
+      const cur=pm.sov||{lines:[],retentionPercent:10,billsToDate:0};
+      return {...state,projectManagement:{...pm,sov:{...cur,retentionPercent:action.payload.retentionPercent}},isDirty:true};
+    }
+
     default:
       return state
   }
 }
 
-/* ─── localStorage Persistence ─── */
+/* âââ localStorage Persistence âââ */
 const STORAGE_KEY = 'tw-estimator-state';
 
 function loadState() {
