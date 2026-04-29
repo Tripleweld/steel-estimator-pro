@@ -26,6 +26,7 @@ import GCDirectory from './pages/GCDirectory'
 import ScorecardConfig from './pages/ScorecardConfig'
 import FabInstallStandards from './pages/FabInstallStandards'
 import AiTakeoff from './pages/AiTakeoff'
+import ExcelTakeoff from './pages/ExcelTakeoff'
 import NewProject from './pages/NewProject'
 import ExistingProjects from './pages/ExistingProjects'
 
@@ -49,6 +50,7 @@ export default function App() {
         <Route path="/summary" element={<Summary />} />
         <Route path="/quote" element={<Quote />} />
         <Route path="/ai-takeoff" element={<AiTakeoff />} />
+          <Route path="/excel-takeoff" element={<ExcelTakeoff />} />
         <Route path="/new-project" element={<NewProject />} />
         <Route path="/projects" element={<ExistingProjects />} />
             <Route path="/manual" element={<UserManual />} />
