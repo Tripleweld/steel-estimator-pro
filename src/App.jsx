@@ -16,6 +16,7 @@ import Summary from './pages/Summary'
 import Quote from './pages/Quote'
 import UserManual from './pages/UserManual'
 import PMDashboard from './pages/PMDashboard'
+import PMSchedule from './pages/PMSchedule'
 import FabInstallStandards from './pages/FabInstallStandards'
 import AiTakeoff from './pages/AiTakeoff'
 import NewProject from './pages/NewProject'
@@ -45,6 +46,7 @@ export default function App() {
         <Route path="/projects" element={<ExistingProjects />} />
             <Route path="/manual" element={<UserManual />} />
         <Route path="/pm/dashboard" element={<PMDashboard />} />
+        <Route path="/pm/sov" element={<PMSchedule />} />
       </Routes>
     </Layout>
     </PasswordGate>
