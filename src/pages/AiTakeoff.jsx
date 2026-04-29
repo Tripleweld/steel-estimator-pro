@@ -2,10 +2,10 @@ import { useState, useCallback, useRef } from 'react'
 import { useProject } from '../context/ProjectContext'
 import { Upload, FileText, Zap, AlertTriangle, CheckCircle, Loader2, Settings, Brain, Eye, Download, Trash2, ChevronDown, ChevronUp } from 'lucide-react'
 
-/* ── helpers ─────────────────────────────────────────────────── */
+/* ââ helpers âââââââââââââââââââââââââââââââââââââââââââââââââââ */
 const toNum = v => { const n = Number(v); return isNaN(n) ? 0 : n; }
 
-/* ── AI Provider configs ──────────────────────────────────────── */
+/* ââ AI Provider configs ââââââââââââââââââââââââââââââââââââââââ */
 const PROVIDERS = {
   gemini: { name: 'Gemini 1.5 Flash (Free)', model: 'gemini-1.5-flash', urlBase: 'https://generativelanguage.googleapis.com/v1beta/models/' },
   gemini_pro: { name: 'Gemini 1.5 Pro', model: 'gemini-1.5-pro', urlBase: 'https://generativelanguage.googleapis.com/v1beta/models/' },
@@ -13,13 +13,13 @@ const PROVIDERS = {
   gpt4o: { name: 'GPT-4o', model: 'gpt-4o', urlBase: 'https://api.openai.com/v1/chat/completions' },
 }
 
-/* ── STEEL EXPERT PROMPT ──────────────────────────────────────── */
+/* ââ STEEL EXPERT PROMPT ââââââââââââââââââââââââââââââââââââââââ */
 const STEEL_EXPERT_PROMPT = `You are a Senior Steel Estimator with 25+ years of experience in structural and miscellaneous steel fabrication & erection in Ontario, Canada. You have CWB W47.1 certification and deep knowledge of CSA S16, CSA G40.21, and the Ontario Building Code.
 
 TASK: Analyze this structural drawing page and extract ALL steel members and miscellaneous metals visible. Return a JSON object with the extracted data.
 
 EXTRACTION RULES:
-1. STRUCTURAL STEEL — Look for:
+1. STRUCTURAL STEEL â Look for:
    - Beam schedules (tables listing beam marks, sizes, lengths)
    - Column schedules (tables listing column marks, sizes, heights)
    - Framing plan marks (B1, B2, C1, C2, W1, etc. on plan views)
@@ -30,7 +30,7 @@ EXTRACTION RULES:
    - Steel grade notes (G40.21 300W, 350W, 350WT)
    - Surface treatment notes (galvanized, shop primer, painted)
 
-2. MISCELLANEOUS METALS — Look for:
+2. MISCELLANEOUS METALS â Look for:
    - Stairs (steel pan, concrete filled, checker plate)
    - Railings/handrails (pipe rail, glass, cable)
    - Ladders (fixed, cage, ship's ladder)
@@ -40,18 +40,18 @@ EXTRACTION RULES:
    - Grating, platforms, catwalks
    - Steel deck type and gauge
 
-3. STRUCTURAL NOTES — Extract:
+3. STRUCTURAL NOTES â Extract:
    - Design loads (live, dead, snow, wind, seismic)
    - Deflection criteria
    - Inspection requirements
    - Special provisions
 
-4. QUANTITIES — For each member:
+4. QUANTITIES â For each member:
    - Count duplicates (e.g., if B1 appears 6 times on plan, qty=6)
    - Measure or estimate lengths from gridline spacing
    - Calculate weight using AISC/CISC tables (W310x45 = 45 kg/m = 30.2 lb/ft)
 
-OUTPUT FORMAT — Return ONLY valid JSON, no markdown:
+OUTPUT FORMAT â Return ONLY valid JSON, no markdown:
 {
   "pageType": "framing_plan|beam_schedule|column_schedule|elevation|section|detail|notes|spec|other",
   "pageDescription": "Brief description of what this page shows",
@@ -105,14 +105,14 @@ OUTPUT FORMAT — Return ONLY valid JSON, no markdown:
 
 IMPORTANT:
 - If you cannot read a value clearly, set confidence < 0.7 and add to warnings
-- Use imperial units (ft, lbs) — this is Ontario/Canadian construction
+- Use imperial units (ft, lbs) â this is Ontario/Canadian construction
 - For CISC shapes, convert to imperial lb/ft weights
 - If a schedule table is present, extract ALL rows
 - Cross-reference plan marks with schedule data when both are visible
 - Estimate connection weight allowance at 8-12% of member weight
 - Flag any items that seem unusual or may need RFI`
 
-/* ── Markup overlay prompt ────────────────────────────────────── */
+/* ââ Markup overlay prompt ââââââââââââââââââââââââââââââââââââââ */
 const MARKUP_PROMPT = `You previously analyzed this structural drawing and identified steel members. Now I need you to identify the SPATIAL LOCATION of each member on this drawing for markup purposes.
 
 For each member you identified, provide approximate bounding box coordinates as percentages of the page dimensions (0-100 for both x and y, where 0,0 is top-left).
@@ -129,7 +129,7 @@ Return JSON:
   ]
 }`
 
-/* ── PDF to images using pdf.js ───────────────────────────────── */
+/* ââ PDF to images using pdf.js âââââââââââââââââââââââââââââââââ */
 const PDF_JS_CDN = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js'
 const PDF_JS_WORKER = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js'
 
@@ -158,7 +158,7 @@ async function pdfPageToBase64(pdfDoc, pageNum, scale = 2.0) {
   return canvas.toDataURL('image/jpeg', 0.85).split(',')[1]
 }
 
-/* ── Gemini API call ──────────────────────────────────────────── */
+/* ââ Gemini API call ââââââââââââââââââââââââââââââââââââââââââââ */
 async function callGeminiVision(apiKey, model, base64Image, prompt) {
   const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`
   const resp = await fetch(url, {
@@ -186,7 +186,7 @@ async function callGeminiVision(apiKey, model, base64Image, prompt) {
   return JSON.parse(jsonMatch[0])
 }
 
-/* ── MAIN COMPONENT ──────────────────────────────────────────── */
+/* ââ MAIN COMPONENT ââââââââââââââââââââââââââââââââââââââââââââ */
 export default function AiTakeoff() {
   const { state, dispatch, setProjectField } = useProject()
   const fileInputRef = useRef(null)
@@ -425,7 +425,7 @@ export default function AiTakeoff() {
   const onDragOver = (e) => { e.preventDefault(); setDragOver(true) }
   const onDragLeave = () => setDragOver(false)
 
-  /* ── Confidence color ──────────────────────────────────────── */
+  /* ââ Confidence color ââââââââââââââââââââââââââââââââââââââââ */
   const confColor = (c) => {
     if (c >= 0.9) return 'text-green-400'
     if (c >= 0.7) return 'text-yellow-400'
@@ -448,8 +448,19 @@ export default function AiTakeoff() {
             <span className="text-xs bg-fire-500/20 text-fire-400 px-2 py-0.5 rounded-full font-medium">BETA</span>
           </div>
           <p className="text-sm text-steel-400 mt-1">
-            Upload structural drawings & specs — AI extracts quantities automatically
+            Upload structural drawings & specs â AI extracts quantities automatically
           </p>
+
+      {!apiKey && (
+        <div className="bg-yellow-600/20 border border-yellow-500/50 rounded-lg px-4 py-3 flex items-center gap-3">
+          <span className="text-yellow-400 text-lg">&#9888;</span>
+          <div>
+            <p className="text-yellow-300 font-medium text-sm">API Key Required</p>
+            <p className="text-yellow-400/70 text-xs">Enter your Gemini API key in the settings above to enable AI takeoff</p>
+          </div>
+        </div>
+      )}
+
         </div>
         <button
           onClick={() => setShowSettings(!showSettings)}
@@ -500,7 +511,7 @@ export default function AiTakeoff() {
           </div>
           {provider.startsWith('gemini') && (
             <p className="text-xs text-steel-500">
-              Get your free API key at <span className="text-fire-400">ai.google.dev/aistudio</span> — 1,500 free requests/day
+              Get your free API key at <span className="text-fire-400">ai.google.dev/aistudio</span> â 1,500 free requests/day
             </p>
           )}
         </div>
@@ -528,7 +539,7 @@ export default function AiTakeoff() {
         />
         <Upload className={`w-12 h-12 mx-auto mb-3 ${dragOver ? 'text-fire-500' : 'text-steel-500'}`} />
         <p className="text-lg font-semibold text-steel-300">
-          {files.length ? `${files.length} PDF(s) loaded — ${pages.length} pages` : 'Drop PDF drawings here'}
+          {files.length ? `${files.length} PDF(s) loaded â ${pages.length} pages` : 'Drop PDF drawings here'}
         </p>
         <p className="text-sm text-steel-500 mt-1">
           Structural drawings, framing plans, beam schedules, specs (Division 5)
@@ -585,7 +596,7 @@ export default function AiTakeoff() {
           <div className="flex items-center gap-4">
             <button
               onClick={processPages}
-              disabled={processing || !apiKey}
+              disabled={processing || !apiKey || pages.length === 0}
               className={`flex items-center gap-2 px-6 py-3 rounded-xl font-semibold text-sm transition ${
                 processing
                   ? 'bg-steel-700 text-steel-400 cursor-wait'
@@ -600,7 +611,7 @@ export default function AiTakeoff() {
               ) : (
                 <>
                   <Zap className="w-4 h-4" />
-                  Run AI Takeoff ({pages.filter(p => p.selected).length} pages)
+                  {!apiKey ? "Set API Key First" : pages.length === 0 ? "Upload PDF First" : `Run AI Takeoff (${pages.filter(p => p.selected).length} pages)`}
                 </>
               )}
             </button>
@@ -711,7 +722,7 @@ export default function AiTakeoff() {
               </h4>
               <ul className="space-y-1">
                 {mergedResult.warnings.map((w, i) => (
-                  <li key={i} className="text-xs text-yellow-300">• {w}</li>
+                  <li key={i} className="text-xs text-yellow-300">â¢ {w}</li>
                 ))}
               </ul>
             </div>
