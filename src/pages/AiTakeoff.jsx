@@ -7,8 +7,8 @@ const toNum = v => { const n = Number(v); return isNaN(n) ? 0 : n; }
 
 /* --------------- AI Provider configs --------------- */
 const PROVIDERS = {
-  gemini: { name: 'Gemini 1.5 Flash (Free)', model: 'gemini-1.5-flash', urlBase: 'https://generativelanguage.googleapis.com/v1beta/models/' },
-  gemini_pro: { name: 'Gemini 1.5 Pro', model: 'gemini-1.5-pro', urlBase: 'https://generativelanguage.googleapis.com/v1beta/models/' },
+  gemini: { name: 'Gemini 2.5 Flash (Free)', model: 'gemini-2.5-flash', urlBase: 'https://generativelanguage.googleapis.com/v1beta/models/' },
+  gemini_pro: { name: 'Gemini 2.5 Pro', model: 'gemini-2.5-pro', urlBase: 'https://generativelanguage.googleapis.com/v1beta/models/' },
   claude: { name: 'Claude 3.5 Sonnet', model: 'claude-3-5-sonnet-20241022', urlBase: 'https://api.anthropic.com/v1/messages' },
   gpt4o: { name: 'GPT-4o', model: 'gpt-4o', urlBase: 'https://api.openai.com/v1/chat/completions' },
 }
