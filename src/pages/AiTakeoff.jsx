@@ -201,6 +201,59 @@ async function callGeminiVision(apiKey, model, base64Image, prompt) {
   }
 }
 
+/* ── OpenAI GPT-4o Vision API call ───────────────────────────── */
+async function callOpenAIVision(apiKey, model, base64Image, prompt) {
+  const url = 'https://api.openai.com/v1/chat/completions'
+  const MAX_RETRIES = 3
+  for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+    if (attempt > 0) {
+      const wait = 3000 * attempt
+      console.log('AI_TAKEOFF: OpenAI retry', attempt, 'in', wait/1000, 's...')
+      await new Promise(r => setTimeout(r, wait))
+    }
+    const resp = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + apiKey },
+      body: JSON.stringify({
+        model: model,
+        messages: [{
+          role: 'user',
+          content: [
+            { type: 'text', text: prompt },
+            { type: 'image_url', image_url: { url: 'data:image/jpeg;base64,' + base64Image, detail: 'high' } }
+          ]
+        }],
+        max_tokens: 16384,
+        temperature: 0.1
+      })
+    })
+    if (!resp.ok) {
+      const errText = await resp.text()
+      if ((resp.status === 503 || resp.status === 429) && attempt < MAX_RETRIES) {
+        console.warn('AI_TAKEOFF: OpenAI', resp.status, '- will retry')
+        continue
+      }
+      throw new Error('OpenAI API error ' + resp.status + ': ' + errText)
+    }
+    const d = await resp.json()
+    const text = d.choices?.[0]?.message?.content || ''
+    const cleaned = repairJSON(text)
+    if (!cleaned) throw new Error('No JSON found in OpenAI response')
+    try {
+      return JSON.parse(cleaned)
+    } catch (e) {
+      let tr = cleaned
+      while (tr.length > 10) {
+        const lb = tr.lastIndexOf('}')
+        if (lb === -1) break
+        try { return JSON.parse(tr.substring(0, lb + 1)) } catch (_) { tr = tr.substring(0, lb) }
+      }
+      throw new Error('JSON parse failed: ' + e.message)
+    }
+  }
+}
+
+
 /* ------------------ MAIN COMPONENT ------------------ */
 export default function AiTakeoff() {
   const { state, dispatch, setProjectField } = useProject()
@@ -297,7 +350,11 @@ export default function AiTakeoff() {
 
         // Call AI
         let result
-        if (provider.startsWith('gemini')) {
+        if (provider === 'gpt4o') {
+          console.log('AI_TAKEOFF: calling GPT-4o for page', page.pageNum)
+          result = await callOpenAIVision(apiKey, PROVIDERS[provider].model, base64, STEEL_EXPERT_PROMPT)
+          console.log('AI_TAKEOFF: page', page.pageNum, 'GPT-4o result:', result?.structuralMembers?.length, 'members')
+        } else if (provider.startsWith('gemini')) {
           const model = PROVIDERS[provider].model
           console.log('AI_TAKEOFF: calling', model, 'for page', page.pageNum)
           result = await callGeminiVision(apiKey, model, base64, STEEL_EXPERT_PROMPT)
@@ -530,7 +587,7 @@ export default function AiTakeoff() {
                   type={showApiKey ? 'text' : 'password'}
                   value={apiKey}
                   onChange={e => saveApiKey(e.target.value)}
-                  placeholder={provider.startsWith('gemini') ? 'AIza...' : 'sk-...'}
+                  placeholder={provider.startsWith('gemini') ? 'AIza...' : provider === 'gpt4o' ? 'sk-proj-...' : 'sk-...'}
                   className="flex-1 bg-steel-800 border border-steel-600 rounded-lg px-3 py-2 text-sm text-white placeholder-steel-500"
                 />
                 <button
