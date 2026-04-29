@@ -20,8 +20,14 @@ const fmtNum = (v, d = 0) =>
 export default function Quote() {
   const { state, dispatch } = useProject();
   const [editingSoW, setEditingSoW] = useState(false);
+  const [editingExcl, setEditingExcl] = useState(false);
+  const [editingTerms, setEditingTerms] = useState(false);
   const scopeOverrides = state.quoteScopeOverrides || {};
   const customScope = state.quoteScopeCustom || [];
+  const exclOverrides = state.quoteExclOverrides || {};
+  const customExcl = state.quoteExclCustom || [];
+  const termsOverrides = state.quoteTermsOverrides || {};
+  const customTerms = state.quoteTermsCustom || [];
   const info = state.projectInfo || {};
   const rates = state.rates || {};
   const quoteRef = useRef(null);
@@ -180,7 +186,7 @@ export default function Quote() {
     const matRates = state.rates?.materialRates || [];
     const lookupMat = (item) => (matRates.find(m => m.item === item)?.rate) || 1;
 
-    // STRUCTURAL TAKEOFF â group by section
+    // STRUCTURAL TAKEOFF — group by section
     const SECT_LABELS = {
       columns: 'Columns', beams: 'Beams', momentConnections: 'Moment Connections',
       moment: 'Moment Connections', roofOpeningFrames: 'Roof Opening Frames',
@@ -211,18 +217,18 @@ export default function Quote() {
       structGroups[key] = (structGroups[key] || 0) + total;
     });
     Object.entries(structGroups).forEach(([k, v]) => {
-      if (v > 0) rows.push({ label: 'Structural Takeoff â ' + (SECT_LABELS[k] || k), total: v });
+      if (v > 0) rows.push({ label: 'Structural Takeoff — ' + (SECT_LABELS[k] || k), total: v });
     });
 
-    // MISC METALS â calculator items
+    // MISC METALS — calculator items
     const stairsTot = stairs.reduce((s, x) => s + Number(x.totalsCommit?.total || 0), 0);
-    if (stairsTot > 0) rows.push({ label: 'Misc Metals â Stairs', total: stairsTot });
+    if (stairsTot > 0) rows.push({ label: 'Misc Metals — Stairs', total: stairsTot });
     const ladderTot = ladder.reduce((s, x) => s + Number(x.totalsCommit?.total || 0), 0);
-    if (ladderTot > 0) rows.push({ label: 'Misc Metals â Ladders', total: ladderTot });
+    if (ladderTot > 0) rows.push({ label: 'Misc Metals — Ladders', total: ladderTot });
     const railingsTot = railings.reduce((s, x) => s + Number(x.totalsCommit?.total || 0), 0);
-    if (railingsTot > 0) rows.push({ label: 'Misc Metals â Railings', total: railingsTot });
+    if (railingsTot > 0) rows.push({ label: 'Misc Metals — Railings', total: railingsTot });
 
-    // MISC METALS â Standard items per section
+    // MISC METALS — Standard items per section
     const MM_LABELS = {
       bollards: 'Bollards', cornerGuardsSS: 'Corner Guards (SS)', cornerGuardsMS: 'Corner Guards (MS)',
       embedPlates: 'Embed Plates', lintels: 'Lintels', edgeAngles: 'Edge Angles',
@@ -238,13 +244,13 @@ export default function Quote() {
         const rate = (row.rateOverride != null && row.rateOverride !== '') ? Number(row.rateOverride) : findMiscRate(row.section || row.item || row.type);
         return s + (Number(row.qty) || 0) * rate;
       }, 0);
-      if (secTotal > 0) rows.push({ label: 'Misc Metals â ' + label, total: secTotal });
+      if (secTotal > 0) rows.push({ label: 'Misc Metals — ' + label, total: secTotal });
     });
 
     // EQUIPMENT (use already-computed equipmentTotal from summary)
     if (summary.equipmentTotal > 0) rows.push({ label: 'Equipment', total: summary.equipmentTotal });
 
-    // PURCHASED ITEMS â exclude joist/deck (already in Structural)
+    // PURCHASED ITEMS — exclude joist/deck (already in Structural)
     const purchased = state.purchased || [];
     const purchExcl = purchased.filter(p => {
       const cat = String(p.category || p.item || '').toLowerCase();
@@ -253,7 +259,7 @@ export default function Quote() {
     const purchTotal = purchExcl.reduce((s, p) => s + (Number(p.total) || (Number(p.qty || 0) * Number(p.unitCost || 0))), 0);
     if (purchTotal > 0) rows.push({ label: 'Purchased Items', total: purchTotal });
 
-    // SOFT COSTS â single row, description = comma list of non-zero items
+    // SOFT COSTS — single row, description = comma list of non-zero items
     const softCosts = state.softCosts || [];
     const softNonZero = softCosts.filter(c => {
       if (c.unit === '%') return Number(c.rate) > 0;
@@ -390,14 +396,14 @@ export default function Quote() {
               <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-steel-400">
                 Project
               </p>
-              <p className="text-sm font-bold text-steel-900">{info.projectName || 'â'}</p>
-              <p className="text-sm text-steel-600">{info.location || 'â'}</p>
+              <p className="text-sm font-bold text-steel-900">{info.projectName || '—'}</p>
+              <p className="text-sm text-steel-600">{info.location || '—'}</p>
             </div>
             <div className="rounded-lg border border-silver-100 bg-silver-50/50 p-4">
               <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-steel-400">
                 Client / General Contractor
               </p>
-              <p className="text-sm font-bold text-steel-900">{info.gcClient || 'â'}</p>
+              <p className="text-sm font-bold text-steel-900">{info.gcClient || '—'}</p>
               {info.engineer && (
                 <p className="text-sm text-steel-600">Engineer: {info.engineer}</p>
               )}
@@ -594,50 +600,158 @@ export default function Quote() {
 
           {/* Exclusions */}
           <div className="mb-8">
-            <h3 className="mb-3 text-base font-bold uppercase tracking-wide text-steel-900">
-              Exclusions
-            </h3>
-            <ul className="list-inside list-disc space-y-1 text-sm text-steel-600">
-              <li>Fireproofing of structural steel</li>
-              <li>Concrete, masonry, and foundations</li>
-              <li>Painting beyond standard shop primer</li>
-              <li>Hoisting or placing materials for other trades</li>
-              <li>Permit fees and inspection costs</li>
-              <li>Demolition or removal of existing steel</li>
-              <li>Engineering stamps (unless specified in scope)</li>
-              <li>Night or overtime work (unless priced separately)</li>
-            </ul>
+            <div className="mb-3 flex items-center justify-between">
+              <h3 className="text-base font-bold uppercase tracking-wide text-steel-900">
+                Exclusions
+              </h3>
+              <button
+                type="button"
+                onClick={() => setEditingExcl(v => !v)}
+                className="print:hidden inline-flex items-center gap-1 rounded border border-steel-300 bg-white px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide text-steel-600 hover:bg-steel-50 hover:text-steel-900 transition"
+              >
+                {editingExcl ? <Check size={12} /> : <Pencil size={12} />}
+                {editingExcl ? 'Done' : 'Edit'}
+              </button>
+            </div>
+            {(() => {
+              const defaultExcl = [
+                { key: 'fireproof', text: 'Fireproofing of structural steel' },
+                { key: 'concrete', text: 'Concrete, masonry, and foundations' },
+                { key: 'paint', text: 'Painting beyond standard shop primer' },
+                { key: 'hoist', text: 'Hoisting or placing materials for other trades' },
+                { key: 'permits', text: 'Permit fees and inspection costs' },
+                { key: 'demo', text: 'Demolition or removal of existing steel' },
+                { key: 'engstamps', text: 'Engineering stamps (unless specified in scope)' },
+                { key: 'overtime', text: 'Night or overtime work (unless priced separately)' },
+              ];
+              const visibleExcl = defaultExcl.map(line => {
+                const ov = exclOverrides[line.key] || {};
+                const visible = ov.visible !== undefined ? ov.visible : true;
+                const text = ov.text !== undefined ? ov.text : line.text;
+                return { ...line, visible, text, isOverridden: ov.text !== undefined || ov.visible !== undefined };
+              }).filter(l => l.visible);
+
+              if (!editingExcl) {
+                return (
+                  <ul className="list-inside list-disc space-y-1 text-sm text-steel-600">
+                    {visibleExcl.map(line => (<li key={line.key}>{line.text}</li>))}
+                    {customExcl.map(cl => (<li key={cl.id}>{cl.text}</li>))}
+                  </ul>
+                );
+              }
+              return (
+                <div className="space-y-2 print:hidden">
+                  {defaultExcl.map(line => {
+                    const ov = exclOverrides[line.key] || {};
+                    const visible = ov.visible !== undefined ? ov.visible : true;
+                    const text = ov.text !== undefined ? ov.text : line.text;
+                    const isOverridden = ov.text !== undefined || ov.visible !== undefined;
+                    return (
+                      <div key={line.key} className={`flex items-start gap-2 rounded border px-2 py-1.5 ${visible ? 'border-steel-200 bg-white' : 'border-steel-200 bg-steel-50 opacity-60'}`}>
+                        <button type="button" title={visible ? 'Hide' : 'Show'} onClick={() => dispatch({ type: 'UPDATE_QUOTE_EXCL_LINE', key: line.key, patch: { visible: !visible } })} className={`mt-1 inline-flex h-4 w-4 flex-shrink-0 items-center justify-center rounded border ${visible ? 'border-fire-500 bg-fire-500' : 'border-steel-300 bg-white'}`}>
+                          {visible && <Check size={11} className="text-white" />}
+                        </button>
+                        <textarea value={text} onChange={(e) => dispatch({ type: 'UPDATE_QUOTE_EXCL_LINE', key: line.key, patch: { text: e.target.value } })} rows={1} className="flex-1 resize-none rounded border border-transparent bg-transparent px-1 py-0.5 text-sm text-steel-800 outline-none focus:border-fire-300 focus:bg-white" />
+                        {isOverridden && (
+                          <button type="button" title="Reset" onClick={() => dispatch({ type: 'RESET_QUOTE_EXCL_LINE', key: line.key })} className="mt-0.5 rounded p-1 text-steel-400 hover:bg-steel-100 hover:text-steel-700">
+                            <RotateCcw size={12} />
+                          </button>
+                        )}
+                      </div>
+                    );
+                  })}
+                  {customExcl.map(cl => (
+                    <div key={cl.id} className="flex items-start gap-2 rounded border border-fire-200 bg-fire-50/30 px-2 py-1.5">
+                      <span className="mt-1 inline-block rounded bg-fire-500 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide text-white">Custom</span>
+                      <textarea value={cl.text} onChange={(e) => dispatch({ type: 'UPDATE_QUOTE_EXCL_CUSTOM', id: cl.id, text: e.target.value })} rows={1} placeholder="Custom exclusion..." className="flex-1 resize-none rounded border border-transparent bg-transparent px-1 py-0.5 text-sm text-steel-800 outline-none focus:border-fire-300 focus:bg-white" />
+                      <button type="button" title="Delete" onClick={() => dispatch({ type: 'DELETE_QUOTE_EXCL_CUSTOM', id: cl.id })} className="mt-0.5 rounded p-1 text-red-400 hover:bg-red-50 hover:text-red-600">
+                        <Trash2 size={12} />
+                      </button>
+                    </div>
+                  ))}
+                  <button type="button" onClick={() => dispatch({ type: 'ADD_QUOTE_EXCL_CUSTOM', text: '' })} className="inline-flex items-center gap-1 rounded border border-dashed border-fire-400 bg-white px-3 py-1.5 text-xs font-semibold text-fire-600 hover:bg-fire-50">
+                    <Plus size={13} /> Add custom exclusion
+                  </button>
+                </div>
+              );
+            })()}
           </div>
 
           {/* Terms & Conditions */}
           <div className="mb-8">
-            <h3 className="mb-3 text-base font-bold uppercase tracking-wide text-steel-900">
-              Terms &amp; Conditions
-            </h3>
-            <ol className="list-inside list-decimal space-y-1.5 text-sm text-steel-600">
-              <li>
-                This quotation is valid for <strong>30 days</strong> from the date above.
-              </li>
-              <li>
-                Payment terms: 10% deposit upon acceptance, progress billing monthly, net 30 days.
-              </li>
-              <li>
-                Mobilization within 4-6 weeks of shop drawing approval, subject to current
-                production schedule.
-              </li>
-              <li>
-                Any changes to the scope of work will be subject to a written change order and
-                adjusted pricing.
-              </li>
-              <li>
-                Triple Weld Inc. carries comprehensive general liability and CWB certification
-                for all welding operations.
-              </li>
-              <li>
-                Owner/GC to provide clear, level access to the erection area and timely
-                approval of shop drawings.
-              </li>
-            </ol>
+            <div className="mb-3 flex items-center justify-between">
+              <h3 className="text-base font-bold uppercase tracking-wide text-steel-900">
+                Terms &amp; Conditions
+              </h3>
+              <button
+                type="button"
+                onClick={() => setEditingTerms(v => !v)}
+                className="print:hidden inline-flex items-center gap-1 rounded border border-steel-300 bg-white px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide text-steel-600 hover:bg-steel-50 hover:text-steel-900 transition"
+              >
+                {editingTerms ? <Check size={12} /> : <Pencil size={12} />}
+                {editingTerms ? 'Done' : 'Edit'}
+              </button>
+            </div>
+            {(() => {
+              const defaultTerms = [
+                { key: 'validity', text: 'This quotation is valid for 30 days from the date above.' },
+                { key: 'payment', text: 'Payment terms: 10% deposit upon acceptance, progress billing monthly, net 30 days.' },
+                { key: 'mobilization', text: 'Mobilization within 4-6 weeks of shop drawing approval, subject to current production schedule.' },
+                { key: 'changes', text: 'Any changes to the scope of work will be subject to a written change order and adjusted pricing.' },
+                { key: 'liability', text: 'Triple Weld Inc. carries comprehensive general liability and CWB certification for all welding operations.' },
+                { key: 'access', text: 'Owner/GC to provide clear, level access to the erection area and timely approval of shop drawings.' },
+              ];
+              const visibleTerms = defaultTerms.map(line => {
+                const ov = termsOverrides[line.key] || {};
+                const visible = ov.visible !== undefined ? ov.visible : true;
+                const text = ov.text !== undefined ? ov.text : line.text;
+                return { ...line, visible, text, isOverridden: ov.text !== undefined || ov.visible !== undefined };
+              }).filter(l => l.visible);
+
+              if (!editingTerms) {
+                return (
+                  <ol className="list-inside list-decimal space-y-1.5 text-sm text-steel-600">
+                    {visibleTerms.map(line => (<li key={line.key}>{line.text}</li>))}
+                    {customTerms.map(cl => (<li key={cl.id}>{cl.text}</li>))}
+                  </ol>
+                );
+              }
+              return (
+                <div className="space-y-2 print:hidden">
+                  {defaultTerms.map(line => {
+                    const ov = termsOverrides[line.key] || {};
+                    const visible = ov.visible !== undefined ? ov.visible : true;
+                    const text = ov.text !== undefined ? ov.text : line.text;
+                    const isOverridden = ov.text !== undefined || ov.visible !== undefined;
+                    return (
+                      <div key={line.key} className={`flex items-start gap-2 rounded border px-2 py-1.5 ${visible ? 'border-steel-200 bg-white' : 'border-steel-200 bg-steel-50 opacity-60'}`}>
+                        <button type="button" title={visible ? 'Hide' : 'Show'} onClick={() => dispatch({ type: 'UPDATE_QUOTE_TERMS_LINE', key: line.key, patch: { visible: !visible } })} className={`mt-1 inline-flex h-4 w-4 flex-shrink-0 items-center justify-center rounded border ${visible ? 'border-fire-500 bg-fire-500' : 'border-steel-300 bg-white'}`}>
+                          {visible && <Check size={11} className="text-white" />}
+                        </button>
+                        <textarea value={text} onChange={(e) => dispatch({ type: 'UPDATE_QUOTE_TERMS_LINE', key: line.key, patch: { text: e.target.value } })} rows={2} className="flex-1 resize-none rounded border border-transparent bg-transparent px-1 py-0.5 text-sm text-steel-800 outline-none focus:border-fire-300 focus:bg-white" />
+                        {isOverridden && (
+                          <button type="button" title="Reset" onClick={() => dispatch({ type: 'RESET_QUOTE_TERMS_LINE', key: line.key })} className="mt-0.5 rounded p-1 text-steel-400 hover:bg-steel-100 hover:text-steel-700">
+                            <RotateCcw size={12} />
+                          </button>
+                        )}
+                      </div>
+                    );
+                  })}
+                  {customTerms.map(cl => (
+                    <div key={cl.id} className="flex items-start gap-2 rounded border border-fire-200 bg-fire-50/30 px-2 py-1.5">
+                      <span className="mt-1 inline-block rounded bg-fire-500 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide text-white">Custom</span>
+                      <textarea value={cl.text} onChange={(e) => dispatch({ type: 'UPDATE_QUOTE_TERMS_CUSTOM', id: cl.id, text: e.target.value })} rows={2} placeholder="Custom term..." className="flex-1 resize-none rounded border border-transparent bg-transparent px-1 py-0.5 text-sm text-steel-800 outline-none focus:border-fire-300 focus:bg-white" />
+                      <button type="button" title="Delete" onClick={() => dispatch({ type: 'DELETE_QUOTE_TERMS_CUSTOM', id: cl.id })} className="mt-0.5 rounded p-1 text-red-400 hover:bg-red-50 hover:text-red-600">
+                        <Trash2 size={12} />
+                      </button>
+                    </div>
+                  ))}
+                  <button type="button" onClick={() => dispatch({ type: 'ADD_QUOTE_TERMS_CUSTOM', text: '' })} className="inline-flex items-center gap-1 rounded border border-dashed border-fire-400 bg-white px-3 py-1.5 text-xs font-semibold text-fire-600 hover:bg-fire-50">
+                    <Plus size={13} /> Add custom term
+                  </button>
+                </div>
+              );
+            })()}
           </div>
 
           {/* Signature Block */}
