@@ -149,6 +149,15 @@ async function pdfPageToBase64(pdfDoc, pageNum, scale = 2.0) {
 }
 
 /* ----------------- Gemini API call ----------------- */
+function repairJSON(raw) {
+  let s = raw
+  s = s.replace(/```json\s*/g, '').replace(/```\s*/g, '')
+  s = s.replace(/\/\/[^\n]*/g, '').replace(/\/\*[\s\S]*?\*\//g, '')
+  s = s.replace(/,\s*([\]\}])/g, '$1')
+  const match = s.match(/\{[\s\S]*\}/)
+  return match ? match[0] : null
+}
+
 async function callGeminiVision(apiKey, model, base64Image, prompt) {
   const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`
   const reqBody = JSON.stringify({
