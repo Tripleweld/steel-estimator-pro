@@ -149,13 +149,17 @@ async function pdfPageToBase64(pdfDoc, pageNum, scale = 2.0) {
 }
 
 /* ----------------- Gemini API call ----------------- */
-function repairJSON(raw) {
+function repairJSON(raw, logLabel) {
+  if (logLabel) console.log('AI_TAKEOFF RAW (' + logLabel + '):', raw?.substring(0, 500))
   let s = raw
   s = s.replace(/```json\s*/g, '').replace(/```\s*/g, '')
   s = s.replace(/\/\/[^\n]*/g, '').replace(/\/\*[\s\S]*?\*\//g, '')
   s = s.replace(/,\s*([\]\}])/g, '$1')
-  const match = s.match(/\{[\s\S]*\}/)
-  return match ? match[0] : null
+  const objMatch = s.match(/\{[\s\S]*\}/)
+  if (objMatch) return objMatch[0]
+  const arrMatch = s.match(/\[[\s\S]*\]/)
+  if (arrMatch) return arrMatch[0]
+  return null
 }
 
 async function callGeminiVision(apiKey, model, base64Image, prompt) {
@@ -185,10 +189,13 @@ async function callGeminiVision(apiKey, model, base64Image, prompt) {
     }
     const d = await resp.json()
     const text = d.candidates?.[0]?.content?.parts?.[0]?.text || ''
-    const cleaned = repairJSON(text)
-    if (!cleaned) throw new Error('No JSON found in AI response')
+    const cleaned = repairJSON(text, 'Gemini')
+    if (!cleaned) throw new Error('No JSON found in AI response. Raw: ' + text?.substring(0, 200))
     try {
-      return JSON.parse(cleaned)
+      const parsed = JSON.parse(cleaned)
+      // Normalize: if array, wrap as structuralMembers
+      if (Array.isArray(parsed)) return { structuralMembers: parsed, miscMetals: [], specs: {}, warnings: [] }
+      return parsed
     } catch (e) {
       let tr = cleaned
       while (tr.length > 10) {
@@ -201,7 +208,7 @@ async function callGeminiVision(apiKey, model, base64Image, prompt) {
   }
 }
 
-/* ── OpenAI GPT-4o Vision API call ───────────────────────────── */
+/* ââ OpenAI GPT-4o Vision API call âââââââââââââââââââââââââââââ */
 async function callOpenAIVision(apiKey, model, base64Image, prompt) {
   const url = 'https://api.openai.com/v1/chat/completions'
   const MAX_RETRIES = 3
@@ -237,8 +244,8 @@ async function callOpenAIVision(apiKey, model, base64Image, prompt) {
     }
     const d = await resp.json()
     const text = d.choices?.[0]?.message?.content || ''
-    const cleaned = repairJSON(text)
-    if (!cleaned) throw new Error('No JSON found in OpenAI response')
+    const cleaned = repairJSON(text, 'OpenAI')
+    if (!cleaned) throw new Error('No JSON found in OpenAI response. Raw: ' + text?.substring(0, 200))
     try {
       return JSON.parse(cleaned)
     } catch (e) {
