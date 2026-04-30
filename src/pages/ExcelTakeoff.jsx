@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import {
   FileSpreadsheet, Upload, Download, CheckCircle, XCircle, AlertTriangle,
   ArrowRight, Trash2, RefreshCw, FileDown, Info,
+  Brain,
 } from 'lucide-react'
 import { useProject } from '../context/ProjectContext'
 
@@ -264,6 +265,19 @@ function downloadBlob(blob, filename) {
   setTimeout(() => URL.revokeObjectURL(url), 1000)
 }
 
+/* AI Takeoff Prompt download */
+function downloadPrompt() {
+  fetch('/TripleWeld_AI_Takeoff_Prompt.txt')
+    .then(r => { if(!r.ok) throw new Error(); return r.text() })
+    .then(text => {
+      const blob = new Blob([text], { type: 'text/plain;charset=utf-8' })
+      downloadBlob(blob, 'TripleWeld_AI_Takeoff_Prompt.txt')
+    })
+    .catch(() => {
+      window.open('https://raw.githubusercontent.com/Tripleweld/steel-estimator-pro/main/public/TripleWeld_AI_Takeoff_Prompt.txt','_blank')
+    })
+}
+
 /* ─────────── Map parsed row → state row ─────────── */
 function toStateRow(parsedRow, idx) {
   const meta = SECTIONS.find((s) => s.id === parsedRow.section) || {}
@@ -347,9 +361,9 @@ export default function ExcelTakeoff() {
     if (mode === 'replace') {
       nextStructural = validRows
     } else {
-      nextStructural = [...(state.structural || []), ...validRows]
+      nextStructural = [...(state.structuralRows || []), ...validRows]
     }
-    dispatch({ type: 'SET_STRUCTURAL', payload: nextStructural })
+    dispatch({ type: 'SET_STRUCTURAL_ROWS', payload: nextStructural })
     setShowApplyDialog(false)
     alert(`Applied ${validRows.length} rows to Structural Takeoff (${mode} mode). Navigate to Structural Takeoff to review.`)
     // Optional: clear parsed state after apply
@@ -414,9 +428,16 @@ export default function ExcelTakeoff() {
           >
             <FileDown size={16} /> Download Filled Example
           </button>
+          <button
+            onClick={downloadPrompt}
+            className="px-3 py-2 bg-fire-600/80 hover:bg-fire-500 text-white text-sm rounded flex items-center gap-2"
+          >
+            <Brain size={16} />
+            Download AI Takeoff Prompt
+          </button>
         </div>
         <p className="text-xs text-steel-500 mt-2">
-          The template has 2 sheets: Takeoff (data) and Instructions (column reference + section catalog).
+          The template has 2 sheets: Takeoff (data) and Instructions. The <strong className="text-fire-400">AI Takeoff Prompt</strong> is a comprehensive prompt you can paste into any AI (Claude, GPT-4o, Gemini) alongside your drawings to extract quantities in the exact template format.
         </p>
       </div>
 
@@ -586,7 +607,7 @@ export default function ExcelTakeoff() {
           <div className="bg-steel-900 border border-steel-700 rounded-lg w-full max-w-md p-5">
             <h2 className="text-lg font-bold text-white mb-2">How to apply?</h2>
             <p className="text-sm text-steel-300 mb-4">
-              Currently you have <strong className="text-white">{(state.structural || []).length}</strong> existing
+              Currently you have <strong className="text-white">{(state.structuralRows || []).length}</strong> existing
               rows in Structural Takeoff. The Excel has <strong className="text-green-300">{summary.valid}</strong>{' '}
               valid rows to apply.
             </p>
@@ -597,7 +618,7 @@ export default function ExcelTakeoff() {
               >
                 <div className="text-sm font-semibold text-red-200">⚠ Replace all</div>
                 <div className="text-xs text-red-300 mt-1">
-                  Delete current {(state.structural || []).length} rows, replace with {summary.valid} from Excel.
+                  Delete current {(state.structuralRows || []).length} rows, replace with {summary.valid} from Excel.
                 </div>
               </button>
               <button
