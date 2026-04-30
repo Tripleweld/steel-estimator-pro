@@ -111,7 +111,7 @@ export default function PurchasedItems() {
           <div className="rounded-xl border border-steel-700 bg-steel-900/40 p-5 shadow-sm">
             <p className="text-xs font-medium uppercase tracking-wide text-steel-500">Longest Lead Time</p>
             <p className="mt-1 text-2xl font-bold text-white">
-              {summary.longestLead > 0 ? `${fmtNum(summary.longestLead)} wks` : 'â'}
+              {summary.longestLead > 0 ? `${fmtNum(summary.longestLead)} wks` : '—'}
             </p>
           </div>
           <div className="rounded-xl border border-steel-700 bg-steel-900/40 p-5 shadow-sm">
@@ -127,10 +127,10 @@ export default function PurchasedItems() {
             value=""
             className="bg-steel-900 border border-blue-500/30 rounded px-2 py-1.5 text-xs text-white focus:outline-none focus:ring-1 focus:ring-blue-500/50 max-w-[300px]"
           >
-            <option value="" style={{ backgroundColor: '#0c1222' }}>+ Add from catalogâ¦</option>
+            <option value="" style={{ backgroundColor: '#0c1222' }}>+ Add from catalog…</option>
             {CATALOG.map((p, i) => (
               <option key={i} value={i} style={{ backgroundColor: '#0c1222' }}>
-                {p.item} â ${p.unitCost}/{p.unit} ({p.supplier})
+                {p.item} — ${p.unitCost}/{p.unit} ({p.supplier})
               </option>
             ))}
           </select>
