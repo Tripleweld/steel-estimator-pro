@@ -770,7 +770,7 @@ export default function MiscMetals() {
 
         {/* Footer */}
         <div className="mt-10 border-t border-steel-700/40 pt-6 text-center">
-          <p className="text-xs text-steel-500">Triple Weld Inc. Â· Steel Estimator Pro Â· Misc Metals (Phase 1)</p>
+          <p className="text-xs text-steel-500">Triple Weld Inc. · Steel Estimator Pro · Misc Metals (Phase 1)</p>
         </div>
       </div>
     </div>
