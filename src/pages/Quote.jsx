@@ -116,7 +116,7 @@ export default function Quote() {
           (Number(eq.dropoff) || 0);
       }
     });
-    const equipMarkupPct = Number(rates.markup?.equipmentMarkup) || 0;
+    const equipMarkupPct = Number(rates.markup?.equipment ?? rates.markup?.equipmentMarkup) || 0;
     const equipmentWithMarkup = equipmentTotal * (1 + equipMarkupPct / 100);
 
     const baseForPercent = totalMaterialCost + totalLabourCost + purchasedTotal + equipmentWithMarkup;
@@ -129,10 +129,10 @@ export default function Quote() {
 
     const subtotal =
       totalMaterialCost + totalLabourCost + purchasedTotal + equipmentWithMarkup + softCostTotal;
-    const markupPercent = Number(rates.markup?.markupPercent) || 0;
+    const markupPercent = Number(rates.markup?.markup ?? rates.markup?.markupPercent) || 0;
     const markupAmount = subtotal * (markupPercent / 100);
     const bidPrice = subtotal + markupAmount;
-    const hstPercent = Number(rates.markup?.hstPercent) || 13;
+    const hstPercent = Number(rates.markup?.hst ?? rates.markup?.hstPercent) || 13;
     const hstAmount = bidPrice * (hstPercent / 100);
     const grandTotal = bidPrice + hstAmount;
 
