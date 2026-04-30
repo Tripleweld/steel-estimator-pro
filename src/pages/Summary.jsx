@@ -158,7 +158,7 @@ export default function Summary() {
         equipmentTotal += (toNum(eq.rate) * toNum(eq.days)) + toNum(eq.pickup) + toNum(eq.dropoff);
       }
     });
-    const equipMarkupPct = toNum(rates.markup?.equipmentMarkup);
+    const equipMarkupPct = toNum(rates.markup?.equipment ?? rates.markup?.equipmentMarkup);
     const equipmentWithMarkup = equipmentTotal * (1 + equipMarkupPct / 100);
 
     /* --- Soft Costs --- */
@@ -172,10 +172,10 @@ export default function Summary() {
 
     /* --- Totals & Markup --- */
     const subtotal = totalMaterialCost + totalLabourCost + purchasedTotal + equipmentWithMarkup + softCostTotal;
-    const markupPercent = toNum(rates.markup?.markupPercent);
+    const markupPercent = toNum(rates.markup?.markup ?? rates.markup?.markupPercent);
     const markupAmount = subtotal * (markupPercent / 100);
     const bidPrice = subtotal + markupAmount;
-    const hstPercent = toNum(rates.markup?.hstPercent) || 13;
+    const hstPercent = toNum(rates.markup?.hst ?? rates.markup?.hstPercent) || 13;
     const hstAmount = bidPrice * (hstPercent / 100);
     const grandTotal = bidPrice + hstAmount;
 
