@@ -273,6 +273,7 @@ const defaultState = {
   quoteExclCustom: [],
   quoteTermsOverrides: {},
   quoteTermsCustom: [],
+  quoteCustomization: {},
   isDirty: false,
 }
 
@@ -778,6 +779,20 @@ function projectReducer(state, action) {
       return { ...state, quoteTermsCustom: (state.quoteTermsCustom || []).map(_l => _l.id === action.id ? { ..._l, text: action.text } : _l), isDirty: true };
     case 'DELETE_QUOTE_TERMS_CUSTOM':
       return { ...state, quoteTermsCustom: (state.quoteTermsCustom || []).filter(_l => _l.id !== action.id), isDirty: true };
+
+    case 'UPDATE_QUOTE_CUSTOMIZATION':
+      return { ...state, quoteCustomization: { ...(state.quoteCustomization || {}), ...action.patch }, isDirty: true };
+    case 'RESET_QUOTE_CUSTOMIZATION_FIELD': {
+      const _qc = { ...(state.quoteCustomization || {}) };
+      if (action.subkey) {
+        const sub = { ..._qc[action.key] };
+        delete sub[action.subkey];
+        _qc[action.key] = sub;
+      } else {
+        delete _qc[action.key];
+      }
+      return { ...state, quoteCustomization: _qc, isDirty: true };
+    }
 
     default:
       return state
