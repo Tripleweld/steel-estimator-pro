@@ -134,7 +134,9 @@ export default function Summary() {
     const connectionPercent = toNum(matRatesObj.connectionPercent);
     const structuralMaterialCost = structuralWt * steelRate * (1 + wastePercent / 100 + connectionPercent / 100);
     const miscMaterialCost = (miscWt + stairsWt + railingsWt + ladderWt + joistReinfWt) * miscRate * (1 + wastePercent / 100);
-    const totalMaterialCost = structuralMaterialCost + miscMaterialCost;
+    const customMM = state.miscMetalsCustom || [];
+    const mmCustomTotal = customMM.reduce((acc, it) => acc + (Number(it.qty) || 0) * (Number(it.rate) || 0), 0);
+    const totalMaterialCost = structuralMaterialCost + miscMaterialCost + mmCustomTotal;
 
     /* --- Labour costs --- */
     const fabLabourCost = totalFabHrs * fabRate;
