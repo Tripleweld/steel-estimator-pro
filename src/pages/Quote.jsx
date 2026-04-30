@@ -411,7 +411,7 @@ export default function Quote() {
               <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-steel-400">
                 Client / General Contractor
               </p>
-              <p className="text-sm font-bold text-steel-900">{info.gcClient || '—'}</p>
+              <p className="text-sm font-bold text-steel-900">{(info.clientGC || info.gcClient) || '—'}</p>
               {info.engineer && (
                 <p className="text-sm text-steel-600">Engineer: {info.engineer}</p>
               )}
