@@ -22,6 +22,9 @@ export default function Quote() {
   const [editingSoW, setEditingSoW] = useState(false);
   const [editingExcl, setEditingExcl] = useState(false);
   const [editingTerms, setEditingTerms] = useState(false);
+  const [editingDoc, setEditingDoc] = useState(false);
+  const customization = state.quoteCustomization || {};
+  const customLabels = customization.pricingLabels || {};
   const scopeOverrides = state.quoteScopeOverrides || {};
   const customScope = state.quoteScopeCustom || [];
   const exclOverrides = state.quoteExclOverrides || {};
@@ -331,6 +334,15 @@ export default function Quote() {
           </div>
           <div className="flex gap-3">
             <button
+              type="button"
+              onClick={() => setEditingDoc(v => !v)}
+              className={`inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold shadow-sm transition border ${editingDoc ? 'bg-fire-500 text-white border-fire-500 hover:bg-fire-600' : 'bg-white text-steel-700 border-steel-300 hover:bg-steel-50'}`}
+              title="Edit quote document text"
+            >
+              {editingDoc ? <Check className="h-4 w-4" /> : <Pencil className="h-4 w-4" />}
+              {editingDoc ? 'Done editing' : 'Edit document'}
+            </button>
+            <button
               onClick={handlePrint}
               className="inline-flex items-center gap-2 rounded-lg bg-fire-500 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-fire-600"
             >
@@ -436,10 +448,31 @@ export default function Quote() {
                 {editingSoW ? 'Done' : 'Edit'}
               </button>
             </div>
-            <p className="mb-3 text-sm text-steel-600">
-              Triple Weld Inc. is pleased to provide the following quotation for structural steel
-              fabrication and erection services:
-            </p>
+            {(() => {
+              const defaultText = 'Triple Weld Inc. is pleased to provide the following quotation for structural steel fabrication and erection services:';
+              const text = customization.openingParagraph !== undefined ? customization.openingParagraph : defaultText;
+              if (!editingDoc) return (<p className="mb-3 text-sm text-steel-600">{text}</p>);
+              return (
+                <div className="mb-3 flex items-start gap-2 print:hidden">
+                  <textarea
+                    value={text}
+                    onChange={(e) => dispatch({ type: 'UPDATE_QUOTE_CUSTOMIZATION', patch: { openingParagraph: e.target.value } })}
+                    rows={3}
+                    className="flex-1 resize-none rounded border border-fire-300 bg-fire-50/30 px-2 py-1.5 text-sm text-steel-800 outline-none focus:border-fire-500"
+                  />
+                  {customization.openingParagraph !== undefined && (
+                    <button
+                      type="button"
+                      onClick={() => dispatch({ type: 'RESET_QUOTE_CUSTOMIZATION_FIELD', key: 'openingParagraph' })}
+                      className="mt-1 rounded p-1 text-steel-400 hover:bg-steel-100 hover:text-steel-700"
+                      title="Reset to default"
+                    >
+                      <RotateCcw size={14} />
+                    </button>
+                  )}
+                </div>
+              );
+            })()}
             {(() => {
               const fmtNum = (v, d = 0) => Number(v || 0).toLocaleString('en-US', { minimumFractionDigits: d, maximumFractionDigits: d });
               const defaultLines = [
@@ -566,7 +599,17 @@ export default function Quote() {
                       </tr>
                     ))}
                     <tr className="bg-silver-50">
-                    <td className="px-4 py-2.5 font-semibold text-steel-900">Subtotal</td>
+                    <td className="px-4 py-2.5 font-semibold text-steel-900">{(() => {
+                        const _def = 'Subtotal';
+                        const _txt = customLabels.subtotal !== undefined ? customLabels.subtotal : _def;
+                        if (!editingDoc) return _txt;
+                        return (
+                          <span className="inline-flex items-center gap-1 print:hidden">
+                            <input type="text" value={_txt} onChange={(e) => dispatch({ type: 'UPDATE_QUOTE_CUSTOMIZATION', patch: { pricingLabels: { ...customLabels, subtotal: e.target.value } } })} className="w-40 rounded border border-fire-300 bg-fire-50/30 px-1 py-0.5 text-sm outline-none focus:border-fire-500" />
+                            {customLabels.subtotal !== undefined && (<button type="button" onClick={() => dispatch({ type: 'RESET_QUOTE_CUSTOMIZATION_FIELD', key: 'pricingLabels', subkey: 'subtotal' })} className="rounded p-0.5 text-steel-400 hover:bg-steel-100" title="Reset"><RotateCcw size={12} /></button>)}
+                          </span>
+                        );
+                      })()}</td>
                     <td className="px-4 py-2.5 text-right font-semibold text-steel-900">
                       {fmt(pricingItems.reduce((s,r)=>s+(Number(r.total)||0),0))}
                     </td>
@@ -574,7 +617,17 @@ export default function Quote() {
                   {summary.markupAmount > 0 && (
                     <tr>
                       <td className="px-4 py-2.5 text-steel-700">
-                        Markup ({fmtNum(summary.markupPercent, 1)}%)
+                        {(() => {
+                        const _def = 'Markup (' + fmtNum(summary.markupPercent, 1) + '%)';
+                        const _txt = customLabels.markup !== undefined ? customLabels.markup : _def;
+                        if (!editingDoc) return _txt;
+                        return (
+                          <span className="inline-flex items-center gap-1 print:hidden">
+                            <input type="text" value={_txt} onChange={(e) => dispatch({ type: 'UPDATE_QUOTE_CUSTOMIZATION', patch: { pricingLabels: { ...customLabels, markup: e.target.value } } })} className="w-40 rounded border border-fire-300 bg-fire-50/30 px-1 py-0.5 text-sm outline-none focus:border-fire-500" />
+                            {customLabels.markup !== undefined && (<button type="button" onClick={() => dispatch({ type: 'RESET_QUOTE_CUSTOMIZATION_FIELD', key: 'pricingLabels', subkey: 'markup' })} className="rounded p-0.5 text-steel-400 hover:bg-steel-100" title="Reset"><RotateCcw size={12} /></button>)}
+                          </span>
+                        );
+                      })()}
                       </td>
                       <td className="px-4 py-2.5 text-right text-steel-800">
                         {fmt(pricingItems.reduce((s,r)=>s+(Number(r.total)||0),0) * (Number(summary.markupPercent)||0) / 100)}
@@ -582,21 +635,51 @@ export default function Quote() {
                     </tr>
                   )}
                   <tr className="bg-fire-50">
-                    <td className="px-4 py-3 text-base font-bold text-fire-700">Bid Price</td>
+                    <td className="px-4 py-3 text-base font-bold text-fire-700">{(() => {
+                        const _def = 'Bid Price';
+                        const _txt = customLabels.bidPrice !== undefined ? customLabels.bidPrice : _def;
+                        if (!editingDoc) return _txt;
+                        return (
+                          <span className="inline-flex items-center gap-1 print:hidden">
+                            <input type="text" value={_txt} onChange={(e) => dispatch({ type: 'UPDATE_QUOTE_CUSTOMIZATION', patch: { pricingLabels: { ...customLabels, bidPrice: e.target.value } } })} className="w-40 rounded border border-fire-300 bg-fire-50/30 px-1 py-0.5 text-sm outline-none focus:border-fire-500" />
+                            {customLabels.bidPrice !== undefined && (<button type="button" onClick={() => dispatch({ type: 'RESET_QUOTE_CUSTOMIZATION_FIELD', key: 'pricingLabels', subkey: 'bidPrice' })} className="rounded p-0.5 text-steel-400 hover:bg-steel-100" title="Reset"><RotateCcw size={12} /></button>)}
+                          </span>
+                        );
+                      })()}</td>
                     <td className="px-4 py-3 text-right text-base font-bold text-fire-700">
                       {fmt(pricingItems.reduce((s,r)=>s+(Number(r.total)||0),0) * (1 + (Number(summary.markupPercent)||0)/100))}
                     </td>
                   </tr>
                   <tr>
                     <td className="px-4 py-2.5 text-steel-700">
-                      HST ({fmtNum(summary.hstPercent, 1)}%)
+                      {(() => {
+                        const _def = 'HST (' + fmtNum(summary.hstPercent, 1) + '%)';
+                        const _txt = customLabels.hst !== undefined ? customLabels.hst : _def;
+                        if (!editingDoc) return _txt;
+                        return (
+                          <span className="inline-flex items-center gap-1 print:hidden">
+                            <input type="text" value={_txt} onChange={(e) => dispatch({ type: 'UPDATE_QUOTE_CUSTOMIZATION', patch: { pricingLabels: { ...customLabels, hst: e.target.value } } })} className="w-40 rounded border border-fire-300 bg-fire-50/30 px-1 py-0.5 text-sm outline-none focus:border-fire-500" />
+                            {customLabels.hst !== undefined && (<button type="button" onClick={() => dispatch({ type: 'RESET_QUOTE_CUSTOMIZATION_FIELD', key: 'pricingLabels', subkey: 'hst' })} className="rounded p-0.5 text-steel-400 hover:bg-steel-100" title="Reset"><RotateCcw size={12} /></button>)}
+                          </span>
+                        );
+                      })()}
                     </td>
                     <td className="px-4 py-2.5 text-right text-steel-800">
                       {fmt(pricingItems.reduce((s,r)=>s+(Number(r.total)||0),0) * (1 + (Number(summary.markupPercent)||0)/100) * (Number(summary.hstPercent)||0) / 100)}
                     </td>
                   </tr>
                   <tr className="bg-steel-800">
-                    <td className="px-4 py-3 text-base font-bold text-white">Grand Total</td>
+                    <td className="px-4 py-3 text-base font-bold text-white">{(() => {
+                        const _def = 'Grand Total';
+                        const _txt = customLabels.grandTotal !== undefined ? customLabels.grandTotal : _def;
+                        if (!editingDoc) return _txt;
+                        return (
+                          <span className="inline-flex items-center gap-1 print:hidden">
+                            <input type="text" value={_txt} onChange={(e) => dispatch({ type: 'UPDATE_QUOTE_CUSTOMIZATION', patch: { pricingLabels: { ...customLabels, grandTotal: e.target.value } } })} className="w-40 rounded border border-fire-300 bg-fire-50/30 px-1 py-0.5 text-sm outline-none focus:border-fire-500" />
+                            {customLabels.grandTotal !== undefined && (<button type="button" onClick={() => dispatch({ type: 'RESET_QUOTE_CUSTOMIZATION_FIELD', key: 'pricingLabels', subkey: 'grandTotal' })} className="rounded p-0.5 text-steel-400 hover:bg-steel-100" title="Reset"><RotateCcw size={12} /></button>)}
+                          </span>
+                        );
+                      })()}</td>
                     <td className="px-4 py-3 text-right text-base font-bold text-fire-400">
                       {fmt(pricingItems.reduce((s,r)=>s+(Number(r.total)||0),0) * (1 + (Number(summary.markupPercent)||0)/100) * (1 + (Number(summary.hstPercent)||0)/100))}
                     </td>
