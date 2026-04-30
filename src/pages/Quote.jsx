@@ -247,7 +247,15 @@ export default function Quote() {
       if (secTotal > 0) rows.push({ label: 'Misc Metals — ' + label, total: secTotal });
     });
 
-    // EQUIPMENT (use already-computed equipmentTotal from summary)
+
+    // MISC METALS CUSTOM ITEMS (user-added beyond Tier 1)
+    const customMM = state.miscMetalsCustom || [];
+    customMM.forEach(it => {
+      const lineTotal = (Number(it.qty) || 0) * (Number(it.rate) || 0);
+      if (lineTotal > 0) rows.push({ label: 'Misc Metals — ' + (it.name || 'Custom item'), total: lineTotal });
+    });
+
+        // EQUIPMENT (use already-computed equipmentTotal from summary)
     if (summary.equipmentTotal > 0) rows.push({ label: 'Equipment', total: summary.equipmentTotal });
 
     // PURCHASED ITEMS — exclude joist/deck (already in Structural)
