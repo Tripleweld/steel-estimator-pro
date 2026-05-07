@@ -3,7 +3,7 @@ import { Lock, AlertCircle } from 'lucide-react'
 
 // SHA-256 hash of the temporary access password.
 // Stored as hash so the plaintext password is not visible in the bundle.
-const PASSWORD_HASH = 'b9a2df362b853d9074cc574828830e1609c2cc25b04094229a060e8a4aaaa1b9'
+const PASSWORD_HASH = '43ed41dc9ea5ab4b855e508c80ee0d95bf1f3d069695be40eec6b7e42cfdd2f3'
 const SESSION_KEY = 'tw_gate_authed_v1'
 
 async function sha256(text) {
