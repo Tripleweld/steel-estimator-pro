@@ -6,6 +6,26 @@ import { Link } from 'react-router-dom'
 /* --------------------- helpers --------------------- */
 const toNum = v => { const n = Number(v); return isNaN(n) ? 0 : n; }
 
+function inferType(designation, bucketSection) {
+  const s = String(designation || '').toUpperCase().trim()
+  if (!s) return '--'
+  if (s.startsWith('OWSJ') || s.includes('JOIST')) return 'OWSJ'
+  if (s.includes('DECK')) return 'Deck'
+  if (s.startsWith('WT')) return 'WT'
+  if (s.startsWith('W')) return bucketSection === 'columns' ? 'W-Column' : 'W-Beam'
+  if (s.startsWith('HSS')) {
+    const m = s.match(/HSS\s*(\d+(?:\.\d+)?)\s*[X]\s*(\d+(?:\.\d+)?)/)
+    if (m) return m[1] === m[2] ? 'HSS-Square' : 'HSS-Rect'
+    return 'HSS-Round'
+  }
+  if (s.startsWith('PIPE')) return 'Pipe'
+  if (s.startsWith('C')) return 'Channel'
+  if (s.startsWith('L')) return 'Angle'
+  if (s.startsWith('PL')) return 'Plate'
+  if (s.startsWith('FB') || s.startsWith('BAR')) return 'Flat Bar'
+  return 'Other'
+}
+
 /* --------------- AI Provider configs --------------- */
 const PROVIDERS = {
   gemini: { name: 'Gemini 2.0 Flash (Stable)', model: 'gemini-2.0-flash', urlBase: 'https://generativelanguage.googleapis.com/v1beta/models/' },
@@ -478,27 +498,30 @@ export default function AiTakeoff() {
     if (!mergedResult) return
 
     // Map structural members to takeoff rows
-    const newRows = mergedResult.structuralMembers.map((m, i) => ({
-      id: 'ai-' + Date.now() + '-' + i,
-      mark: m.mark || '',
-      section: 'beams',
-      grade: m.grade || '300W',
-      length: toNum(m.length_ft),
-      qty: toNum(m.qty) || 1,
-      wtPerFt: toNum(m.weight_per_ft),
-      totalWt: toNum(m.total_weight_lbs) || (toNum(m.qty) || 1) * toNum(m.length_ft) * toNum(m.weight_per_ft),
-      connectionLeft: m.connection_left || 'simple',
-      connectionRight: m.connection_right || 'simple',
-      elevation: m.elevation || '',
-      finish: m.finish || 'shop primer',
-      notes: m.notes || '',
-      aiConfidence: toNum(m.confidence),
-      // Fab and install hours will be calculated by the existing system
-      fabSetup: 0, fabCut: 0, fabDrill: 0, fabFeed: 0, fabWeld: 0,
-      fabGrind: 0, fabTotal: 0,
-      installPlumb: 0, installBolt: 0, installWeld: 0, installDeck: 0,
-      installTotal: 0,
-    }))
+    const newRows = mergedResult.structuralMembers.map((m, i) => {
+      const profile = m.section || ''
+      return {
+        id: 'ai-' + Date.now() + '-' + i,
+        section: 'beams',
+        mark: m.mark || '',
+        dwgRef: m.gridLocation || '',
+        type: inferType(profile, 'beams'),
+        profile,
+        qty: toNum(m.qty) || 1,
+        lengthFt: toNum(m.length_ft),
+        wtPerFt: toNum(m.weight_per_ft),
+        basePlLb: 0,
+        anchorsPc: 0,
+        setup: 0, cut: 0, drill: 0, feed: 0, weld: 0, grind: 0, paint: 0,
+        fabPerPcOverride: null,
+        fabCrew: 1,
+        unload: 0, rig: 0, fit: 0, bolt: 0, touchUp: 0,
+        instPerPcOverride: null,
+        instCrew: 2,
+        notes: m.notes || '',
+        aiConfidence: toNum(m.confidence),
+      }
+    })
 
     // Dispatch to add rows to structural takeoff
     dispatch({ type: 'SET_STRUCTURAL_ROWS', payload: [
