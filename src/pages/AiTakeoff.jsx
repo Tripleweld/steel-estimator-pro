@@ -6,6 +6,18 @@ import { Link } from 'react-router-dom'
 /* --------------------- helpers --------------------- */
 const toNum = v => { const n = Number(v); return isNaN(n) ? 0 : n; }
 
+function confToNum(c) {
+  if (typeof c === 'number') return c > 1 ? c / 100 : c
+  if (typeof c !== 'string') return 0
+  const s = c.toLowerCase().trim()
+  if (s === 'high') return 0.95
+  if (s === 'medium' || s === 'med') return 0.75
+  if (s === 'low') return 0.5
+  const n = parseFloat(s)
+  if (!isNaN(n)) return n > 1 ? n / 100 : n
+  return 0
+}
+
 function inferType(designation, bucketSection) {
   const s = String(designation || '').toUpperCase().trim()
   if (!s) return '--'
@@ -477,7 +489,7 @@ export default function AiTakeoff() {
 
     const totalWeight = allMembers.reduce((s, m) => s + toNum(m.total_weight_lbs), 0)
     const avgConfidence = allMembers.length
-      ? allMembers.reduce((s, m) => s + toNum(m.confidence), 0) / allMembers.length
+      ? allMembers.reduce((s, m) => s + confToNum(m.confidence), 0) / allMembers.length
       : 0
 
     return {
@@ -526,7 +538,7 @@ export default function AiTakeoff() {
         instPerPcOverride: null,
         instCrew: 2,
         notes,
-        aiConfidence: toNum(m.confidence),
+        aiConfidence: confToNum(m.confidence),
       }
     })
 
@@ -839,7 +851,7 @@ export default function AiTakeoff() {
                   </thead>
                   <tbody>
                     {mergedResult.structuralMembers.map((m, i) => (
-                      <tr key={i} className={`border-t border-steel-800 ${toNum(m.confidence) < 0.7 ? 'bg-yellow-500/5' : ''}`}>
+                      <tr key={i} className={`border-t border-steel-800 ${confToNum(m.confidence) < 0.7 ? 'bg-yellow-500/5' : ''}`}>
                         <td className="px-3 py-2 font-medium text-white">{m.mark}</td>
                         <td className="px-3 py-2 text-steel-300">{m.category}</td>
                         <td className="px-3 py-2 text-fire-400 font-mono">{m.section}</td>
@@ -851,8 +863,8 @@ export default function AiTakeoff() {
                         <td className="px-3 py-2 text-steel-400">{m.connection_left}</td>
                         <td className="px-3 py-2 text-steel-400">{m.connection_right}</td>
                         <td className="px-3 py-2 text-steel-400">{m.finish}</td>
-                        <td className={`px-3 py-2 font-medium ${confColor(toNum(m.confidence))}`}>
-                          {(toNum(m.confidence) * 100).toFixed(0)}%
+                        <td className={`px-3 py-2 font-medium ${confColor(confToNum(m.confidence))}`}>
+                          {(confToNum(m.confidence) * 100).toFixed(0)}%
                         </td>
                       </tr>
                     ))}
