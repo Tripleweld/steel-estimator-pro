@@ -18,6 +18,37 @@ function confToNum(c) {
   return 0
 }
 
+const MARK_PREFIX_MAP = [
+  ['CONN', 'moment'],
+  ['JR',   'joistReinf'],
+  ['XB',   'xBracing'],
+  ['KB',   'kneeBrace'],
+  ['BR',   'bridging'],
+  ['SD',   'steelDeck'],
+  ['PA',   'perimeterAngle'],
+  ['RF',   'roofFrames'],
+  ['L',    'lintels'],
+  ['C',    'columns'],
+  ['B',    'beams'],
+  ['J',    'joists'],
+]
+
+function inferSection(m) {
+  const mark = String(m.mark || '').toUpperCase().trim()
+  const designation = String(m.section || '').toUpperCase().trim()
+
+  for (const [pfx, sec] of MARK_PREFIX_MAP) {
+    if (mark.startsWith(pfx)) return sec
+  }
+
+  if (designation.startsWith('OWSJ') || designation.includes('JOIST')) return 'joists'
+  if (designation.includes('DECK')) return 'steelDeck'
+  if (designation.startsWith('HSS')) return 'columns'
+  if (designation.startsWith('W')) return 'beams'
+  if (designation.startsWith('PL')) return 'moment'
+  return 'beams'
+}
+
 function inferType(designation, bucketSection) {
   const s = String(designation || '').toUpperCase().trim()
   if (!s) return '--'
@@ -512,6 +543,7 @@ export default function AiTakeoff() {
     // Map structural members to takeoff rows
     const newRows = mergedResult.structuralMembers.map((m, i) => {
       const profile = m.section || ''
+      const section = inferSection(m)
       const connL = m.connectionLeft || m.connection_left || ''
       const connR = m.connectionRight || m.connection_right || ''
       const aiContext = [
@@ -521,10 +553,10 @@ export default function AiTakeoff() {
       const notes = [m.notes, aiContext].filter(Boolean).join(' — ')
       return {
         id: 'ai-' + Date.now() + '-' + i,
-        section: 'beams',
+        section,
         mark: m.mark || '',
         dwgRef: m.gridLocation || '',
-        type: inferType(profile, 'beams'),
+        type: inferType(profile, section),
         profile,
         qty: toNum(m.qty) || 1,
         lengthFt: toNum(m.length_ft),
