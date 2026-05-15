@@ -500,6 +500,13 @@ export default function AiTakeoff() {
     // Map structural members to takeoff rows
     const newRows = mergedResult.structuralMembers.map((m, i) => {
       const profile = m.section || ''
+      const connL = m.connectionLeft || m.connection_left || ''
+      const connR = m.connectionRight || m.connection_right || ''
+      const aiContext = [
+        connL && `connL: ${connL}`,
+        connR && `connR: ${connR}`,
+      ].filter(Boolean).join(' | ')
+      const notes = [m.notes, aiContext].filter(Boolean).join(' — ')
       return {
         id: 'ai-' + Date.now() + '-' + i,
         section: 'beams',
@@ -518,7 +525,7 @@ export default function AiTakeoff() {
         unload: 0, rig: 0, fit: 0, bolt: 0, touchUp: 0,
         instPerPcOverride: null,
         instCrew: 2,
-        notes: m.notes || '',
+        notes,
         aiConfidence: toNum(m.confidence),
       }
     })
