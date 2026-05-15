@@ -602,26 +602,26 @@ export default function AiTakeoff() {
       ...newRows
     ]})
 
-    // Map misc metals
+    // Map misc metals → miscMetalsCustom (Misc Metals page's custom items list)
     if (mergedResult.miscMetals.length > 0) {
-      const miscRows = mergedResult.miscMetals.map((mm, i) => ({
-        id: 'ai-misc-' + Date.now() + '-' + i,
-        item: mm.item || '',
-        type: mm.type || 'other',
-        description: mm.description || '',
-        qty: toNum(mm.qty) || 1,
-        unit: mm.unit || 'ea',
-        dimensions: mm.dimensions || '',
-        finish: mm.finish || '',
-        totalWt: toNum(mm.estimated_weight_lbs),
-        notes: '',
-        aiConfidence: toNum(mm.confidence),
-      }))
-
-      dispatch({ type: 'SET_MISC_METALS', payload: [
-        ...(state.miscMetals || []),
-        ...miscRows
-      ]})
+      const miscRows = mergedResult.miscMetals.map((mm, i) => {
+        const aiNotes = [
+          mm.description,
+          mm.material && `material: ${mm.material}`,
+          mm.finish && `finish: ${mm.finish}`,
+          mm.flights != null && `flights: ${mm.flights}`,
+          mm.notes,
+        ].filter(Boolean).join(' — ')
+        return {
+          id: 'mmc-ai-' + Date.now() + '-' + i,
+          name: mm.item || mm.description || 'AI-extracted misc item',
+          qty: toNum(mm.qty) || 1,
+          unit: mm.unit || 'ea',
+          rate: 0,
+          notes: aiNotes,
+        }
+      })
+      dispatch({ type: 'APPEND_MM_CUSTOM_ITEMS', payload: miscRows })
     }
 
     setError(null)

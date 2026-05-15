@@ -748,6 +748,8 @@ function projectReducer(state, action) {
       return { ...state, quoteScopeCustom: (state.quoteScopeCustom || []).filter(_l => _l.id !== action.id), isDirty: true };
     case 'ADD_MM_CUSTOM_ITEM':
       return { ...state, miscMetalsCustom: [...(state.miscMetalsCustom || []), { id: 'mmc-' + Date.now() + '-' + Math.floor(Math.random()*1000), name: '', qty: 0, unit: 'ea', rate: 0, notes: '' }], isDirty: true };
+    case 'APPEND_MM_CUSTOM_ITEMS':
+      return { ...state, miscMetalsCustom: [...(state.miscMetalsCustom || []), ...action.payload], isDirty: true };
     case 'UPDATE_MM_CUSTOM_ITEM':
       return { ...state, miscMetalsCustom: (state.miscMetalsCustom || []).map(_it => _it.id === action.id ? { ..._it, ...action.patch } : _it), isDirty: true };
     case 'DELETE_MM_CUSTOM_ITEM':
