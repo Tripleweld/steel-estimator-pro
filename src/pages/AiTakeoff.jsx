@@ -2,9 +2,28 @@ import { useState, useCallback, useRef } from 'react'
 import { useProject } from '../context/ProjectContext'
 import { Upload, FileText, Zap, AlertTriangle, CheckCircle, Loader2, Settings, Brain, Eye, Download, Trash2, ChevronDown, ChevronUp, FileSpreadsheet, ArrowRight } from 'lucide-react'
 import { Link } from 'react-router-dom'
+import AISC_SHAPES from '../data/aisc-shapes-data'
 
 /* --------------------- helpers --------------------- */
 const toNum = v => { const n = Number(v); return isNaN(n) ? 0 : n; }
+
+const AISC_WT_LOOKUP = (() => {
+  const map = new Map()
+  const norm = (s) => String(s || '').toUpperCase().replace(/\s+/g, '').replace(/Ø/g, '')
+  for (const row of AISC_SHAPES) {
+    const imp = row[0], wtImp = row[2], met = row[3]
+    if (imp) map.set(norm(imp), wtImp)
+    if (met) map.set(norm(met), wtImp)
+  }
+  return map
+})()
+
+function lookupWtPerFt(designation) {
+  if (!designation) return null
+  const key = String(designation).toUpperCase().replace(/\s+/g, '').replace(/Ø/g, '')
+  const wt = AISC_WT_LOOKUP.get(key)
+  return wt != null ? wt : null
+}
 
 function confToNum(c) {
   if (typeof c === 'number') return c > 1 ? c / 100 : c
@@ -544,6 +563,9 @@ export default function AiTakeoff() {
     const newRows = mergedResult.structuralMembers.map((m, i) => {
       const profile = m.section || ''
       const section = inferSection(m)
+      const aiWt = toNum(m.weight_per_ft)
+      const aiscWt = lookupWtPerFt(profile)
+      const wtPerFt = aiscWt != null ? aiscWt : aiWt
       const connL = m.connectionLeft || m.connection_left || ''
       const connR = m.connectionRight || m.connection_right || ''
       const aiContext = [
@@ -560,7 +582,7 @@ export default function AiTakeoff() {
         profile,
         qty: toNum(m.qty) || 1,
         lengthFt: toNum(m.length_ft),
-        wtPerFt: toNum(m.weight_per_ft),
+        wtPerFt,
         basePlLb: 0,
         anchorsPc: 0,
         setup: 0, cut: 0, drill: 0, feed: 0, weld: 0, grind: 0, paint: 0,
