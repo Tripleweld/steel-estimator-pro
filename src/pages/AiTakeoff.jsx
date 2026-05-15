@@ -481,8 +481,7 @@ export default function AiTakeoff() {
     const newRows = mergedResult.structuralMembers.map((m, i) => ({
       id: 'ai-' + Date.now() + '-' + i,
       mark: m.mark || '',
-      section: m.section || '',
-      section: ({beam:'beams',column:'columns',brace:'kneeBrace',hss:'beams',plate:'beams',joist:'joists'}[m.category])||'beams',
+      section: 'beams',
       grade: m.grade || '300W',
       length: toNum(m.length_ft),
       qty: toNum(m.qty) || 1,
