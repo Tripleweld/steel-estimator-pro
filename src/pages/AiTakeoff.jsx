@@ -331,7 +331,10 @@ async function loadPdfJs() {
   })
 }
 
-async function pdfPageToBase64(pdfDoc, pageNum, scale = 2.0) {
+// Render a PDF page to a base64 JPEG. Defaults tuned for Vercel Hobby's 4.5 MB
+// request limit: scale 1.5 + JPEG quality 0.75 keeps a typical 8.5x11 / 11x17
+// structural sheet under ~2 MB base64 while Gemini still reads dim text reliably.
+async function pdfPageToBase64(pdfDoc, pageNum, scale = 1.5, quality = 0.75) {
   const page = await pdfDoc.getPage(pageNum)
   const viewport = page.getViewport({ scale })
   const canvas = document.createElement('canvas')
@@ -339,7 +342,7 @@ async function pdfPageToBase64(pdfDoc, pageNum, scale = 2.0) {
   canvas.height = viewport.height
   const ctx = canvas.getContext('2d')
   await page.render({ canvasContext: ctx, viewport }).promise
-  return canvas.toDataURL('image/jpeg', 0.85).split(',')[1]
+  return canvas.toDataURL('image/jpeg', quality).split(',')[1]
 }
 
 // Abortable sleep — rejects with AbortError immediately if signal fires.
@@ -601,11 +604,25 @@ export default function AiTakeoff() {
       ))
 
       try {
-        // Convert page to high-res image
+        // Convert page to image. Default 1.5x / quality 0.75 (≈ <2 MB base64);
+        // if a dense sheet still lands over 3 MB, recompress at quality 0.5
+        // and, if still too big, drop scale to 1.2 — Vercel Hobby caps the
+        // proxy request body at 4.5 MB total.
+        const SIZE_CAP_BYTES = 3 * 1024 * 1024
         console.log('AI_TAKEOFF: rendering page', page.pageNum, 'to image, pdfDoc:', !!page.pdfDoc)
-        const base64 = await pdfPageToBase64(page.pdfDoc, page.pageNum, 2.0)
+        let base64 = await pdfPageToBase64(page.pdfDoc, page.pageNum, 1.5, 0.75)
         if (signal.aborted) { cancelled = true; break }
-        console.log('AI_TAKEOFF: page', page.pageNum, 'rendered, base64 length:', base64?.length)
+        if (base64.length > SIZE_CAP_BYTES) {
+          console.warn('AI_TAKEOFF: page', page.pageNum, 'base64', base64.length, 'B > cap', SIZE_CAP_BYTES, '— recompressing at q=0.5')
+          base64 = await pdfPageToBase64(page.pdfDoc, page.pageNum, 1.5, 0.5)
+          if (signal.aborted) { cancelled = true; break }
+        }
+        if (base64.length > SIZE_CAP_BYTES) {
+          console.warn('AI_TAKEOFF: page', page.pageNum, 'still', base64.length, 'B — falling back to scale=1.2 q=0.5')
+          base64 = await pdfPageToBase64(page.pdfDoc, page.pageNum, 1.2, 0.5)
+          if (signal.aborted) { cancelled = true; break }
+        }
+        console.log('AI_TAKEOFF: page', page.pageNum, 'final payload base64:', base64.length, 'B (~', (base64.length / 1024 / 1024).toFixed(2), 'MB)')
 
         // Call AI via /api/gemini serverless proxy (key lives in Vercel env)
         const model = PROVIDERS[provider]?.model || 'gemini-2.5-flash'
