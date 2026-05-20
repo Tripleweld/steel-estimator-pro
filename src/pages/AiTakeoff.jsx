@@ -170,13 +170,13 @@ function inferType(designation, bucketSection) {
   return 'Other'
 }
 
-/* --------------- AI Provider configs --------------- */
+/* --------------- AI Provider configs ---------------
+ * All calls go through the /api/gemini serverless function — the GEMINI_API_KEY
+ * lives in Vercel env vars, never in the browser. Only Gemini models are
+ * supported here; the proxy enforces the same allowlist server-side. */
 const PROVIDERS = {
-  gemini_25: { name: 'Gemini 2.5 Flash (Recommended)', model: 'gemini-2.5-flash', urlBase: 'https://generativelanguage.googleapis.com/v1beta/models/' },
-  gemini_pro: { name: 'Gemini 2.5 Pro', model: 'gemini-2.5-pro', urlBase: 'https://generativelanguage.googleapis.com/v1beta/models/' },
-  gemini: { name: 'Gemini 2.0 Flash (legacy — 404 for new keys)', model: 'gemini-2.0-flash', urlBase: 'https://generativelanguage.googleapis.com/v1beta/models/' },
-  claude: { name: 'Claude 3.5 Sonnet', model: 'claude-3-5-sonnet-20241022', urlBase: 'https://api.anthropic.com/v1/messages' },
-  gpt4o: { name: 'GPT-4o', model: 'gpt-4o', urlBase: 'https://api.openai.com/v1/chat/completions' },
+  gemini_25: { name: 'Gemini Flash 2.5', model: 'gemini-2.5-flash' },
+  gemini_pro: { name: 'Gemini Pro 2.5', model: 'gemini-2.5-pro' },
 }
 
 /* --------------- STEEL EXPERT PROMPT --------------- */
@@ -368,9 +368,12 @@ function repairJSON(raw, logLabel) {
   return null
 }
 
-async function callGeminiVision(apiKey, model, base64Image, prompt, signal) {
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`
+// Posts to our own /api/gemini serverless function — the GEMINI_API_KEY lives
+// in Vercel env vars, never in the browser. Same retry policy as before (5xx /
+// 429 → up to 3 retries with exponential-ish backoff, abortable).
+async function callGeminiVision(model, base64Image, prompt, signal) {
   const reqBody = JSON.stringify({
+    model,
     contents: [{ parts: [
       { text: prompt },
       { inline_data: { mime_type: 'image/jpeg', data: base64Image } }
@@ -385,14 +388,18 @@ async function callGeminiVision(apiKey, model, base64Image, prompt, signal) {
       console.log('AI_TAKEOFF: retry', attempt, 'in', wait/1000, 's...')
       await abortableSleep(wait, signal)
     }
-    const resp = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: reqBody, signal })
+    const resp = await fetch('/api/gemini', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: reqBody, signal })
     if (!resp.ok) {
-      const errText = await resp.text()
-      if ((resp.status === 503 || resp.status === 429) && attempt < MAX_RETRIES) {
-        console.warn('AI_TAKEOFF:', resp.status, '- will retry')
+      // The proxy returns { error } JSON for its own failures; Gemini upstream
+      // errors are forwarded with the upstream status + Gemini's raw body.
+      let detail = ''
+      try { const j = await resp.clone().json(); detail = j?.error || j?.error?.message || '' } catch (_) {}
+      if (!detail) { try { detail = await resp.text() } catch (_) { detail = resp.statusText } }
+      if ((resp.status === 503 || resp.status === 429 || resp.status === 502) && attempt < MAX_RETRIES) {
+        console.warn('AI_TAKEOFF: proxy', resp.status, '- will retry')
         continue
       }
-      throw new Error(`Gemini API error ${resp.status}: ${errText}`)
+      throw new Error(`Gemini proxy error ${resp.status}: ${detail}`)
     }
     const d = await resp.json()
     const text = d.candidates?.[0]?.content?.parts?.[0]?.text || ''
@@ -416,62 +423,6 @@ async function callGeminiVision(apiKey, model, base64Image, prompt, signal) {
 }
 
 /* ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ OpenAI GPT-4o Vision API call ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ */
-async function callOpenAIVision(apiKey, model, base64Image, prompt, signal) {
-  const url = 'https://api.openai.com/v1/chat/completions'
-  const MAX_RETRIES = 3
-  for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
-    if (signal?.aborted) throw new DOMException('Aborted', 'AbortError')
-    if (attempt > 0) {
-      const wait = 3000 * attempt
-      console.log('AI_TAKEOFF: OpenAI retry', attempt, 'in', wait/1000, 's...')
-      await abortableSleep(wait, signal)
-    }
-    const resp = await fetch(url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + apiKey },
-      body: JSON.stringify({
-        model: model,
-        messages: [{
-          role: 'user',
-          content: [
-            { type: 'text', text: prompt },
-            { type: 'image_url', image_url: { url: 'data:image/jpeg;base64,' + base64Image, detail: 'high' } }
-          ]
-        }],
-        max_tokens: 16384,
-        temperature: 0.1
-      }),
-      signal
-    })
-    if (!resp.ok) {
-      const errText = await resp.text()
-      if ((resp.status === 503 || resp.status === 429) && attempt < MAX_RETRIES) {
-        console.warn('AI_TAKEOFF: OpenAI', resp.status, '- will retry')
-        continue
-      }
-      throw new Error('OpenAI API error ' + resp.status + ': ' + errText)
-    }
-    const d = await resp.json()
-    const msg = d.choices?.[0]?.message
-    console.log('AI_TAKEOFF GPT4O MSG:', JSON.stringify({content: msg?.content?.substring(0,300), refusal: msg?.refusal, role: msg?.role, finish: d.choices?.[0]?.finish_reason}))
-    const text = msg?.content || ''
-    const cleaned = repairJSON(text, 'OpenAI')
-    if (!cleaned) throw new Error('No JSON found in OpenAI response. Raw: ' + text?.substring(0, 200))
-    try {
-      return JSON.parse(cleaned)
-    } catch (e) {
-      let tr = cleaned
-      while (tr.length > 10) {
-        const lb = tr.lastIndexOf('}')
-        if (lb === -1) break
-        try { return JSON.parse(tr.substring(0, lb + 1)) } catch (_) { tr = tr.substring(0, lb) }
-      }
-      throw new Error('JSON parse failed: ' + e.message)
-    }
-  }
-}
-
-
 /* ----- Normalize / merge helpers (module scope so memos can use them) ----- */
 function normalizeResult(r) {
   if (!r) return { structuralMembers: [], miscMetals: [], specs: {}, warnings: [] }
@@ -563,14 +514,12 @@ export default function AiTakeoff() {
   const [files, setFiles] = useState([])
   const [pages, setPages] = useState([])       // {pageNum, thumbnail, selected, status, result}
   const [provider, setProvider] = useState('gemini_25')
-  const [apiKey, setApiKey] = useState(() => localStorage.getItem('tw-ai-apikey') || '')
-  const [showApiKey, setShowApiKey] = useState(false)
   const [processing, setProcessing] = useState(false)
   const [currentPage, setCurrentPage] = useState(null)
   const [progress, setProgress] = useState({ done: 0, total: 0 })
   const [results, setResults] = useState([])
   const [error, setError] = useState(null)
-  const [showSettings, setShowSettings] = useState(!apiKey)
+  const [showSettings, setShowSettings] = useState(false)
   const [showResults, setShowResults] = useState(false)
 
   // Persistent takeoff history (one entry per processed PDF, stored in
@@ -585,12 +534,6 @@ export default function AiTakeoff() {
       warnings: r.warnings,
     })))
   }, [runs])
-
-  // Save API key
-  const saveApiKey = (key) => {
-    setApiKey(key)
-    localStorage.setItem('tw-ai-apikey', key)
-  }
 
   // Handle file drop
   const onDrop = useCallback(async (e) => {
@@ -632,7 +575,6 @@ export default function AiTakeoff() {
 
   // Process selected pages
   const processPages = async () => {
-    if (!apiKey) { setError('Please enter your API key first'); setShowSettings(true); return }
     const selectedPages = pages.filter(p => p.selected)
     if (!selectedPages.length) { setError('Select at least one page to process'); return }
 
@@ -661,24 +603,15 @@ export default function AiTakeoff() {
       try {
         // Convert page to high-res image
         console.log('AI_TAKEOFF: rendering page', page.pageNum, 'to image, pdfDoc:', !!page.pdfDoc)
-        const imgScale = provider === 'gpt4o' ? 1.0 : 2.0
-        const base64 = await pdfPageToBase64(page.pdfDoc, page.pageNum, imgScale)
+        const base64 = await pdfPageToBase64(page.pdfDoc, page.pageNum, 2.0)
         if (signal.aborted) { cancelled = true; break }
         console.log('AI_TAKEOFF: page', page.pageNum, 'rendered, base64 length:', base64?.length)
 
-        // Call AI
-        let result
-        if (provider === 'gpt4o') {
-          console.log('AI_TAKEOFF: calling GPT-4o for page', page.pageNum)
-          result = await callOpenAIVision(apiKey, PROVIDERS[provider].model, base64, 'IMPORTANT: You MUST respond with ONLY a valid JSON object. No explanations, no markdown, just raw JSON.\n\n' + STEEL_EXPERT_PROMPT, signal)
-          console.log('AI_TAKEOFF: page', page.pageNum, 'GPT-4o result:', result?.structuralMembers?.length, 'members')
-        } else if (provider.startsWith('gemini')) {
-          const model = PROVIDERS[provider].model
-          console.log('AI_TAKEOFF: calling', model, 'for page', page.pageNum)
-          result = await callGeminiVision(apiKey, model, base64, STEEL_EXPERT_PROMPT, signal)
-          console.log('AI_TAKEOFF: page', page.pageNum, 'result:', result?.structuralMembers?.length, 'members')
-        }
-        // TODO: Add Claude and GPT-4o providers
+        // Call AI via /api/gemini serverless proxy (key lives in Vercel env)
+        const model = PROVIDERS[provider]?.model || 'gemini-2.5-flash'
+        console.log('AI_TAKEOFF: calling', model, 'for page', page.pageNum)
+        const result = await callGeminiVision(model, base64, STEEL_EXPERT_PROMPT, signal)
+        console.log('AI_TAKEOFF: page', page.pageNum, 'result:', result?.structuralMembers?.length, 'members')
 
         pageResults.push({ ...page, result, status: 'done' })
         setPages(prev => prev.map(p =>
@@ -893,32 +826,21 @@ export default function AiTakeoff() {
           <p className="text-sm text-steel-400 mt-1">
             Upload structural drawings & specs \u2192 AI extracts quantities automatically
           </p>
-
-      {!apiKey && (
-        <div className="bg-yellow-600/20 border border-yellow-500/50 rounded-lg px-4 py-3 flex items-center gap-3">
-          <span className="text-yellow-400 text-lg">&#9888;</span>
-          <div>
-            <p className="text-yellow-300 font-medium text-sm">API Key Required</p>
-            <p className="text-yellow-400/70 text-xs">Enter your Gemini API key in the settings above to enable AI takeoff</p>
-          </div>
-        </div>
-      )}
-
         </div>
         <button
           onClick={() => setShowSettings(!showSettings)}
           className="flex items-center gap-2 px-3 py-2 rounded-lg border border-steel-700 text-steel-400 hover:text-white hover:border-steel-500 transition"
         >
           <Settings className="w-4 h-4" />
-          <span className="text-sm">API Settings</span>
+          <span className="text-sm">Model</span>
         </button>
       </div>
 
-      {/* API Settings Panel */}
+      {/* Model selector \u2014 API key lives server-side as GEMINI_API_KEY */}
       {showSettings && (
         <div className="bg-steel-900 border border-steel-700 rounded-xl p-4 space-y-3">
-          <h3 className="text-sm font-semibold text-steel-300">AI Provider Configuration</h3>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+          <h3 className="text-sm font-semibold text-steel-300">AI Model</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <div>
               <label className="block text-xs text-steel-400 mb-1">Provider</label>
               <select
@@ -931,32 +853,12 @@ export default function AiTakeoff() {
                 ))}
               </select>
             </div>
-            <div className="md:col-span-2">
-              <label className="block text-xs text-steel-400 mb-1">
-                API Key {provider.startsWith('gemini') && <span className="text-green-400">(Free at ai.google.dev)</span>}
-              </label>
-              <div className="flex gap-2">
-                <input
-                  type={showApiKey ? 'text' : 'password'}
-                  value={apiKey}
-                  onChange={e => saveApiKey(e.target.value)}
-                  placeholder={provider.startsWith('gemini') ? 'AIza...' : provider === 'gpt4o' ? 'sk-proj-...' : 'sk-...'}
-                  className="flex-1 bg-steel-800 border border-steel-600 rounded-lg px-3 py-2 text-sm text-white placeholder-steel-500"
-                />
-                <button
-                  onClick={() => setShowApiKey(!showApiKey)}
-                  className="px-3 py-2 rounded-lg border border-steel-600 text-steel-400 hover:text-white text-xs"
-                >
-                  {showApiKey ? 'Hide' : 'Show'}
-                </button>
-              </div>
+            <div className="flex items-end">
+              <p className="text-xs text-steel-500">
+                Requests are proxied through <span className="font-mono text-fire-400">/api/gemini</span>. The Gemini API key is configured in Vercel \u2014 no key entry required.
+              </p>
             </div>
           </div>
-          {provider.startsWith('gemini') && (
-            <p className="text-xs text-steel-500">
-              Get your free API key at <span className="text-fire-400">ai.google.dev/aistudio</span> --- 1,500 free requests/day
-            </p>
-          )}
         </div>
       )}
 
@@ -1039,7 +941,7 @@ export default function AiTakeoff() {
           <div className="flex items-center gap-4">
             <button
               onClick={processPages}
-              disabled={processing || !apiKey || pages.length === 0}
+              disabled={processing || pages.length === 0}
               className={`flex items-center gap-2 px-6 py-3 rounded-xl font-semibold text-sm transition ${
                 processing
                   ? 'bg-steel-700 text-steel-400 cursor-wait'
@@ -1054,7 +956,7 @@ export default function AiTakeoff() {
               ) : (
                 <>
                   <Zap className="w-4 h-4" />
-                  {!apiKey ? "Set API Key First" : pages.length === 0 ? "Upload PDF First" : `Run AI Takeoff (${pages.filter(p => p.selected).length} pages)`}
+                  {pages.length === 0 ? "Upload PDF First" : `Run AI Takeoff (${pages.filter(p => p.selected).length} pages)`}
                 </>
               )}
             </button>
