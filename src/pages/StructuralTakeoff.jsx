@@ -80,7 +80,8 @@ const fmtDollar = (v) => '$' + fmtNum(v, 0);
 const toNum = (v) => { const n = parseFloat(v); return isNaN(n) ? 0 : n; };
 
 const MEMBER_TYPES = [
-  'W-Beam', 'W-Column', 'HSS-Round', 'HSS-Rect', 'HSS-Square',
+  'W-Beam', 'W-Column',
+  'HSS-Column', 'HSS-Brace', 'HSS-Round', 'HSS-Rect', 'HSS-Square',
   'Channel', 'Angle', 'Plate', 'Flat Bar', 'Pipe', 'WT', 'OWSJ', 'Deck', 'Other'
 ];
 

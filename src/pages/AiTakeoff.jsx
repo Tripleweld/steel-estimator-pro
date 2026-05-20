@@ -90,6 +90,8 @@ function inferType(designation, bucketSection) {
   if (s.startsWith('WT')) return 'WT'
   if (s.startsWith('W')) return bucketSection === 'columns' ? 'W-Column' : 'W-Beam'
   if (s.startsWith('HSS')) {
+    if (bucketSection === 'columns') return 'HSS-Column'
+    if (bucketSection === 'xBracing' || bucketSection === 'kneeBrace' || bucketSection === 'bridging') return 'HSS-Brace'
     const m = s.match(/HSS\s*(\d+(?:\.\d+)?)\s*[X]\s*(\d+(?:\.\d+)?)/)
     if (m) return m[1] === m[2] ? 'HSS-Square' : 'HSS-Rect'
     return 'HSS-Round'
