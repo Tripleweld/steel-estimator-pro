@@ -270,6 +270,18 @@ async function pdfPageToBase64(pdfDoc, pageNum, scale = 2.0) {
   return canvas.toDataURL('image/jpeg', 0.85).split(',')[1]
 }
 
+// Abortable sleep — rejects with AbortError immediately if signal fires.
+function abortableSleep(ms, signal) {
+  return new Promise((resolve, reject) => {
+    if (signal?.aborted) return reject(new DOMException('Aborted', 'AbortError'))
+    const id = setTimeout(resolve, ms)
+    signal?.addEventListener('abort', () => {
+      clearTimeout(id)
+      reject(new DOMException('Aborted', 'AbortError'))
+    }, { once: true })
+  })
+}
+
 /* ----------------- Gemini API call ----------------- */
 function repairJSON(raw, logLabel) {
   if (logLabel) console.log('AI_TAKEOFF RAW (' + logLabel + '):', raw?.substring(0, 500))
@@ -284,7 +296,7 @@ function repairJSON(raw, logLabel) {
   return null
 }
 
-async function callGeminiVision(apiKey, model, base64Image, prompt) {
+async function callGeminiVision(apiKey, model, base64Image, prompt, signal) {
   const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`
   const reqBody = JSON.stringify({
     contents: [{ parts: [
@@ -295,12 +307,13 @@ async function callGeminiVision(apiKey, model, base64Image, prompt) {
   })
   const MAX_RETRIES = 3
   for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+    if (signal?.aborted) throw new DOMException('Aborted', 'AbortError')
     if (attempt > 0) {
       const wait = 3000 * attempt
       console.log('AI_TAKEOFF: retry', attempt, 'in', wait/1000, 's...')
-      await new Promise(r => setTimeout(r, wait))
+      await abortableSleep(wait, signal)
     }
-    const resp = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: reqBody })
+    const resp = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: reqBody, signal })
     if (!resp.ok) {
       const errText = await resp.text()
       if ((resp.status === 503 || resp.status === 429) && attempt < MAX_RETRIES) {
@@ -331,14 +344,15 @@ async function callGeminiVision(apiKey, model, base64Image, prompt) {
 }
 
 /* ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ OpenAI GPT-4o Vision API call ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ */
-async function callOpenAIVision(apiKey, model, base64Image, prompt) {
+async function callOpenAIVision(apiKey, model, base64Image, prompt, signal) {
   const url = 'https://api.openai.com/v1/chat/completions'
   const MAX_RETRIES = 3
   for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+    if (signal?.aborted) throw new DOMException('Aborted', 'AbortError')
     if (attempt > 0) {
       const wait = 3000 * attempt
       console.log('AI_TAKEOFF: OpenAI retry', attempt, 'in', wait/1000, 's...')
-      await new Promise(r => setTimeout(r, wait))
+      await abortableSleep(wait, signal)
     }
     const resp = await fetch(url, {
       method: 'POST',
@@ -354,7 +368,8 @@ async function callOpenAIVision(apiKey, model, base64Image, prompt) {
         }],
         max_tokens: 16384,
         temperature: 0.1
-      })
+      }),
+      signal
     })
     if (!resp.ok) {
       const errText = await resp.text()
@@ -470,6 +485,7 @@ function buildRunsFromPageResults(pageResults, processedAt) {
 export default function AiTakeoff() {
   const { state, dispatch, setProjectField } = useProject()
   const fileInputRef = useRef(null)
+  const abortControllerRef = useRef(null)
 
   // State
   const [files, setFiles] = useState([])
@@ -548,12 +564,18 @@ export default function AiTakeoff() {
     const selectedPages = pages.filter(p => p.selected)
     if (!selectedPages.length) { setError('Select at least one page to process'); return }
 
+    const controller = new AbortController()
+    abortControllerRef.current = controller
+    const signal = controller.signal
+
     setProcessing(true)
     setError(null)
     setProgress({ done: 0, total: selectedPages.length })
     const pageResults = []
+    let cancelled = false
 
     for (let i = 0; i < selectedPages.length; i++) {
+      if (signal.aborted) { cancelled = true; break }
       const page = selectedPages[i]
       setCurrentPage(page.pageNum)
       setProgress({ done: i, total: selectedPages.length })
@@ -569,19 +591,19 @@ export default function AiTakeoff() {
         console.log('AI_TAKEOFF: rendering page', page.pageNum, 'to image, pdfDoc:', !!page.pdfDoc)
         const imgScale = provider === 'gpt4o' ? 1.0 : 2.0
         const base64 = await pdfPageToBase64(page.pdfDoc, page.pageNum, imgScale)
+        if (signal.aborted) { cancelled = true; break }
         console.log('AI_TAKEOFF: page', page.pageNum, 'rendered, base64 length:', base64?.length)
-        console.log('AI_TAKEOFF: base64 length:', base64 ? base64.length : 'NULL')
 
         // Call AI
         let result
         if (provider === 'gpt4o') {
           console.log('AI_TAKEOFF: calling GPT-4o for page', page.pageNum)
-          result = await callOpenAIVision(apiKey, PROVIDERS[provider].model, base64, 'IMPORTANT: You MUST respond with ONLY a valid JSON object. No explanations, no markdown, just raw JSON.\n\n' + STEEL_EXPERT_PROMPT)
+          result = await callOpenAIVision(apiKey, PROVIDERS[provider].model, base64, 'IMPORTANT: You MUST respond with ONLY a valid JSON object. No explanations, no markdown, just raw JSON.\n\n' + STEEL_EXPERT_PROMPT, signal)
           console.log('AI_TAKEOFF: page', page.pageNum, 'GPT-4o result:', result?.structuralMembers?.length, 'members')
         } else if (provider.startsWith('gemini')) {
           const model = PROVIDERS[provider].model
           console.log('AI_TAKEOFF: calling', model, 'for page', page.pageNum)
-          result = await callGeminiVision(apiKey, model, base64, STEEL_EXPERT_PROMPT)
+          result = await callGeminiVision(apiKey, model, base64, STEEL_EXPERT_PROMPT, signal)
           console.log('AI_TAKEOFF: page', page.pageNum, 'result:', result?.structuralMembers?.length, 'members')
         }
         // TODO: Add Claude and GPT-4o providers
@@ -592,6 +614,17 @@ export default function AiTakeoff() {
             ? { ...p, status: 'done', result } : p
         ))
       } catch (err) {
+        const isAbort = err?.name === 'AbortError' || signal.aborted
+        if (isAbort) {
+          cancelled = true
+          // Roll the in-flight page back to pending so the user can see it
+          // wasn't actually processed and can re-run it.
+          setPages(prev => prev.map(p =>
+            p.pageNum === page.pageNum && p.fileName === page.fileName
+              ? { ...p, status: 'pending' } : p
+          ))
+          break
+        }
         pageResults.push({ ...page, status: 'error', error: err.message })
         setPages(prev => prev.map(p =>
           p.pageNum === page.pageNum && p.fileName === page.fileName
@@ -600,15 +633,18 @@ export default function AiTakeoff() {
       }
     }
 
-    setProgress({ done: selectedPages.length, total: selectedPages.length })
+    setProgress({ done: pageResults.length, total: selectedPages.length })
     setResults(pageResults)
     setProcessing(false)
     setCurrentPage(null)
+    abortControllerRef.current = null
 
-    // Show error summary if any pages failed
+    // Summary message: cancellation takes precedence over per-page failures.
     const failedPages = pageResults.filter(p => p.status === 'error')
     const succeededPages = pageResults.filter(p => p.result)
-    if (failedPages.length > 0) {
+    if (cancelled) {
+      setError(`Cancelled — ${succeededPages.length} of ${selectedPages.length} page${selectedPages.length === 1 ? '' : 's'} processed${failedPages.length > 0 ? ` (${failedPages.length} failed)` : ''}. Completed pages are kept.`)
+    } else if (failedPages.length > 0) {
       const firstErr = failedPages[0].error || 'Unknown error'
       if (succeededPages.length === 0) {
         setError('All ' + failedPages.length + ' page(s) failed. Error: ' + firstErr)
@@ -617,13 +653,19 @@ export default function AiTakeoff() {
       }
     }
 
-    // Persist each processed PDF as a "run" in ProjectContext so the page
-    // survives navigation. Failed-only PDFs are skipped (nothing to persist).
+    // Persist successfully processed pages as runs (cancelled mid-batch is fine
+    // — succeeded pages are preserved per-file).
     const newRuns = buildRunsFromPageResults(pageResults, new Date().toISOString())
     if (newRuns.length > 0) {
       dispatch({ type: 'AI_TAKEOFF_ADD_RUNS', payload: newRuns })
     }
     setShowResults(true)
+  }
+
+  const cancelProcessing = () => {
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort()
+    }
   }
 
   const deleteRun = (id) => {
@@ -939,6 +981,17 @@ export default function AiTakeoff() {
                 </>
               )}
             </button>
+
+            {processing && (
+              <button
+                onClick={cancelProcessing}
+                className="flex items-center gap-2 px-4 py-3 rounded-xl font-semibold text-sm bg-red-600 text-white hover:bg-red-500 transition shadow-lg shadow-red-600/20"
+                title="Cancel the in-flight AI Takeoff. Completed pages will be kept."
+              >
+                <AlertTriangle className="w-4 h-4" />
+                Cancel
+              </button>
+            )}
 
             {processing && (
               <div className="flex-1">
