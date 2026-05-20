@@ -274,7 +274,13 @@ function ProfileSearch({ value, onSelect, profiles }) {
 }
 
 /*  Section Header with collapse toggle  */
-function SectionHeader({ label, isOpen, onToggle, rowCount, sectionTotals, onAddRow }) {
+function SectionHeader({ label, isOpen, onToggle, rowCount, sectionTotals, onAddRow, onClearSection }) {
+  const handleClear = () => {
+    if (rowCount === 0) return;
+    if (window.confirm(`Clear all ${rowCount} row${rowCount === 1 ? '' : 's'} from ${label}? This cannot be undone.`)) {
+      onClearSection();
+    }
+  };
   return (
     <div className="flex items-center justify-between bg-steel-800/80 border border-steel-700 rounded-lg px-4 py-2.5 mt-4 first:mt-0">
       <button onClick={onToggle} className="flex items-center gap-3 text-left flex-1">
@@ -288,12 +294,23 @@ function SectionHeader({ label, isOpen, onToggle, rowCount, sectionTotals, onAdd
           </span>
         )}
       </button>
-      <button
-        onClick={onAddRow}
-        className="flex items-center gap-1 px-3 py-1 bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold rounded transition-colors"
-      >
-        + Add Row
-      </button>
+      <div className="flex items-center gap-2">
+        {rowCount > 0 && (
+          <button
+            onClick={handleClear}
+            title={`Clear all rows from ${label}`}
+            className="flex items-center gap-1 px-3 py-1 bg-red-700/80 hover:bg-red-600 text-white text-xs font-semibold rounded transition-colors"
+          >
+            Clear All
+          </button>
+        )}
+        <button
+          onClick={onAddRow}
+          className="flex items-center gap-1 px-3 py-1 bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold rounded transition-colors"
+        >
+          + Add Row
+        </button>
+      </div>
     </div>
   );
 }
@@ -797,6 +814,10 @@ function StructuralTakeoffInner() {
     setRows(prev => prev.filter(r => r.id !== id));
   }, []);
 
+  const clearSection = useCallback((sectionId) => {
+    setRows(prev => prev.filter(r => r.section !== sectionId));
+  }, []);
+
   /*  Save rows to context on change  */
   useEffect(() => {
     dispatch({ type: 'SET_STRUCTURAL_ROWS', payload: rows });
@@ -887,6 +908,7 @@ function StructuralTakeoffInner() {
                 rowCount={sectionRows.length}
                 sectionTotals={sectionTotals}
                 onAddRow={() => addRow(sec.id)}
+                onClearSection={() => clearSection(sec.id)}
               />
 
               {isOpen && (sec.id === 'moment' ? <MomentConnectionTable sectionRows={sectionRows} fabRate={fabRate} installRate={installRate} steelRate={steelRate} onUpdate={updateRow} onDelete={deleteRow} /> : sec.id === 'joistReinf' ? <JoistReinfSyncTable fabRate={fabRate} installRate={installRate} /> : (
