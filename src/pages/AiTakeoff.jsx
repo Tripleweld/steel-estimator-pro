@@ -68,6 +68,20 @@ function inferSection(m) {
   return 'beams'
 }
 
+// Default fab/install minutes per piece by bucket + profile family.
+// HSS overrides bucket-specific defaults. User can edit after apply.
+function defaultFabInstMin(bucket, designation) {
+  const p = String(designation || '').toUpperCase().trim()
+  const isHSS = p.startsWith('HSS') || p.startsWith('PIPE')
+  if (isHSS) return { fab: 40, inst: 30 }
+  if (bucket === 'beams' || bucket === 'roofFrames') return { fab: 45, inst: 30 }
+  if (bucket === 'columns') return { fab: 60, inst: 45 }
+  if (bucket === 'xBracing' || bucket === 'kneeBrace' || bucket === 'bridging') {
+    return { fab: 30, inst: 25 }
+  }
+  return { fab: 30, inst: 20 }
+}
+
 function inferType(designation, bucketSection) {
   const s = String(designation || '').toUpperCase().trim()
   if (!s) return '--'
@@ -575,6 +589,7 @@ export default function AiTakeoff() {
         connR && `connR: ${connR}`,
       ].filter(Boolean).join(' | ')
       const notes = [m.notes, aiContext].filter(Boolean).join(' — ')
+      const def = defaultFabInstMin(section, profile)
       return {
         id: 'ai-' + Date.now() + '-' + i,
         section,
@@ -588,10 +603,10 @@ export default function AiTakeoff() {
         basePlLb: 0,
         anchorsPc: 0,
         setup: 0, cut: 0, drill: 0, feed: 0, weld: 0, grind: 0, paint: 0,
-        fabPerPcOverride: null,
+        fabPerPcOverride: Math.round((def.fab / 60) * 1000) / 1000,
         fabCrew: 1,
         unload: 0, rig: 0, fit: 0, bolt: 0, touchUp: 0,
-        instPerPcOverride: null,
+        instPerPcOverride: Math.round((def.inst / 60) * 1000) / 1000,
         instCrew: 2,
         notes,
         aiConfidence: confToNum(m.confidence),
