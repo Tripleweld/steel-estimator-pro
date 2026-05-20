@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef } from 'react'
+import { useState, useCallback, useMemo, useRef } from 'react'
 import { useProject } from '../context/ProjectContext'
 import { Upload, FileText, Zap, AlertTriangle, CheckCircle, Loader2, Settings, Brain, Eye, Download, Trash2, ChevronDown, ChevronUp, FileSpreadsheet, ArrowRight } from 'lucide-react'
 import { Link } from 'react-router-dom'
@@ -385,6 +385,87 @@ async function callOpenAIVision(apiKey, model, base64Image, prompt) {
 }
 
 
+/* ----- Normalize / merge helpers (module scope so memos can use them) ----- */
+function normalizeResult(r) {
+  if (!r) return { structuralMembers: [], miscMetals: [], specs: {}, warnings: [] }
+  return {
+    structuralMembers: r.structuralMembers || r.structural || r.structural_members || r.members || [],
+    miscMetals: r.miscMetals || r.miscellaneous || r.misc_metals || r.miscellaneousMetals || r.misc || [],
+    specs: r.specs || r.specifications || r.projectInfo || {},
+    warnings: r.warnings || r.notes || []
+  }
+}
+
+function mergeNormalized(items) {
+  const allMembers = []
+  const allMisc = []
+  const specs = {}
+  const warnings = []
+  const seen = new Set()
+  for (const r of items) {
+    if (!r) continue
+    for (const m of (r.structuralMembers || [])) {
+      const key = (m.mark || '') + '|' + (m.section || m.designation || '')
+      if (!seen.has(key)) { seen.add(key); allMembers.push(m) }
+    }
+    for (const mm of (r.miscMetals || [])) allMisc.push(mm)
+    if (r.specs) Object.assign(specs, r.specs)
+    if (r.warnings) warnings.push(...r.warnings)
+  }
+  const totalWeight = allMembers.reduce((s, m) => s + toNum(m.total_weight_lbs), 0)
+  const avgConfPct = allMembers.length
+    ? allMembers.reduce((s, m) => s + confToNum(m.confidence), 0) / allMembers.length
+    : 0
+  return {
+    structuralMembers: allMembers,
+    miscMetals: allMisc,
+    specs,
+    warnings,
+    totalWeight,
+    totalTons: (totalWeight / 2000).toFixed(1),
+    avgConfidence: (avgConfPct * 100).toFixed(0),
+    memberCount: allMembers.length,
+    miscCount: allMisc.length,
+  }
+}
+
+// Group succeeded page results by fileName, normalize/merge each group into a
+// persistent "run" object so the AI Takeoff page can survive navigation.
+function buildRunsFromPageResults(pageResults, processedAt) {
+  const byFile = new Map()
+  for (const pr of pageResults) {
+    const arr = byFile.get(pr.fileName) || []
+    arr.push(pr)
+    byFile.set(pr.fileName, arr)
+  }
+  const runs = []
+  let idx = 0
+  for (const [fileName, pages] of byFile.entries()) {
+    const succeeded = pages.filter(p => p.result)
+    if (succeeded.length === 0) continue
+    const failed = pages.filter(p => p.status === 'error')
+    const normalized = succeeded.map(p => normalizeResult(p.result))
+    const merged = mergeNormalized(normalized)
+    runs.push({
+      id: 'aitk-' + Date.now() + '-' + (idx++),
+      fileName,
+      processedAt,
+      pageCount: pages.length,
+      pagesSucceeded: succeeded.length,
+      pagesFailed: failed.length,
+      structuralMembers: merged.structuralMembers,
+      miscMetals: merged.miscMetals,
+      specs: merged.specs,
+      warnings: merged.warnings,
+      memberCount: merged.memberCount,
+      miscCount: merged.miscCount,
+      totalWeight: merged.totalWeight,
+      avgConfidence: parseInt(merged.avgConfidence, 10) || 0,
+    })
+  }
+  return runs
+}
+
 /* ------------------ MAIN COMPONENT ------------------ */
 export default function AiTakeoff() {
   const { state, dispatch, setProjectField } = useProject()
@@ -403,7 +484,19 @@ export default function AiTakeoff() {
   const [error, setError] = useState(null)
   const [showSettings, setShowSettings] = useState(!apiKey)
   const [showResults, setShowResults] = useState(false)
-  const [mergedResult, setMergedResult] = useState(null)
+
+  // Persistent takeoff history (one entry per processed PDF, stored in
+  // ProjectContext + localStorage so the page survives navigation).
+  const runs = state.aiTakeoff?.runs || []
+  const mergedResult = useMemo(() => {
+    if (!runs.length) return null
+    return mergeNormalized(runs.map(r => ({
+      structuralMembers: r.structuralMembers,
+      miscMetals: r.miscMetals,
+      specs: r.specs,
+      warnings: r.warnings,
+    })))
+  }, [runs])
 
   // Save API key
   const saveApiKey = (key) => {
@@ -421,7 +514,6 @@ export default function AiTakeoff() {
     setError(null)
     setFiles(droppedFiles)
     setResults([])
-    setMergedResult(null)
 
     // Load PDF and generate thumbnails
     try {
@@ -525,72 +617,25 @@ export default function AiTakeoff() {
       }
     }
 
-    // Merge results from all pages
-    const normalized = succeededPages.map(p => ({ ...p, result: normalizeResult(p.result) }))
-    const merged = mergeResults(normalized)
-    setMergedResult(merged)
+    // Persist each processed PDF as a "run" in ProjectContext so the page
+    // survives navigation. Failed-only PDFs are skipped (nothing to persist).
+    const newRuns = buildRunsFromPageResults(pageResults, new Date().toISOString())
+    if (newRuns.length > 0) {
+      dispatch({ type: 'AI_TAKEOFF_ADD_RUNS', payload: newRuns })
+    }
     setShowResults(true)
   }
 
-  // Normalize AI response field names (GPT-4o vs Gemini use different keys)
-  function normalizeResult(r) {
-    if (!r) return r
-    return {
-      structuralMembers: r.structuralMembers || r.structural || r.structural_members || r.members || [],
-      miscMetals: r.miscMetals || r.miscellaneous || r.misc_metals || r.miscellaneousMetals || r.misc || [],
-      specs: r.specs || r.specifications || r.projectInfo || {},
-      warnings: r.warnings || r.notes || []
+  const deleteRun = (id) => {
+    if (window.confirm('Remove this PDF and its extracted data from history?')) {
+      dispatch({ type: 'AI_TAKEOFF_DELETE_RUN', id })
     }
   }
 
-  // Merge results from multiple pages into unified takeoff
-  function mergeResults(pageResults) {
-    const allMembers = []
-    const allMisc = []
-    const specs = {}
-    const warnings = []
-    const seenMarks = new Set()
-
-    for (const pr of pageResults) {
-      const r = pr.result
-      if (!r) continue
-
-      // Structural members - deduplicate by mark
-      for (const m of (r.structuralMembers || [])) {
-        const key = m.mark + '|' + m.section
-        if (!seenMarks.has(key)) {
-          seenMarks.add(key)
-          allMembers.push(m)
-        }
-      }
-
-      // Misc metals
-      for (const mm of (r.miscMetals || [])) {
-        allMisc.push(mm)
-      }
-
-      // Merge specs
-      if (r.specs) Object.assign(specs, r.specs)
-
-      // Warnings
-      if (r.warnings) warnings.push(...r.warnings)
-    }
-
-    const totalWeight = allMembers.reduce((s, m) => s + toNum(m.total_weight_lbs), 0)
-    const avgConfidence = allMembers.length
-      ? allMembers.reduce((s, m) => s + confToNum(m.confidence), 0) / allMembers.length
-      : 0
-
-    return {
-      structuralMembers: allMembers,
-      miscMetals: allMisc,
-      specs,
-      warnings,
-      totalWeight,
-      totalTons: (totalWeight / 2000).toFixed(1),
-      avgConfidence: (avgConfidence * 100).toFixed(0),
-      memberCount: allMembers.length,
-      miscCount: allMisc.length
+  const clearAllRuns = () => {
+    if (!runs.length) return
+    if (window.confirm(`Clear all ${runs.length} processed PDF${runs.length === 1 ? '' : 's'} from AI Takeoff history? This cannot be undone.`)) {
+      dispatch({ type: 'AI_TAKEOFF_CLEAR_ALL' })
     }
   }
 
@@ -917,6 +962,63 @@ export default function AiTakeoff() {
         </div>
       )}
 
+      {/* Processed PDFs (persisted history) */}
+      {runs.length > 0 && (
+        <div className="bg-steel-900 border border-steel-700 rounded-xl overflow-hidden">
+          <div className="flex items-center justify-between px-4 py-3 border-b border-steel-700">
+            <div className="flex items-center gap-2">
+              <FileText className="w-4 h-4 text-fire-400" />
+              <h3 className="text-sm font-semibold text-steel-200">
+                Processed PDFs ({runs.length})
+              </h3>
+              <span className="text-xs text-steel-500">— persisted across sessions</span>
+            </div>
+            <button
+              onClick={clearAllRuns}
+              className="flex items-center gap-1 px-3 py-1 bg-red-700/80 hover:bg-red-600 text-white text-xs font-semibold rounded transition-colors"
+            >
+              <Trash2 className="w-3 h-3" /> Clear All
+            </button>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full text-xs">
+              <thead className="bg-steel-800">
+                <tr>
+                  {['File', 'Processed', 'Pages', 'Members', 'Misc', 'Weight', 'Conf', ''].map(h => (
+                    <th key={h} className="px-3 py-2 text-left text-steel-400 font-medium">{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {runs.map(r => {
+                  const conf = (r.avgConfidence || 0)
+                  const confCls = conf >= 90 ? 'text-green-400' : conf >= 70 ? 'text-yellow-400' : 'text-red-400'
+                  return (
+                    <tr key={r.id} className="border-t border-steel-800 hover:bg-steel-800/30">
+                      <td className="px-3 py-2 text-white font-medium truncate max-w-xs" title={r.fileName}>{r.fileName}</td>
+                      <td className="px-3 py-2 text-steel-400">{r.processedAt ? new Date(r.processedAt).toLocaleString() : '—'}</td>
+                      <td className="px-3 py-2 text-steel-300">{r.pagesSucceeded}/{r.pageCount}{r.pagesFailed > 0 && <span className="text-red-400"> ({r.pagesFailed} failed)</span>}</td>
+                      <td className="px-3 py-2 text-fire-400 font-medium">{r.memberCount}</td>
+                      <td className="px-3 py-2 text-fire-400">{r.miscCount}</td>
+                      <td className="px-3 py-2 text-steel-300 font-mono">{Number(r.totalWeight || 0).toLocaleString()} lb</td>
+                      <td className={`px-3 py-2 font-medium ${confCls}`}>{conf}%</td>
+                      <td className="px-3 py-2 text-right">
+                        <button
+                          onClick={() => deleteRun(r.id)}
+                          title={`Remove ${r.fileName} from history`}
+                          aria-label={`Remove ${r.fileName} from history`}
+                          className="inline-flex items-center justify-center w-6 h-6 rounded text-red-400 hover:text-white hover:bg-red-600/80 text-sm font-bold leading-none transition-colors"
+                        >×</button>
+                      </td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
       {/* Results */}
       {mergedResult && (
         <div className="space-y-4">
@@ -1018,11 +1120,12 @@ export default function AiTakeoff() {
             </button>
 
             <button
-              onClick={() => { setFiles([]); setPages([]); setResults([]); setMergedResult(null); setShowResults(false) }}
+              onClick={() => { setFiles([]); setPages([]); setResults([]); setShowResults(false) }}
               className="flex items-center gap-2 px-4 py-3 rounded-xl border border-steel-600 text-steel-400 hover:text-white text-sm transition"
+              title="Clear the upload zone (PDF history is preserved — use Clear All in Processed PDFs to wipe history)"
             >
               <Trash2 className="w-4 h-4" />
-              Clear
+              Clear Upload
             </button>
           </div>
         </div>

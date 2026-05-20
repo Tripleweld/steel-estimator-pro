@@ -274,6 +274,7 @@ const defaultState = {
   quoteTermsOverrides: {},
   quoteTermsCustom: [],
   quoteCustomization: {},
+  aiTakeoff: { runs: [] },
   isDirty: false,
 }
 
@@ -781,6 +782,17 @@ function projectReducer(state, action) {
       return { ...state, quoteTermsCustom: (state.quoteTermsCustom || []).map(_l => _l.id === action.id ? { ..._l, text: action.text } : _l), isDirty: true };
     case 'DELETE_QUOTE_TERMS_CUSTOM':
       return { ...state, quoteTermsCustom: (state.quoteTermsCustom || []).filter(_l => _l.id !== action.id), isDirty: true };
+
+    case 'AI_TAKEOFF_ADD_RUNS': {
+      const existing = state.aiTakeoff?.runs || [];
+      return { ...state, aiTakeoff: { runs: [...existing, ...action.payload] }, isDirty: true };
+    }
+    case 'AI_TAKEOFF_DELETE_RUN': {
+      const existing = state.aiTakeoff?.runs || [];
+      return { ...state, aiTakeoff: { runs: existing.filter(r => r.id !== action.id) }, isDirty: true };
+    }
+    case 'AI_TAKEOFF_CLEAR_ALL':
+      return { ...state, aiTakeoff: { runs: [] }, isDirty: true };
 
     case 'UPDATE_QUOTE_CUSTOMIZATION':
       return { ...state, quoteCustomization: { ...(state.quoteCustomization || {}), ...action.patch }, isDirty: true };
