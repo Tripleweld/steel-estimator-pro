@@ -106,9 +106,9 @@ function inferType(designation, bucketSection) {
 
 /* --------------- AI Provider configs --------------- */
 const PROVIDERS = {
-  gemini: { name: 'Gemini 2.0 Flash (Stable)', model: 'gemini-2.0-flash', urlBase: 'https://generativelanguage.googleapis.com/v1beta/models/' },
-  gemini_25: { name: 'Gemini 2.5 Flash', model: 'gemini-2.5-flash', urlBase: 'https://generativelanguage.googleapis.com/v1beta/models/' },
+  gemini_25: { name: 'Gemini 2.5 Flash (Recommended)', model: 'gemini-2.5-flash', urlBase: 'https://generativelanguage.googleapis.com/v1beta/models/' },
   gemini_pro: { name: 'Gemini 2.5 Pro', model: 'gemini-2.5-pro', urlBase: 'https://generativelanguage.googleapis.com/v1beta/models/' },
+  gemini: { name: 'Gemini 2.0 Flash (legacy — 404 for new keys)', model: 'gemini-2.0-flash', urlBase: 'https://generativelanguage.googleapis.com/v1beta/models/' },
   claude: { name: 'Claude 3.5 Sonnet', model: 'claude-3-5-sonnet-20241022', urlBase: 'https://api.anthropic.com/v1/messages' },
   gpt4o: { name: 'GPT-4o', model: 'gpt-4o', urlBase: 'https://api.openai.com/v1/chat/completions' },
 }
@@ -370,7 +370,7 @@ export default function AiTakeoff() {
   // State
   const [files, setFiles] = useState([])
   const [pages, setPages] = useState([])       // {pageNum, thumbnail, selected, status, result}
-  const [provider, setProvider] = useState('gemini')
+  const [provider, setProvider] = useState('gemini_25')
   const [apiKey, setApiKey] = useState(() => localStorage.getItem('tw-ai-apikey') || '')
   const [showApiKey, setShowApiKey] = useState(false)
   const [processing, setProcessing] = useState(false)
