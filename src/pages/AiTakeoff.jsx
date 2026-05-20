@@ -582,12 +582,12 @@ export default function AiTakeoff() {
       const aiWt = toNum(m.weight_per_ft)
       const aiscWt = lookupWtPerFt(profile)
       const wtPerFt = aiscWt != null ? aiscWt : aiWt
-      const connL = m.connectionLeft || m.connection_left || ''
-      const connR = m.connectionRight || m.connection_right || ''
+      const connL = m.connectionLeft || m.connection_left || 'simple'
+      const connR = m.connectionRight || m.connection_right || 'simple'
       const aiContext = [
-        connL && `connL: ${connL}`,
-        connR && `connR: ${connR}`,
-      ].filter(Boolean).join(' | ')
+        `connL: ${connL}`,
+        `connR: ${connR}`,
+      ].join(' | ')
       const notes = [m.notes, aiContext].filter(Boolean).join(' — ')
       const def = defaultFabInstMin(section, profile)
       return {
