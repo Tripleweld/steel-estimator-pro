@@ -689,7 +689,7 @@ function RailingCard({ row, idx, calc, fabRate, installRate, onUpdate, onDelete,
                         <td className="px-2 py-1 text-right text-cyan-300 font-mono">{fmtNum(b.qty)}</td>
                         {FAB_OPS.map(op => (
                           <td key={op} className="px-1 py-1 text-right">
-                            <EditCell value={fm[op]} onChange={setSubMin('fabMin', b.key, op)} className="w-12 text-right font-mono" />
+                            <EditCell value={fm[op]} onChange={setSubMin('fabMin', b.key, op)} className="min-w-[60px] text-right font-mono" />
                           </td>
                         ))}
                         <td className="px-2 py-1 text-right text-amber-300 font-mono">{fmtNum(hrsPerPc, 2)}</td>
@@ -733,7 +733,7 @@ function RailingCard({ row, idx, calc, fabRate, installRate, onUpdate, onDelete,
                         <td className="px-2 py-1 text-right text-cyan-300 font-mono">{fmtNum(b.qty)}</td>
                         {INST_OPS.map(op => (
                           <td key={op} className="px-1 py-1 text-right">
-                            <EditCell value={im[op]} onChange={setSubMin('instMin', b.key, op)} className="w-12 text-right font-mono" />
+                            <EditCell value={im[op]} onChange={setSubMin('instMin', b.key, op)} className="min-w-[60px] text-right font-mono" />
                           </td>
                         ))}
                         <td className="px-2 py-1 text-right text-cyan-300 font-mono">{fmtNum(hrsPerPc, 2)}</td>

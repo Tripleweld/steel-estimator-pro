@@ -135,7 +135,7 @@ function EditCell({ value, onChange, type = 'text', className = '', ...rest }) {
       value={value ?? ''}
       onChange={onChange}
       onFocus={(e) => e.target.select()}
-      className={`w-full bg-blue-500/5 border border-blue-500/30 rounded px-2 py-1 text-sm text-white
+      className={`w-full min-w-[60px] bg-blue-500/5 border border-blue-500/30 rounded px-2 py-1 text-sm text-white
         placeholder-steel-500 focus:outline-none focus:ring-1 focus:ring-blue-500/50 ${className}`}
       {...rest}
     />
@@ -175,7 +175,7 @@ function OverridableCell({ calcValue, override, onOverride, colorClass }) {
           if (!isNaN(n)) onOverride(n);
         }
       }}
-      className={`w-16 text-right rounded px-1 py-1 text-sm font-mono focus:outline-none focus:ring-1 focus:ring-blue-500/50 ${colorClass} ${
+      className={`w-full min-w-[64px] text-right rounded px-1 py-1 text-sm font-mono focus:outline-none focus:ring-1 focus:ring-blue-500/50 ${colorClass} ${
         isOverridden
           ? 'bg-amber-900/40 border border-amber-500/50'
           : 'bg-transparent border border-transparent'
@@ -370,31 +370,31 @@ function MomentConnectionRow({ row, index, fabRate, installRate, steelRate, onUp
         </select>
       </td>
       <td className="px-1 py-1 text-sm text-right text-steel-400 font-mono" style={{minWidth:'70px'}}>{lbsPerFt > 0 ? fmtNum(lbsPerFt, 2) : ''}</td>
-      <td className="px-1 py-1"><input type="text" inputMode="decimal" value={row.plateQty} onChange={e => onUpdate(row.id, { plateQty: e.target.value })} className={mcIn} style={{width:'50px'}} /></td>
-      <td className="px-1 py-1"><input type="text" inputMode="decimal" value={row.plateLengthFt} onChange={e => onUpdate(row.id, { plateLengthFt: e.target.value })} className={mcIn} style={{width:'60px'}} /></td>
-      <td className="px-1 py-1"><input type="text" inputMode="decimal" value={row.wtOverride != null ? row.wtOverride : ''} onChange={e => onUpdate(row.id, { wtOverride: e.target.value === '' ? null : e.target.value })} placeholder={fmtNum(pQty * lbsPerFt * pLen, 1)} className={mcIn + ' placeholder:text-steel-500'} style={{width:'70px'}} title="Override total weight (leave blank for auto)" /></td>
+      <td className="px-1 py-1"><input type="text" inputMode="decimal" value={row.plateQty} onChange={e => onUpdate(row.id, { plateQty: e.target.value })} className={mcIn} style={{minWidth:'60px'}} /></td>
+      <td className="px-1 py-1"><input type="text" inputMode="decimal" value={row.plateLengthFt} onChange={e => onUpdate(row.id, { plateLengthFt: e.target.value })} className={mcIn} style={{minWidth:'72px'}} /></td>
+      <td className="px-1 py-1"><input type="text" inputMode="decimal" value={row.wtOverride != null ? row.wtOverride : ''} onChange={e => onUpdate(row.id, { wtOverride: e.target.value === '' ? null : e.target.value })} placeholder={fmtNum(pQty * lbsPerFt * pLen, 1)} className={mcIn + ' placeholder:text-steel-500'} style={{minWidth:'80px'}} title="Override total weight (leave blank for auto)" /></td>
       <td className="px-1 py-1 text-sm text-right text-white font-mono font-bold">{fmtNum(totalLbs, 1)}</td>
       <td className="px-1 py-1 text-sm text-right text-steel-400 font-mono">{fmtNum(totalTon, 3)}</td>
-      <td className="px-1 py-1"><input type="text" inputMode="decimal" value={row.basePlLb} onChange={set('basePlLb')} className={mcIn} style={{width:'55px'}} /></td>
-      <td className="px-1 py-1"><input type="text" inputMode="decimal" value={row.anchorsPc} onChange={set('anchorsPc')} className={mcIn} style={{width:'55px'}} /></td>
-      <td className="px-1 py-1">{row.section === 'steelDeck' ? <span className="text-steel-500 text-xs italic"></span> : <input type="text" inputMode="decimal" value={row.setup} onChange={set('setup')} className={mcIn} style={{width:'45px'}} />}</td>
-      <td className="px-1 py-1">{row.section === 'steelDeck' ? <span className="text-steel-500 text-xs italic"></span> : <input type="text" inputMode="decimal" value={row.cut} onChange={set('cut')} className={mcIn} style={{width:'45px'}} />}</td>
-      <td className="px-1 py-1">{row.section === 'steelDeck' ? <span className="text-steel-500 text-xs italic"></span> : <input type="text" inputMode="decimal" value={row.drill} onChange={set('drill')} className={mcIn} style={{width:'45px'}} />}</td>
-      <td className="px-1 py-1">{row.section === 'steelDeck' ? <span className="text-steel-500 text-xs italic"></span> : <input type="text" inputMode="decimal" value={row.feed} onChange={set('feed')} className={mcIn} style={{width:'45px'}} />}</td>
-      <td className="px-1 py-1">{row.section === 'steelDeck' ? <span className="text-steel-500 text-xs italic"></span> : <input type="text" inputMode="decimal" value={row.weld} onChange={set('weld')} className={mcIn} style={{width:'45px'}} />}</td>
-      <td className="px-1 py-1">{row.section === 'steelDeck' ? <span className="text-steel-500 text-xs italic"></span> : <input type="text" inputMode="decimal" value={row.grind} onChange={set('grind')} className={mcIn} style={{width:'45px'}} />}</td>
-      <td className="px-1 py-1">{row.section === 'steelDeck' ? <span className="text-steel-500 text-xs italic"></span> : <input type="text" inputMode="decimal" value={row.paint} onChange={set('paint')} className={mcIn} style={{width:'45px'}} />}</td>
+      <td className="px-1 py-1"><input type="text" inputMode="decimal" value={row.basePlLb} onChange={set('basePlLb')} className={mcIn} style={{minWidth:'70px'}} /></td>
+      <td className="px-1 py-1"><input type="text" inputMode="decimal" value={row.anchorsPc} onChange={set('anchorsPc')} className={mcIn} style={{minWidth:'70px'}} /></td>
+      <td className="px-1 py-1">{row.section === 'steelDeck' ? <span className="text-steel-500 text-xs italic"></span> : <input type="text" inputMode="decimal" value={row.setup} onChange={set('setup')} className={mcIn} style={{minWidth:'56px'}} />}</td>
+      <td className="px-1 py-1">{row.section === 'steelDeck' ? <span className="text-steel-500 text-xs italic"></span> : <input type="text" inputMode="decimal" value={row.cut} onChange={set('cut')} className={mcIn} style={{minWidth:'56px'}} />}</td>
+      <td className="px-1 py-1">{row.section === 'steelDeck' ? <span className="text-steel-500 text-xs italic"></span> : <input type="text" inputMode="decimal" value={row.drill} onChange={set('drill')} className={mcIn} style={{minWidth:'56px'}} />}</td>
+      <td className="px-1 py-1">{row.section === 'steelDeck' ? <span className="text-steel-500 text-xs italic"></span> : <input type="text" inputMode="decimal" value={row.feed} onChange={set('feed')} className={mcIn} style={{minWidth:'56px'}} />}</td>
+      <td className="px-1 py-1">{row.section === 'steelDeck' ? <span className="text-steel-500 text-xs italic"></span> : <input type="text" inputMode="decimal" value={row.weld} onChange={set('weld')} className={mcIn} style={{minWidth:'56px'}} />}</td>
+      <td className="px-1 py-1">{row.section === 'steelDeck' ? <span className="text-steel-500 text-xs italic"></span> : <input type="text" inputMode="decimal" value={row.grind} onChange={set('grind')} className={mcIn} style={{minWidth:'56px'}} />}</td>
+      <td className="px-1 py-1">{row.section === 'steelDeck' ? <span className="text-steel-500 text-xs italic"></span> : <input type="text" inputMode="decimal" value={row.paint} onChange={set('paint')} className={mcIn} style={{minWidth:'56px'}} />}</td>
       <td className='px-1 py-1'><OverridableCell calcValue={calcFabPerPc} override={row.fabPerPcOverride} onOverride={(v) => onUpdate(row.id, { fabPerPcOverride: v })} colorClass='text-green-400' /></td>
       <td className={'px-1 py-1 ' + mcRo + ' text-white'}>{fmtNum(totFab, 2)}</td>
-      <td className="px-1 py-1"><input type="text" inputMode="decimal" value={row.fabCrew || 1} onChange={e => onUpdate(row.id, { fabCrew: e.target.value })} className={mcIn} style={{width:'40px'}} /></td>
-      <td className="px-1 py-1"><input type="text" inputMode="decimal" value={row.unload} onChange={set('unload')} className={mcIn} style={{width:'45px'}} /></td>
-      <td className="px-1 py-1"><input type="text" inputMode="decimal" value={row.rig} onChange={set('rig')} className={mcIn} style={{width:'45px'}} /></td>
-      <td className="px-1 py-1"><input type="text" inputMode="decimal" value={row.fit} onChange={set('fit')} className={mcIn} style={{width:'45px'}} /></td>
-      <td className="px-1 py-1"><input type="text" inputMode="decimal" value={row.bolt} onChange={set('bolt')} className={mcIn} style={{width:'45px'}} /></td>
-      <td className="px-1 py-1"><input type="text" inputMode="decimal" value={row.touchUp} onChange={set('touchUp')} className={mcIn} style={{width:'45px'}} /></td>
+      <td className="px-1 py-1"><input type="text" inputMode="decimal" value={row.fabCrew || 1} onChange={e => onUpdate(row.id, { fabCrew: e.target.value })} className={mcIn} style={{minWidth:'50px'}} /></td>
+      <td className="px-1 py-1"><input type="text" inputMode="decimal" value={row.unload} onChange={set('unload')} className={mcIn} style={{minWidth:'56px'}} /></td>
+      <td className="px-1 py-1"><input type="text" inputMode="decimal" value={row.rig} onChange={set('rig')} className={mcIn} style={{minWidth:'56px'}} /></td>
+      <td className="px-1 py-1"><input type="text" inputMode="decimal" value={row.fit} onChange={set('fit')} className={mcIn} style={{minWidth:'56px'}} /></td>
+      <td className="px-1 py-1"><input type="text" inputMode="decimal" value={row.bolt} onChange={set('bolt')} className={mcIn} style={{minWidth:'56px'}} /></td>
+      <td className="px-1 py-1"><input type="text" inputMode="decimal" value={row.touchUp} onChange={set('touchUp')} className={mcIn} style={{minWidth:'56px'}} /></td>
       <td className='px-1 py-1'><OverridableCell calcValue={calcInstPerPc} override={row.instPerPcOverride} onOverride={(v) => onUpdate(row.id, { instPerPcOverride: v })} colorClass='text-cyan-400' /></td>
       <td className={'px-1 py-1 ' + mcRo + ' text-white'}>{fmtNum(totInst, 2)}</td>
-      <td className="px-1 py-1"><input type="text" inputMode="decimal" value={row.instCrew || 2} onChange={e => onUpdate(row.id, { instCrew: e.target.value })} className={mcIn} style={{width:'40px'}} /></td>
+      <td className="px-1 py-1"><input type="text" inputMode="decimal" value={row.instCrew || 2} onChange={e => onUpdate(row.id, { instCrew: e.target.value })} className={mcIn} style={{minWidth:'50px'}} /></td>
       <td className="px-1 py-1 text-sm text-right text-steel-300 font-mono">{fmtDollar(matCost)}</td>
       <td className="px-1 py-1 text-sm text-right text-steel-300 font-mono">{fmtDollar(fabCost)}</td>
       <td className="px-1 py-1 text-sm text-right text-steel-300 font-mono">{fmtDollar(instCost)}</td>
@@ -590,13 +590,13 @@ function DataRow({ row, index, fabRate, installRate, onUpdate, onDelete }) {
       {/* Row # */}
       <td className="px-1 py-1 text-center text-xs text-steel-500 font-mono w-8">{index + 1}</td>
       {/* Mark */}
-      <td className="px-1 py-1"><EditCell value={row.mark} onChange={set('mark')} /></td>
+      <td className="px-1 py-1"><EditCell value={row.mark} onChange={set('mark')} className="min-w-[80px]" /></td>
       {/* Dwg Ref */}
-      <td className="px-1 py-1"><EditCell value={row.dwgRef} onChange={set('dwgRef')} placeholder="S-101" /></td>
+      <td className="px-1 py-1"><EditCell value={row.dwgRef} onChange={set('dwgRef')} placeholder="S-101" className="min-w-[100px]" /></td>
       {/* Type */}
       <td className="px-1 py-1">
         <select value={row.type || '--'} onChange={set('type')}
-          className="w-full bg-steel-900 border border-blue-500/30 rounded px-1 py-1 text-sm text-white focus:outline-none focus:ring-1 focus:ring-blue-500/50">
+          className="w-full min-w-[110px] bg-steel-900 border border-blue-500/30 rounded px-1 py-1 text-sm text-white focus:outline-none focus:ring-1 focus:ring-blue-500/50">
           <option value="--" style={{ backgroundColor: "#0c1222", color: "white" }}>--</option>
           {MEMBER_TYPES.map(t => <option key={t} value={t} style={{ backgroundColor: "#0c1222", color: "white" }}>{t}</option>)}
         </select>
@@ -610,26 +610,26 @@ function DataRow({ row, index, fabRate, installRate, onUpdate, onDelete }) {
         />
       </td>
       {/* Qty */}
-      <td className="px-1 py-1"><EditCell value={row.qty} onChange={set('qty')} type="text" inputMode="decimal" className="text-right w-14" /></td>
+      <td className="px-1 py-1"><EditCell value={row.qty} onChange={set('qty')} type="text" inputMode="decimal" className="text-right min-w-[64px]" /></td>
       {/* Length */}
-      <td className="px-1 py-1">{row.section === 'steelDeck' ? <span className="text-steel-500 text-xs italic"></span> : <EditCell value={row.lengthFt} onChange={set('lengthFt')} type="text" inputMode="decimal" className="text-right w-16" />}</td>
+      <td className="px-1 py-1 min-w-[72px]">{row.section === 'steelDeck' ? <span className="text-steel-500 text-xs italic"></span> : <EditCell value={row.lengthFt} onChange={set('lengthFt')} type="text" inputMode="decimal" className="text-right min-w-[72px]" />}</td>
       {/* Wt/ft */}
-      <td className="px-1 py-1 text-right text-sm text-white font-mono">{row.wtPerFt || '--'}</td>
+      <td className="px-1 py-1 text-right text-sm text-white font-mono min-w-[72px]">{row.wtPerFt || '--'}</td>
       {/* Total lb */}
-      <td className="px-1 py-1 text-right text-sm text-white font-mono">{fmtNum(totalLbs)}</td>
+      <td className="px-1 py-1 text-right text-sm text-white font-mono min-w-[88px]">{fmtNum(totalLbs)}</td>
       {/* Total ton */}
-      <td className="px-1 py-1 text-right text-sm text-white font-mono">{fmtNum(totalTon, 2)}</td>
+      <td className="px-1 py-1 text-right text-sm text-white font-mono min-w-[72px]">{fmtNum(totalTon, 2)}</td>
       {/* Base Pl */}
       {row.section !== 'steelDeck' && (
-        <td className="px-1 py-1"><EditCell value={row.basePlLb} onChange={set('basePlLb')} type="text" inputMode="decimal" className="text-right w-16" /></td>
+        <td className="px-1 py-1"><EditCell value={row.basePlLb} onChange={set('basePlLb')} type="text" inputMode="decimal" className="text-right min-w-[72px]" /></td>
       )}
       {/* Anchors */}
       {row.section !== 'steelDeck' && (
-        <td className="px-1 py-1"><EditCell value={row.anchorsPc} onChange={set('anchorsPc')} type="text" inputMode="decimal" className="text-right w-16" /></td>
+        <td className="px-1 py-1"><EditCell value={row.anchorsPc} onChange={set('anchorsPc')} type="text" inputMode="decimal" className="text-right min-w-[72px]" /></td>
       )}
       {/* Fab hours: setup, cut, drill, feed, weld, grind, paint */}
       {['setup','cut','drill','feed','weld','grind','paint'].map(f => (
-        <td key={f} className="px-1 py-1"><EditCell value={row[f]} onChange={set(f)} type="text" inputMode="decimal" className="text-right w-12" /></td>
+        <td key={f} className="px-1 py-1"><EditCell value={row[f]} onChange={set(f)} type="text" inputMode="decimal" className="text-right min-w-[56px]" /></td>
       ))}
       {/* Fab/Pc  overridable */}
       <td className="px-1 py-1">
@@ -641,12 +641,12 @@ function DataRow({ row, index, fabRate, installRate, onUpdate, onDelete }) {
         />
       </td>
       {/* Tot Fab */}
-      <td className="px-1 py-1 text-right text-sm text-amber-300 font-mono font-bold">{fmtNum(totFab, 1)}</td>
+      <td className="px-1 py-1 text-right text-sm text-amber-300 font-mono font-bold min-w-[72px]">{fmtNum(totFab, 1)}</td>
       {/* Fab Crew */}
-      <td className="px-1 py-1">{row.section === 'steelDeck' ? <span className="text-steel-500 text-xs italic"></span> : <EditCell value={row.fabCrew} onChange={set('fabCrew')} type="text" inputMode="decimal" className="text-right w-12" />}</td>
+      <td className="px-1 py-1">{row.section === 'steelDeck' ? <span className="text-steel-500 text-xs italic"></span> : <EditCell value={row.fabCrew} onChange={set('fabCrew')} type="text" inputMode="decimal" className="text-right min-w-[56px]" />}</td>
       {/* Install hours: unload, rig, fit, bolt, touchUp */}
       {['unload','rig','fit','bolt','touchUp'].map(f => (
-        <td key={f} className="px-1 py-1"><EditCell value={row[f]} onChange={set(f)} type="text" inputMode="decimal" className="text-right w-12" /></td>
+        <td key={f} className="px-1 py-1"><EditCell value={row[f]} onChange={set(f)} type="text" inputMode="decimal" className="text-right min-w-[56px]" /></td>
       ))}
       {/* Inst/Pc  overridable */}
       <td className="px-1 py-1">
@@ -658,16 +658,16 @@ function DataRow({ row, index, fabRate, installRate, onUpdate, onDelete }) {
         />
       </td>
       {/* Tot Inst */}
-      <td className="px-1 py-1 text-right text-sm text-cyan-300 font-mono font-bold">{fmtNum(totInst, 1)}</td>
+      <td className="px-1 py-1 text-right text-sm text-cyan-300 font-mono font-bold min-w-[72px]">{fmtNum(totInst, 1)}</td>
       {/* Inst Crew */}
-      <td className="px-1 py-1"><EditCell value={row.instCrew} onChange={set('instCrew')} type="text" inputMode="decimal" className="text-right w-12" /></td>
+      <td className="px-1 py-1"><EditCell value={row.instCrew} onChange={set('instCrew')} type="text" inputMode="decimal" className="text-right min-w-[56px]" /></td>
       {/* Cost preview */}
-      <td className="px-1 py-1 text-right text-sm text-steel-300 font-mono">{fmtDollar(matCost)}</td>
-      <td className="px-1 py-1 text-right text-sm text-steel-300 font-mono">{fmtDollar(fabCost)}</td>
-      <td className="px-1 py-1 text-right text-sm text-steel-300 font-mono">{fmtDollar(instCost)}</td>
-      <td className="px-1 py-1 text-right text-sm text-green-400 font-mono font-bold">{fmtDollar(rowTotal)}</td>
+      <td className="px-1 py-1 text-right text-sm text-steel-300 font-mono min-w-[88px]">{fmtDollar(matCost)}</td>
+      <td className="px-1 py-1 text-right text-sm text-steel-300 font-mono min-w-[88px]">{fmtDollar(fabCost)}</td>
+      <td className="px-1 py-1 text-right text-sm text-steel-300 font-mono min-w-[88px]">{fmtDollar(instCost)}</td>
+      <td className="px-1 py-1 text-right text-sm text-green-400 font-mono font-bold min-w-[96px]">{fmtDollar(rowTotal)}</td>
       {/* Notes */}
-      <td className="px-1 py-1"><EditCell value={row.notes} onChange={set('notes')} placeholder="" className="w-24" /></td>
+      <td className="px-1 py-1"><EditCell value={row.notes} onChange={set('notes')} placeholder="" className="min-w-[140px]" /></td>
       {/* Delete */}
       <td className="px-1 py-1 text-center">
         <button
@@ -913,7 +913,7 @@ function StructuralTakeoffInner() {
 
               {isOpen && (sec.id === 'moment' ? <MomentConnectionTable sectionRows={sectionRows} fabRate={fabRate} installRate={installRate} steelRate={steelRate} onUpdate={updateRow} onDelete={deleteRow} /> : sec.id === 'joistReinf' ? <JoistReinfSyncTable fabRate={fabRate} installRate={installRate} /> : (
                 <div className="overflow-x-auto border border-steel-700 rounded-b-lg bg-steel-900/50">
-                  <table className="w-full text-left whitespace-nowrap" style={{ minWidth: '2400px' }}>
+                  <table className="w-full text-left whitespace-nowrap" style={{ minWidth: '2800px' }}>
                     {/* Column group headers */}
                     <thead>
                       <tr>

@@ -37,7 +37,7 @@ function NumInput({ value, onChange, step = 'any', className = '', disabled = fa
       value={value ?? ''}
       placeholder={placeholder}
       onChange={(e) => onChange(e.target.value)}
-      className={`w-full rounded border border-steel-700/50 bg-steel-900/40 px-2 py-1 text-xs font-mono text-steel-100 outline-none transition focus:border-fire-500 focus:ring-1 focus:ring-fire-500 disabled:bg-steel-900/30 disabled:text-steel-500 ${className}`}
+      className={`w-full min-w-[64px] rounded border border-steel-700/50 bg-steel-900/40 px-2 py-1 text-xs font-mono text-steel-100 outline-none transition focus:border-fire-500 focus:ring-1 focus:ring-fire-500 disabled:bg-steel-900/30 disabled:text-steel-500 ${className}`}
     />
   )
 }
@@ -49,7 +49,7 @@ function TextInput({ value, onChange, className = '', placeholder = '' }) {
       value={value ?? ''}
       placeholder={placeholder}
       onChange={(e) => onChange(e.target.value)}
-      className={`w-full rounded border border-steel-700/50 bg-steel-900/40 px-2 py-1 text-xs text-steel-100 outline-none transition focus:border-fire-500 focus:ring-1 focus:ring-fire-500 ${className}`}
+      className={`w-full min-w-[90px] rounded border border-steel-700/50 bg-steel-900/40 px-2 py-1 text-xs text-steel-100 outline-none transition focus:border-fire-500 focus:ring-1 focus:ring-fire-500 ${className}`}
     />
   )
 }
@@ -59,7 +59,7 @@ function Select({ value, onChange, options, className = '' }) {
     <select
       value={value ?? ''}
       onChange={(e) => onChange(e.target.value)}
-      className={`w-full rounded border border-steel-700/50 bg-steel-900/60 px-2 py-1 text-xs text-steel-100 outline-none transition focus:border-fire-500 focus:ring-1 focus:ring-fire-500 ${className}`}
+      className={`w-full min-w-[110px] rounded border border-steel-700/50 bg-steel-900/60 px-2 py-1 text-xs text-steel-100 outline-none transition focus:border-fire-500 focus:ring-1 focus:ring-fire-500 ${className}`}
     >
       {options.map((o) => (
         <option key={o} value={o} className="bg-steel-900">{o}</option>
