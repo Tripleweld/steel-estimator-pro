@@ -382,7 +382,14 @@ function MomentConnectionRow({ row, index, fabRate, installRate, steelRate, onUp
       <td className="px-1 py-1 text-sm text-right text-steel-300 font-mono">{fmtDollar(fabCost)}</td>
       <td className="px-1 py-1 text-sm text-right text-steel-300 font-mono">{fmtDollar(instCost)}</td>
       <td className="px-1 py-1 text-sm text-right text-white font-bold font-mono">{fmtDollar(rowTotal)}</td>
-      <td className="px-1 py-1 text-center"><button onClick={() => onDelete(row.id)} className="text-red-500 hover:text-red-400 text-xs"></button></td>
+      <td className="px-1 py-1 text-center">
+        <button
+          onClick={() => onDelete(row.id)}
+          title={`Delete ${row.mark || 'row'}`}
+          aria-label={`Delete ${row.mark || 'row'}`}
+          className="inline-flex items-center justify-center w-6 h-6 rounded text-red-400 hover:text-white hover:bg-red-600/80 text-sm font-bold leading-none transition-colors"
+        >×</button>
+      </td>
     </tr>
   );
 }
@@ -646,7 +653,14 @@ function DataRow({ row, index, fabRate, installRate, onUpdate, onDelete }) {
       <td className="px-1 py-1"><EditCell value={row.notes} onChange={set('notes')} placeholder="" className="w-24" /></td>
       {/* Delete */}
       <td className="px-1 py-1 text-center">
-        <button onClick={() => onDelete(row.id)} className="text-red-500/60 hover:text-red-400 text-xs"></button>
+        <button
+          onClick={() => onDelete(row.id)}
+          title={`Delete ${row.mark || 'row'}`}
+          aria-label={`Delete ${row.mark || 'row'}`}
+          className="inline-flex items-center justify-center w-6 h-6 rounded text-red-400 hover:text-white hover:bg-red-600/80 text-sm font-bold leading-none transition-colors"
+        >
+          ×
+        </button>
       </td>
     </tr>
   );
