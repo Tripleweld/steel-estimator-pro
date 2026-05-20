@@ -68,6 +68,56 @@ function inferSection(m) {
   return 'beams'
 }
 
+// Find a $/unit rate for an AI-extracted misc-metals item by matching its
+// description against the Rates & Config catalog (state.rates.miscMetalsRates
+// first, then materialRates as fallback for bare structural shapes).
+function lookupMiscRate(aiItem, ratesState) {
+  const name = String(aiItem?.item || aiItem?.description || '').toLowerCase()
+  const miscRates = ratesState?.miscMetalsRates || []
+  const materialRates = ratesState?.materialRates || []
+  if (!name) {
+    const struct = materialRates.find(r => /structural steel/i.test(r.item))
+    return struct ? { rate: toNum(struct.rate), unit: struct.unit, source: struct.item + ' (fallback — no description)' } : { rate: 0, unit: 'ea', source: '' }
+  }
+  // Keyword → filter map. Order matters — most specific first.
+  const KEYWORD_MAP = [
+    { keys: ['lintel'],           pick: r => /lintel/i.test(r.item) },
+    { keys: ['embed', 'weld plate'], pick: r => /embed/i.test(r.item) },
+    { keys: ['bollard'],          pick: r => /bollard/i.test(r.item) },
+    { keys: ['stair', 'tread'],   pick: r => /tread/i.test(r.item) },
+    { keys: ['grating', 'grate'], pick: r => /grating/i.test(r.item) },
+    { keys: ['guardrail'],        pick: r => /guardrail/i.test(r.item) },
+    { keys: ['handrail', 'railing'], pick: r => /handrail/i.test(r.item) },
+    { keys: ['corner guard'],     pick: r => /corner guard/i.test(r.item) },
+    { keys: ['edge angle'],       pick: r => /edge angle/i.test(r.item) },
+    { keys: ['bumper'],           pick: r => /bumper/i.test(r.item) },
+    { keys: ['wheel stop'],       pick: r => /wheel stop/i.test(r.item) },
+    { keys: ['anchor', 'j-bolt', 'l-bolt', 'threaded rod'], pick: r => /anchor/i.test(r.item) },
+    { keys: ['hatch'],            pick: r => /hatch/i.test(r.item) },
+    { keys: ['catwalk', 'mezzanine', 'platform'], pick: r => /catwalk/i.test(r.item) },
+    { keys: ['floor plate', 'checker'], pick: r => /floor plate/i.test(r.item) },
+    { keys: ['pipe support', 'stanchion'], pick: r => /pipe support/i.test(r.item) },
+    { keys: ['sump'],             pick: r => /sump/i.test(r.item) },
+    { keys: ['dunnage', 'equipment support'], pick: r => /dunnage/i.test(r.item) },
+  ]
+  for (const m of KEYWORD_MAP) {
+    if (m.keys.some(k => name.includes(k))) {
+      const match = miscRates.find(m.pick)
+      if (match) return { rate: toNum(match.rate), unit: match.unit, source: match.item }
+    }
+  }
+  // Bare structural shapes / bracing / reinforcement → $/lb structural steel
+  const STRUCT_KW = ['bracing', 'brace', 'reinforc', 'angle', 'channel', 'hss', 'pipe ', 'w-shape', 'wide flange', 'plate', 'rebar', 'bar ', 'shape']
+  if (STRUCT_KW.some(k => name.includes(k))) {
+    const isGalv = /galv|hdg/i.test(name)
+    const struct = materialRates.find(r => isGalv ? /galvanized/i.test(r.item) : /structural steel/i.test(r.item))
+    if (struct) return { rate: toNum(struct.rate), unit: struct.unit, source: struct.item }
+  }
+  // Last resort
+  const struct = materialRates.find(r => /structural steel/i.test(r.item))
+  return struct ? { rate: toNum(struct.rate), unit: struct.unit, source: struct.item + ' (fallback)' } : { rate: 0, unit: 'ea', source: '' }
+}
+
 // Default fab/install minutes per piece distributed across the actual sub-step
 // fields (setup/cut/drill/feed/weld/grind/paint and unload/rig/fit/bolt/touchUp)
 // so the StructuralTakeoff row's calcFabPerPc / calcInstPerPc compute non-zero
@@ -174,6 +224,28 @@ A. STRUCTURAL: Wide flange beams (W shapes) - floor/roof/transfer/spandrel beams
 B. CONNECTIONS & HARDWARE: Base plates (size x thickness, anchor bolt pattern); Gusset plates; Shear tabs / clip angles / end plates; Moment connection plates (top & bottom flange); Stiffener plates; Anchor bolts (diameter x length x qty per base); High-strength bolts (A325/A490, note if slip-critical); Shear studs (composite beams); Bearing/sole plates for OWSJ
 
 C. MISCELLANEOUS METALS: Stairs (pan type, concrete filled, ship ladder) - width, floor-to-floor height, flights; Handrails and guardrails - type, height, length, finish; Ladders (fixed, cage, ship); Lintels (read LINTEL SCHEDULE first); Embed plates / weld plates; Bollards; Grating and floor plates; Mezzanine/platform framing; Catwalks; Equipment support steel (dunnage, curb); Roof hatch frames; Misc angles, plates, brackets
+
+CRITICAL — MISC METALS QTY MUST BE PIECE COUNT, NEVER FEET / INCHES / POUNDS:
+For every item in miscMetals[], "qty" is the number of discrete physical pieces installed on this drawing — NOT a length, not a weight, not a square-footage. Items priced per linear foot or per square foot still have a piece count (e.g., one continuous handrail run on a stair flight is qty=1, not qty=22 even if it's 22 feet long).
+
+  ✓ CORRECT examples:
+    - "Lintel L102x102x9.5 over door D-101" → qty=1 (one lintel piece)
+    - "Bracing HSS6x6x3/8, diagonal at Grid B" → qty=1 per diagonal member; count the diagonals in the bracing pattern. A typical X-brace in a single bay = qty=2 (two diagonals). A K-brace = qty=2.
+    - "Joist reinforcement angle" → qty = number of reinforcement pieces (one per joist that gets reinforced), NOT total linear feet of angle.
+    - "Bollard 6" pipe" → qty=1 per bollard.
+    - "Pan-type stair ST-1" → qty=1 (one stair assembly).
+    - "Handrail at stair ST-1" → qty=1 (one handrail run); put length_ft separately if known.
+
+  ✗ WRONG examples (these caused real-world bad takeoffs):
+    - qty=1090 for bracing → that is linear feet, not pieces. A real building rarely has more than ~50 diagonal braces.
+    - qty=2912 for joist reinforcement → that is feet or weight, not pieces.
+    - qty=120 for a single lintel → that is the length in inches.
+
+SANITY CHECK BEFORE OUTPUTTING (do this for every miscMetals item):
+1. Re-read your own qty and ask: "Could this number plausibly be a count of physical pieces?"
+2. If qty > 100, you are almost certainly returning a length or weight by mistake. Stop, recount the actual pieces, and set qty to that smaller count.
+3. If after recounting you still believe qty > 100 is correct (e.g., 200 embed plates in a large precast project), you MUST set "confidence":"low" AND include the literal string "qty may be linear feet, not pieces — verify" in the notes field so the estimator double-checks.
+4. Length-based or area-based dimensions belong in separate fields ("length_ft", "area_sqft"), never folded into qty.
 
 D. STEEL DECK & JOISTS: Open web steel joists (OWSJ) - designation, span, spacing, qty; Joist girders; Steel deck - profile (P3606, P3615, B22, N22), gauge, span, area (sq ft); Composite deck vs. roof deck vs. form deck
 
@@ -757,19 +829,24 @@ export default function AiTakeoff() {
     // Map misc metals → miscMetalsCustom (Misc Metals page's custom items list)
     if (mergedResult.miscMetals.length > 0) {
       const miscRows = mergedResult.miscMetals.map((mm, i) => {
+        const qty = toNum(mm.qty) || 1
+        const lookup = lookupMiscRate(mm, state.rates)
+        const qtySuspect = qty > 100
         const aiNotes = [
           mm.description,
           mm.material && `material: ${mm.material}`,
           mm.finish && `finish: ${mm.finish}`,
           mm.flights != null && `flights: ${mm.flights}`,
+          lookup.source && `rate from: ${lookup.source} (${lookup.unit})`,
+          qtySuspect && `⚠ qty=${qty} — may be linear feet, not pieces. Verify before pricing.`,
           mm.notes,
         ].filter(Boolean).join(' — ')
         return {
           id: 'mmc-ai-' + Date.now() + '-' + i,
           name: mm.item || mm.description || 'AI-extracted misc item',
-          qty: toNum(mm.qty) || 1,
-          unit: mm.unit || 'ea',
-          rate: 0,
+          qty,
+          unit: lookup.unit || mm.unit || 'ea',
+          rate: lookup.rate,
           notes: aiNotes,
         }
       })
