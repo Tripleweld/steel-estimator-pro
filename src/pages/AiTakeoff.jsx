@@ -590,11 +590,13 @@ export default function AiTakeoff() {
       ].join(' | ')
       const notes = [m.notes, aiContext].filter(Boolean).join(' — ')
       const def = defaultFabInstMin(section, profile)
+      const dwgRef = [m.gridLocation, m.elevation, m.dwgRef, m.sheet]
+        .filter(Boolean).map(s => String(s).trim()).filter(Boolean).join(' / ')
       return {
         id: 'ai-' + Date.now() + '-' + i,
         section,
         mark: m.mark || '',
-        dwgRef: m.gridLocation || '',
+        dwgRef,
         type: inferType(profile, section),
         profile,
         qty: toNum(m.qty) || 1,
