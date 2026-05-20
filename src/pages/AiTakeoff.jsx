@@ -598,6 +598,18 @@ export default function AiTakeoff() {
   const applyToTakeoff = () => {
     if (!mergedResult) return
 
+    // Replace, don't append: clear prior structural rows + prior AI-generated
+    // misc items so successive AI runs don't pile on duplicates. Manually
+    // entered misc items (id without 'mmc-ai-' prefix) are preserved.
+    const existingStructural = (state.structuralRows || []).length
+    const existingAiMisc = (state.miscMetalsCustom || []).filter(it => String(it.id || '').startsWith('mmc-ai-')).length
+    if (existingStructural > 0 || existingAiMisc > 0) {
+      const msg = `Replace ${existingStructural} existing structural row${existingStructural === 1 ? '' : 's'}` +
+        (existingAiMisc > 0 ? ` and ${existingAiMisc} AI-added misc item${existingAiMisc === 1 ? '' : 's'}` : '') +
+        ` with the new AI takeoff? This cannot be undone.`
+      if (!window.confirm(msg)) return
+    }
+
     // Map structural members to takeoff rows
     const newRows = mergedResult.structuralMembers.map((m, i) => {
       const profile = String(
@@ -641,11 +653,19 @@ export default function AiTakeoff() {
       }
     })
 
-    // Dispatch to add rows to structural takeoff
-    dispatch({ type: 'SET_STRUCTURAL_ROWS', payload: [
-      ...(state.structuralRows || []),
-      ...newRows
-    ]})
+    // Replace structural rows entirely (no append).
+    dispatch({ type: 'SET_STRUCTURAL_ROWS', payload: newRows })
+
+    // For misc metals: drop prior AI-added items, keep manual ones, then append new.
+    const keptMisc = (state.miscMetalsCustom || []).filter(it => !String(it.id || '').startsWith('mmc-ai-'))
+    if (keptMisc.length !== (state.miscMetalsCustom || []).length) {
+      // Replace the misc list with only the kept (manual) items first.
+      for (const it of (state.miscMetalsCustom || [])) {
+        if (String(it.id || '').startsWith('mmc-ai-')) {
+          dispatch({ type: 'DELETE_MM_CUSTOM_ITEM', id: it.id })
+        }
+      }
+    }
 
     // Map misc metals → miscMetalsCustom (Misc Metals page's custom items list)
     if (mergedResult.miscMetals.length > 0) {
