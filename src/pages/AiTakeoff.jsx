@@ -68,18 +68,34 @@ function inferSection(m) {
   return 'beams'
 }
 
-// Default fab/install minutes per piece by bucket + profile family.
-// HSS overrides bucket-specific defaults. User can edit after apply.
-function defaultFabInstMin(bucket, designation) {
+// Default fab/install minutes per piece distributed across the actual sub-step
+// fields (setup/cut/drill/feed/weld/grind/paint and unload/rig/fit/bolt/touchUp)
+// so the StructuralTakeoff row's calcFabPerPc / calcInstPerPc compute non-zero
+// hours immediately after Apply. Totals match the per-type budget:
+//   Beams 45/30, Columns 60/45, Bracing 30/25, HSS 40/30, Misc 30/20
+// HSS overrides bucket-specific defaults. User can edit any sub-step after apply.
+function defaultFabSteps(bucket, designation) {
   const p = String(designation || '').toUpperCase().trim()
   const isHSS = p.startsWith('HSS') || p.startsWith('PIPE')
-  if (isHSS) return { fab: 40, inst: 30 }
-  if (bucket === 'beams' || bucket === 'roofFrames') return { fab: 45, inst: 30 }
-  if (bucket === 'columns') return { fab: 60, inst: 45 }
+  if (isHSS) return { setup: 10, cut: 5, drill: 5, feed: 0, weld: 15, grind: 5, paint: 0 } // 40
+  if (bucket === 'columns') return { setup: 15, cut: 5, drill: 10, feed: 5, weld: 20, grind: 5, paint: 0 } // 60
+  if (bucket === 'beams' || bucket === 'roofFrames') return { setup: 10, cut: 5, drill: 5, feed: 5, weld: 15, grind: 5, paint: 0 } // 45
   if (bucket === 'xBracing' || bucket === 'kneeBrace' || bucket === 'bridging') {
-    return { fab: 30, inst: 25 }
+    return { setup: 10, cut: 5, drill: 5, feed: 0, weld: 5, grind: 5, paint: 0 } // 30
   }
-  return { fab: 30, inst: 20 }
+  return { setup: 10, cut: 5, drill: 5, feed: 0, weld: 5, grind: 5, paint: 0 } // 30 misc
+}
+
+function defaultInstSteps(bucket, designation) {
+  const p = String(designation || '').toUpperCase().trim()
+  const isHSS = p.startsWith('HSS') || p.startsWith('PIPE')
+  if (isHSS) return { unload: 5, rig: 5, fit: 10, bolt: 5, touchUp: 5 } // 30
+  if (bucket === 'columns') return { unload: 10, rig: 10, fit: 15, bolt: 5, touchUp: 5 } // 45
+  if (bucket === 'beams' || bucket === 'roofFrames') return { unload: 5, rig: 5, fit: 10, bolt: 5, touchUp: 5 } // 30
+  if (bucket === 'xBracing' || bucket === 'kneeBrace' || bucket === 'bridging') {
+    return { unload: 5, rig: 5, fit: 5, bolt: 5, touchUp: 5 } // 25
+  }
+  return { unload: 5, rig: 5, fit: 5, bolt: 5, touchUp: 0 } // 20 misc
 }
 
 function inferType(designation, bucketSection) {
@@ -138,6 +154,13 @@ STRUCTURAL STEEL EXTRACTION:
 For each member found, extract:
 - Mark/ID (e.g., B1, C3, W2, BR1)
 - AISC/CISC shape designation exactly as shown (W310x60, HSS152x152x9.5, L76x76x6.4, C250x30)
+
+CRITICAL — FULL DESIGNATIONS ONLY (NEVER TRUNCATE):
+You MUST return the COMPLETE shape designation including size AND weight/thickness. The "section" field in your JSON output is REQUIRED to be the full string. Examples:
+  ✓ CORRECT: "W18x49", "W16x36", "W10x12", "HSS6x6x3/8", "HSS4x4x1/4", "HSS8x6x1/2", "L3x3x1/4", "L4x4x3/8", "C8x11.5", "PL1/2x6x12"
+  ✗ WRONG (rejected): "W18", "W16", "W10", "HSS", "HSS6x6", "L3", "L", "C8", "PL"
+If the plan view only shows "W18" without the weight, CROSS-REFERENCE the beam schedule, column schedule, member size table, or general notes on the same drawing set to find the complete designation (e.g., the schedule may list "B1 = W18x49"). The full designation is virtually always available somewhere on the drawing set.
+If after exhaustive cross-referencing you genuinely cannot determine the full designation, set "confidence":"low" AND include "RFI: confirm full size for <mark>" in the notes field — but still return your best guess at the full designation, never a truncated stub.
 - Length in feet-inches or meters as shown
 - Quantity (count ALL instances across ALL floor plans)
 - Connection type at each end: simple shear (clip angle/shear tab), moment (full pen weld/end plate), pin, base plate
@@ -591,7 +614,8 @@ export default function AiTakeoff() {
         `connR: ${connR}`,
       ].join(' | ')
       const notes = [m.notes, aiContext].filter(Boolean).join(' — ')
-      const def = defaultFabInstMin(section, profile)
+      const fabSteps = defaultFabSteps(section, profile)
+      const instSteps = defaultInstSteps(section, profile)
       const dwgRef = [m.gridLocation, m.elevation, m.dwgRef, m.sheet]
         .filter(Boolean).map(s => String(s).trim()).filter(Boolean).join(' / ')
       return {
@@ -606,11 +630,11 @@ export default function AiTakeoff() {
         wtPerFt,
         basePlLb: 0,
         anchorsPc: 0,
-        setup: 0, cut: 0, drill: 0, feed: 0, weld: 0, grind: 0, paint: 0,
-        fabPerPcOverride: Math.round((def.fab / 60) * 1000) / 1000,
+        ...fabSteps,
+        fabPerPcOverride: null,
         fabCrew: 1,
-        unload: 0, rig: 0, fit: 0, bolt: 0, touchUp: 0,
-        instPerPcOverride: Math.round((def.inst / 60) * 1000) / 1000,
+        ...instSteps,
+        instPerPcOverride: null,
         instCrew: 2,
         notes,
         aiConfidence: confToNum(m.confidence),
