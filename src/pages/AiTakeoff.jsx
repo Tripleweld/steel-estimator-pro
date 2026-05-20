@@ -561,8 +561,10 @@ export default function AiTakeoff() {
 
     // Map structural members to takeoff rows
     const newRows = mergedResult.structuralMembers.map((m, i) => {
-      const profile = m.section || ''
-      const section = inferSection(m)
+      const profile = String(
+        m.section || m.designation || m.shape || m.member_section || m.size || ''
+      ).trim()
+      const section = inferSection({ ...m, section: profile })
       const aiWt = toNum(m.weight_per_ft)
       const aiscWt = lookupWtPerFt(profile)
       const wtPerFt = aiscWt != null ? aiscWt : aiWt

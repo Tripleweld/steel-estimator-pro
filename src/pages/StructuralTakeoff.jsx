@@ -248,7 +248,7 @@ function ProfileSearch({ value, onSelect, profiles }) {
         onFocus={() => setOpen(true)}
         onKeyDown={onKey}
         placeholder="W10x12..."
-        className="w-full bg-blue-500/5 border border-blue-500/30 rounded px-2 py-1 text-sm text-white placeholder-steel-500 focus:outline-none focus:ring-1 focus:ring-blue-500/50"
+        className="w-full min-w-[110px] bg-blue-500/5 border border-blue-500/30 rounded px-2 py-1 text-sm text-white placeholder-steel-500 focus:outline-none focus:ring-1 focus:ring-blue-500/50"
       />
       {open && filtered.length > 0 && (
         <div className="absolute z-50 left-0 top-full mt-0.5 w-64 max-h-48 overflow-y-auto bg-steel-900 border border-blue-500/40 rounded shadow-xl" ref={listRef}>
