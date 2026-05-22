@@ -294,7 +294,9 @@ FINAL INSTRUCTIONS:
 - Extract from ALL pages, not just the first few
 - Every structural drawing page typically has 5-50 members - if you find less than 5 on a framing plan, look harder
 - Cross-reference plans with sections and details
-- Return ONLY valid JSON, no markdown, no explanation text`
+- Return ONLY valid JSON, no markdown, no explanation text
+
+IMPORTANT: Respond as quickly as possible. Do not over-analyze. Extract what you can see clearly and flag uncertain items. Speed is critical.`
 
 /* -------------- Markup overlay prompt -------------- */
 const MARKUP_PROMPT = `You previously analyzed this structural drawing and identified steel members. Now I need you to identify the SPATIAL LOCATION of each member on this drawing for markup purposes.
@@ -383,13 +385,17 @@ async function callGeminiVision(model, base64Image, prompt, signal) {
     ]}],
     generationConfig: { temperature: 0.1, maxOutputTokens: 65536 }
   })
-  const MAX_RETRIES = 3
+  // One retry with a 3s delay on transient upstream failures (504 timeout from
+  // our own proxy, 502 bad gateway, 503 service unavailable, 429 rate limit).
+  // Two attempts max — dense structural sheets that time out repeatedly should
+  // surface the error to the user rather than keep the spinner running.
+  const MAX_RETRIES = 1
+  const RETRIABLE_STATUSES = new Set([429, 502, 503, 504])
   for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
     if (signal?.aborted) throw new DOMException('Aborted', 'AbortError')
     if (attempt > 0) {
-      const wait = 3000 * attempt
-      console.log('AI_TAKEOFF: retry', attempt, 'in', wait/1000, 's...')
-      await abortableSleep(wait, signal)
+      console.log('AI_TAKEOFF: retry', attempt, 'in 3s...')
+      await abortableSleep(3000, signal)
     }
     const resp = await fetch('/api/gemini', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: reqBody, signal })
     if (!resp.ok) {
@@ -398,7 +404,7 @@ async function callGeminiVision(model, base64Image, prompt, signal) {
       let detail = ''
       try { const j = await resp.clone().json(); detail = j?.error || j?.error?.message || '' } catch (_) {}
       if (!detail) { try { detail = await resp.text() } catch (_) { detail = resp.statusText } }
-      if ((resp.status === 503 || resp.status === 429 || resp.status === 502) && attempt < MAX_RETRIES) {
+      if (RETRIABLE_STATUSES.has(resp.status) && attempt < MAX_RETRIES) {
         console.warn('AI_TAKEOFF: proxy', resp.status, '- will retry')
         continue
       }

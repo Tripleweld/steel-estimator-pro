@@ -125,17 +125,30 @@ export default async function handler(req, res) {
   }
 
   const upstreamUrl = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(apiKey)}`
+
+  // Vercel Hobby caps the function at 60s. Abort the upstream fetch at 55s so
+  // we can return a clean 504 with a friendly message instead of letting the
+  // platform kill us with FUNCTION_INVOCATION_TIMEOUT (which the client sees
+  // as a generic 504 HTML page).
+  const ac = new AbortController()
+  const timeoutId = setTimeout(() => ac.abort(), 55000)
   try {
     const upstream = await fetch(upstreamUrl, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ contents, generationConfig }),
+      signal: ac.signal,
     })
+    clearTimeout(timeoutId)
     const text = await upstream.text()
     res.status(upstream.status)
     res.setHeader('Content-Type', upstream.headers.get('content-type') || 'application/json')
     return res.send(text)
   } catch (err) {
+    clearTimeout(timeoutId)
+    if (err?.name === 'AbortError') {
+      return res.status(504).json({ error: 'Gemini took too long to respond. Try again or use a simpler page.' })
+    }
     return res.status(502).json({ error: 'Upstream Gemini request failed: ' + (err?.message || 'unknown error') })
   }
 }
